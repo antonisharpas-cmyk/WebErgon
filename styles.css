@@ -468,6 +468,108 @@ a {
   max-width: 680px;
 }
 
+.team-page {
+  padding-top: 90px;
+}
+
+.team-shell {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 28px;
+  align-items: center;
+  padding: 32px;
+  border: 1px solid var(--line);
+  background: rgba(11, 19, 29, 0.7);
+  border-radius: 30px;
+  box-shadow: var(--shadow);
+}
+
+.team-copy h2 {
+  margin: 0;
+  font-size: clamp(2.3rem, 2.8vw, 3.4rem);
+  letter-spacing: -0.06em;
+  line-height: 1.05;
+}
+
+.team-copy p {
+  color: var(--muted);
+  line-height: 1.8;
+  margin-top: 18px;
+}
+
+.team-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  margin-top: 28px;
+}
+
+.team-stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 120px;
+}
+
+.team-stats strong {
+  font-size: 1.6rem;
+  letter-spacing: -0.05em;
+}
+
+.team-stats span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.team-card {
+  padding: 22px 18px;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  text-align: center;
+}
+
+.avatar {
+  width: 78px;
+  height: 78px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: 0 18px 30px rgba(125, 140, 255, 0.25);
+}
+
+.avatar-one {
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+}
+
+.avatar-two {
+  background: linear-gradient(135deg, #ff9e6d, #ff6b9a);
+}
+
+.avatar-three {
+  background: linear-gradient(135deg, #6ce2d1, #7d8cff);
+}
+
+.team-card h3 {
+  margin: 0 0 6px;
+  font-size: 1.28rem;
+  letter-spacing: -0.04em;
+}
+
+.team-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
 .card-grid,
 .process-grid,
 .work-grid {
@@ -654,6 +756,7 @@ a {
 
 @media (max-width: 940px) {
   .hero-grid,
+  .team-shell,
   .card-grid,
   .process-grid,
   .work-grid,
@@ -662,8 +765,13 @@ a {
     display: grid;
   }
 
-  .hero-grid {
+  .hero-grid,
+  .team-shell {
     gap: 30px;
+  }
+
+  .team-grid {
+    grid-template-columns: 1fr;
   }
 
   .nav-wrap {
