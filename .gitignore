@@ -1,0 +1,9 @@
+node_modules/
+.DS_Store
+.env
+.env.local
+dist/
+build/
+.idea/
+.vscode/settings.json
+*.log
