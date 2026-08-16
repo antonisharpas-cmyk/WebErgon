@@ -35,7 +35,33 @@
       </header>
 
       <main>
-        <section class="section admin-page">
+        <!-- Login Modal -->
+        <div id="loginModal" class="login-modal-overlay">
+          <div class="login-modal-card">
+            <div class="login-modal-header">
+              <span class="brand-mark">W</span>
+              <h2>Back Office Login</h2>
+              <p>Please enter your credentials to access client inquiries.</p>
+            </div>
+            <form id="loginForm" class="login-form">
+              <label>
+                <span>Username</span>
+                <input type="text" id="usernameInput" name="username" placeholder="admin" required autocomplete="username" />
+              </label>
+              <label>
+                <span>Password</span>
+                <input type="password" id="passwordInput" name="password" placeholder="••••••••" required autocomplete="current-password" />
+              </label>
+              <button type="submit" class="button button-primary full-width">Sign In</button>
+              <p id="loginError" class="form-message error" aria-live="polite"></p>
+            </form>
+            <div class="login-hint">
+              <small>Default credentials: <code>admin</code> / <code>ronaldo7</code></small>
+            </div>
+          </div>
+        </div>
+
+        <section class="section admin-page hidden" id="adminContent">
           <div class="container">
             <div class="admin-panel reveal">
               <div class="admin-header">
@@ -43,7 +69,10 @@
                   <p class="eyebrow">Back office</p>
                   <h1>Client inquiries</h1>
                 </div>
-                <button class="button button-secondary" id="refreshButton" type="button">Refresh</button>
+                <div class="admin-actions">
+                  <button class="button button-secondary" id="refreshButton" type="button">Refresh</button>
+                  <button class="button button-secondary" id="logoutButton" type="button">Logout</button>
+                </div>
               </div>
 
               <div class="admin-toolbar">

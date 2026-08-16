@@ -1025,3 +1025,116 @@ a {
     text-align: center;
   }
 }
+
+.hidden {
+  display: none !important;
+}
+
+.admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Login Modal Styles */
+.login-modal-overlay {
+  padding-top: 100px;
+  padding-bottom: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 200px);
+}
+
+.login-modal-card {
+  width: min(100%, 420px);
+  padding: 36px 32px;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: rgba(11, 19, 29, 0.85);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-modal-header {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.login-modal-header .brand-mark {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 16px;
+  font-size: 1.2rem;
+}
+
+.login-modal-header h2 {
+  margin: 0 0 8px;
+  font-size: 1.8rem;
+  letter-spacing: -0.04em;
+}
+
+.login-modal-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.login-form {
+  display: grid;
+  gap: 16px;
+}
+
+.login-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.login-form input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  padding: 13px 16px;
+  font-family: inherit;
+  font-size: 0.98rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-form input:focus {
+  border-color: rgba(125, 140, 255, 0.7);
+  box-shadow: 0 0 0 4px rgba(125, 140, 255, 0.12);
+}
+
+.login-hint {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+  color: var(--muted);
+}
+
+.login-hint code {
+  color: var(--primary-2);
+  background: rgba(108, 226, 209, 0.1);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-family: inherit;
+}

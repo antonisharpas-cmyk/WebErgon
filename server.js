@@ -66,6 +66,24 @@ function serveStaticFile(res, filePath) {
   });
 }
 
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'ronaldo7';
+const AUTH_TOKEN = Buffer.from(`${ADMIN_USER}:${ADMIN_PASS}`).toString('base64');
+
+function isAuthenticated(req) {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) return false;
+  let token = '';
+  if (authHeader.startsWith('Bearer ')) {
+    token = authHeader.slice(7);
+  } else if (authHeader.startsWith('Basic ')) {
+    token = authHeader.slice(6);
+  } else {
+    token = authHeader;
+  }
+  return token === AUTH_TOKEN;
+}
+
 function createServer() {
   const server = http.createServer((req, res) => {
     setCorsHeaders(res);
@@ -77,6 +95,32 @@ function createServer() {
     }
 
     const requestUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+
+    if (req.method === 'POST' && requestUrl.pathname === '/api/login') {
+      let body = '';
+
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+
+      req.on('end', () => {
+        try {
+          const data = JSON.parse(body || '{}');
+          if (data.username === ADMIN_USER && data.password === ADMIN_PASS) {
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ success: true, token: AUTH_TOKEN, username: ADMIN_USER }));
+          } else {
+            res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ success: false, message: 'Invalid username or password.' }));
+          }
+        } catch (error) {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ success: false, message: 'Invalid request body.' }));
+        }
+      });
+
+      return;
+    }
 
     if (req.method === 'POST' && requestUrl.pathname === '/api/contact') {
       let body = '';
@@ -114,6 +158,12 @@ function createServer() {
     }
 
     if (req.method === 'GET' && requestUrl.pathname === '/api/submissions') {
+      if (!isAuthenticated(req)) {
+        res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: false, message: 'Unauthorized. Credentials required.' }));
+        return;
+      }
+
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify(readSubmissions()));
       return;
@@ -122,6 +172,12 @@ function createServer() {
     if (req.method === 'DELETE') {
       const match = requestUrl.pathname.match(/^\/api\/submissions\/(\d+)$/);
       if (match) {
+        if (!isAuthenticated(req)) {
+          res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ success: false, message: 'Unauthorized. Credentials required.' }));
+          return;
+        }
+
         const targetId = Number(match[1]);
         const submissions = readSubmissions();
         const filtered = submissions.filter(item => Number(item.id) !== targetId);

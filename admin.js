@@ -1,32 +1,46 @@
 const tableBody = document.getElementById('submissionsTableBody');
 const refreshButton = document.getElementById('refreshButton');
+const logoutButton = document.getElementById('logoutButton');
 const searchInput = document.getElementById('searchInput');
 const yearNode = document.getElementById('year');
+
+const loginModal = document.getElementById('loginModal');
+const adminContent = document.getElementById('adminContent');
+const loginForm = document.getElementById('loginForm');
+const loginError = document.getElementById('loginError');
 
 if (yearNode) {
   yearNode.textContent = new Date().getFullYear();
 }
 
-const revealItems = document.querySelectorAll('.reveal');
-if (revealItems.length > 0) {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    },
-    { threshold: 0.1 }
-  );
-
-  revealItems.forEach((item) => observer.observe(item));
-}
-
 const API_BASE = (window.location.protocol === 'http:' || window.location.protocol === 'https:') && window.location.host
   ? ''
   : 'http://localhost:3000';
+
+function getToken() {
+  return sessionStorage.getItem('adminToken') || '';
+}
+
+function setToken(token) {
+  sessionStorage.setItem('adminToken', token);
+}
+
+function clearToken() {
+  sessionStorage.removeItem('adminToken');
+}
+
+function showLoginModal() {
+  if (loginModal) loginModal.classList.remove('hidden');
+  if (adminContent) adminContent.classList.add('hidden');
+}
+
+function showAdminContent() {
+  if (loginModal) loginModal.classList.add('hidden');
+  if (adminContent) adminContent.classList.remove('hidden');
+
+  const revealItems = document.querySelectorAll('.reveal');
+  revealItems.forEach(item => item.classList.add('visible'));
+}
 
 function formatDate(value) {
   if (!value) return '—';
@@ -44,12 +58,30 @@ function escapeHtml(value) {
 }
 
 let allSubmissions = [];
+let autoRefreshInterval = null;
 
 async function loadSubmissions() {
-  try {
-    const response = await fetch(`${API_BASE}/api/submissions`);
-    const data = await response.json();
+  const token = getToken();
+  if (!token) {
+    showLoginModal();
+    return;
+  }
 
+  try {
+    const response = await fetch(`${API_BASE}/api/submissions`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (response.status === 401) {
+      clearToken();
+      showLoginModal();
+      return;
+    }
+
+    const data = await response.json();
+    showAdminContent();
     allSubmissions = Array.isArray(data) ? data : [];
     renderSubmissions();
   } catch (error) {
@@ -105,10 +137,25 @@ function renderSubmissions() {
 }
 
 async function deleteSubmission(id) {
+  const token = getToken();
+  if (!token) {
+    showLoginModal();
+    return;
+  }
+
   try {
     const response = await fetch(`${API_BASE}/api/submissions/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     });
+
+    if (response.status === 401) {
+      clearToken();
+      showLoginModal();
+      return;
+    }
 
     if (!response.ok) {
       throw new Error('Delete failed');
@@ -119,6 +166,44 @@ async function deleteSubmission(id) {
     alert('Could not delete this inquiry.');
   }
 }
+
+if (loginForm) {
+  loginForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (loginError) loginError.textContent = '';
+
+    const username = document.getElementById('usernameInput')?.value || '';
+    const password = document.getElementById('passwordInput')?.value || '';
+
+    try {
+      const response = await fetch(`${API_BASE}/api/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Invalid username or password.');
+      }
+
+      setToken(result.token);
+      if (loginForm) loginForm.reset();
+      showAdminContent();
+      await loadSubmissions();
+    } catch (error) {
+      if (loginError) loginError.textContent = error.message;
+    }
+  });
+}
+
+logoutButton?.addEventListener('click', () => {
+  clearToken();
+  showLoginModal();
+});
 
 searchInput?.addEventListener('input', renderSubmissions);
 refreshButton?.addEventListener('click', loadSubmissions);
@@ -133,5 +218,15 @@ tableBody?.addEventListener('click', (event) => {
   }
 });
 
-loadSubmissions();
-setInterval(loadSubmissions, 5000);
+// Initial check
+if (getToken()) {
+  loadSubmissions();
+} else {
+  showLoginModal();
+}
+
+autoRefreshInterval = setInterval(() => {
+  if (getToken()) {
+    loadSubmissions();
+  }
+}, 5000);
