@@ -1,12 +1,11 @@
-# WebErgon
+# ErgonSite
 
-Welcome to WebErgon! This is a collaborative project.
+Welcome to ErgonSite! Premium websites and digital experiences for ambitious brands.
 
 ## Getting Started
 
-1. Clone this repository
-2. Install dependencies
-3. Start developing
+1. Start server with `node server.js`
+2. Open `http://localhost:3000`
 
 ## Contributors
 

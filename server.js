@@ -242,7 +242,7 @@ function startServer() {
   const port = PORTS[portIndex];
   const server = createServer();
   server.listen(port, () => {
-    console.log(`WebErgon backend running at http://localhost:${port}`);
+    console.log(`ErgonSite backend running at http://localhost:${port}`);
   });
 }
 
