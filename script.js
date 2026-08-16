@@ -3,6 +3,10 @@ if (yearNode) {
   yearNode.textContent = new Date().getFullYear();
 }
 
+const API_BASE = (window.location.protocol === 'http:' || window.location.protocol === 'https:') && window.location.host
+  ? ''
+  : 'http://localhost:3000';
+
 const revealItems = document.querySelectorAll('.reveal');
 
 const observer = new IntersectionObserver(
@@ -33,7 +37,7 @@ if (contactForm) {
     formMessage.classList.remove('error');
 
     try {
-      const response = await fetch('/api/contact', {
+      const response = await fetch(`${API_BASE}/api/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

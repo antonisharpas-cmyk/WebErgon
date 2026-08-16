@@ -7,6 +7,27 @@ if (yearNode) {
   yearNode.textContent = new Date().getFullYear();
 }
 
+const revealItems = document.querySelectorAll('.reveal');
+if (revealItems.length > 0) {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.1 }
+  );
+
+  revealItems.forEach((item) => observer.observe(item));
+}
+
+const API_BASE = (window.location.protocol === 'http:' || window.location.protocol === 'https:') && window.location.host
+  ? ''
+  : 'http://localhost:3000';
+
 function formatDate(value) {
   if (!value) return '—';
   const date = new Date(value);
@@ -26,17 +47,21 @@ let allSubmissions = [];
 
 async function loadSubmissions() {
   try {
-    const response = await fetch('/api/submissions');
+    const response = await fetch(`${API_BASE}/api/submissions`);
     const data = await response.json();
 
     allSubmissions = Array.isArray(data) ? data : [];
     renderSubmissions();
   } catch (error) {
-    tableBody.innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load submissions.</td></tr>';
+    if (tableBody) {
+      tableBody.innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load submissions.</td></tr>';
+    }
   }
 }
 
 function renderSubmissions() {
+  if (!tableBody) return;
+
   const query = (searchInput?.value || '').trim().toLowerCase();
 
   const filtered = allSubmissions.filter((item) => {
@@ -81,7 +106,7 @@ function renderSubmissions() {
 
 async function deleteSubmission(id) {
   try {
-    const response = await fetch(`/api/submissions/${id}`, {
+    const response = await fetch(`${API_BASE}/api/submissions/${id}`, {
       method: 'DELETE'
     });
 

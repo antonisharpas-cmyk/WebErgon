@@ -8,6 +8,10 @@ const DATA_FILE = path.join(__dirname, 'data', 'submissions.json');
 let portIndex = 0;
 
 function ensureDataFile() {
+  const dir = path.dirname(DATA_FILE);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
   if (!fs.existsSync(DATA_FILE)) {
     fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2));
   }
@@ -24,7 +28,14 @@ function readSubmissions() {
 }
 
 function writeSubmissions(data) {
+  ensureDataFile();
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+}
+
+function setCorsHeaders(res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
 function serveStaticFile(res, filePath) {
@@ -57,7 +68,15 @@ function serveStaticFile(res, filePath) {
 
 function createServer() {
   const server = http.createServer((req, res) => {
-    const requestUrl = new URL(req.url, `http://${req.headers.host}`);
+    setCorsHeaders(res);
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
+    const requestUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
     if (req.method === 'POST' && requestUrl.pathname === '/api/contact') {
       let body = '';
@@ -112,6 +131,13 @@ function createServer() {
         res.end(JSON.stringify({ success: true, deletedId: targetId }));
         return;
       }
+    }
+
+    // Catch unmatched /api/ requests with a proper JSON 404 error
+    if (requestUrl.pathname.startsWith('/api/')) {
+      res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ success: false, message: 'API endpoint not found.' }));
+      return;
     }
 
     let filePath = requestUrl.pathname === '/' ? 'index.html' : requestUrl.pathname.replace(/^\//, '');

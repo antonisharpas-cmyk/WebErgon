@@ -46,5 +46,37 @@
     "company": "d",
     "message": "d",
     "createdAt": "2026-08-16T10:05:15.743Z"
+  },
+  {
+    "id": 1786876199459,
+    "name": "Antonis Harpas",
+    "email": "crapantonis@gmail.com",
+    "company": "a",
+    "message": "a",
+    "createdAt": "2026-08-16T10:29:59.459Z"
+  },
+  {
+    "id": 1786876389651,
+    "name": "Test User",
+    "email": "test@example.com",
+    "company": "",
+    "message": "Hello world",
+    "createdAt": "2026-08-16T10:33:09.651Z"
+  },
+  {
+    "id": 1786876432946,
+    "name": "Verification Test",
+    "email": "verify@example.com",
+    "company": "WebErgon Test",
+    "message": "Testing backend fix",
+    "createdAt": "2026-08-16T10:33:52.946Z"
+  },
+  {
+    "id": 1786876664796,
+    "name": "kostas",
+    "email": "kostas@kostas",
+    "company": "dmm",
+    "message": "msm",
+    "createdAt": "2026-08-16T10:37:44.796Z"
   }
 ]
