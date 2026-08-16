@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1786874116143,
+    "name": "test",
+    "email": "test@test.com",
+    "company": "tst",
+    "message": "ttst",
+    "createdAt": "2026-08-16T09:55:16.143Z"
+  },
+  {
+    "id": 1786874162879,
+    "name": "Antonis Harpas",
+    "email": "crapantonis@gmail.com",
+    "company": "sdf",
+    "message": "df",
+    "createdAt": "2026-08-16T09:56:02.879Z"
+  },
+  {
+    "id": 1786874438246,
+    "name": "jkjkn",
+    "email": "a@a.com",
+    "company": "km",
+    "message": "kk",
+    "createdAt": "2026-08-16T10:00:38.246Z"
+  },
+  {
+    "id": 1786874571991,
+    "name": "as",
+    "email": "a@a.com",
+    "company": "dkjo",
+    "message": "ojoj",
+    "createdAt": "2026-08-16T10:02:51.991Z"
+  },
+  {
+    "id": 1786874597052,
+    "name": "Antonis Harpas",
+    "email": "crapantonis@gmail.com",
+    "company": "asas",
+    "message": "ksskn",
+    "createdAt": "2026-08-16T10:03:17.052Z"
+  },
+  {
+    "id": 1786874715743,
+    "name": "Antonis Harpas",
+    "email": "crapantonis@gmail.com",
+    "company": "d",
+    "message": "d",
+    "createdAt": "2026-08-16T10:05:15.743Z"
+  }
+]

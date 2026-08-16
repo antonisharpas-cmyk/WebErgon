@@ -248,7 +248,7 @@
         </section>
 
         <section id="contact" class="section cta-section">
-          <div class="container">
+          <div class="container contact-wrap">
             <div class="cta-panel reveal">
               <div>
                 <p class="eyebrow">Let’s build it</p>
@@ -259,6 +259,33 @@
                 <a href="tel:+1234567890" class="button button-secondary">+1 (234) 567-890</a>
               </div>
             </div>
+
+            <form id="contactForm" class="contact-form reveal">
+              <h3>Send your project details</h3>
+              <div class="field-row">
+                <label>
+                  <span>Name</span>
+                  <input type="text" name="name" placeholder="Your name" required />
+                </label>
+                <label>
+                  <span>Email</span>
+                  <input type="email" name="email" placeholder="you@example.com" required />
+                </label>
+              </div>
+
+              <label>
+                <span>Company</span>
+                <input type="text" name="company" placeholder="Your company" />
+              </label>
+
+              <label>
+                <span>Project details</span>
+                <textarea name="message" rows="5" placeholder="Tell us about your website project..." required></textarea>
+              </label>
+
+              <button type="submit" class="button button-primary full-width">Send inquiry</button>
+              <p id="formMessage" class="form-message" aria-live="polite"></p>
+            </form>
           </div>
         </section>
       </main>
