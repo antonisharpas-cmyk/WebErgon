@@ -195,16 +195,208 @@ a {
   color: var(--text);
 }
 
+/* =================================================================
+   HERO — the logo animates in, holds, dissolves, and the headline
+   rises through it.
+
+   Retune the whole sequence from these four variables; everything
+   downstream is derived from them, so you never have to hand-edit
+   individual delays.
+   ================================================================= */
+
 .hero {
-  padding-top: 80px;
+  --intro-in: 1.25s;      /* how long the logo takes to arrive      */
+  --intro-out-at: 2.4s;   /* when the logo starts dissolving        */
+  --copy-at: 2.65s;       /* when the first line of copy appears    */
+  --copy-step: 0.12s;     /* gap between each line                  */
+
+  --header-h: 77px;
+
+  /* Fill the space under the header exactly, then centre everything in
+     it. This is what puts the intro logo at the optical centre of the
+     screen instead of low on the page. */
+  min-height: calc(100vh - var(--header-h) - 110px);
+  min-height: calc(100svh - var(--header-h) - 110px);
+  position: relative;
+  display: grid;
+  align-items: start;      /* content starts just under the header */
+  padding: 44px 0 40px;
 }
 
-.hero-grid {
+.hero > .container {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  align-items: center;
-  gap: 48px;
+  justify-items: center;
 }
+
+.hero-stage {
+  position: relative;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+/* Everything in the stage shares one grid cell, so the logo sits
+   exactly on top of the copy it dissolves into. */
+.hero-stage > * {
+  grid-area: 1 / 1;
+}
+
+/* --- ambient glow behind the whole thing ------------------------- */
+
+.hero-aura {
+  /* Out of flow: a 720px-tall glow would otherwise set the height of the
+     whole hero and push the copy back down to the middle of the screen.
+     inset+margin:auto centres it without touching transform, which the
+     breathe animation needs. */
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(720px, 92vw);
+  height: min(720px, 92vw);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(125, 140, 255, 0.26),
+    rgba(108, 226, 209, 0.1) 45%,
+    transparent 70%
+  );
+  filter: blur(24px);
+  opacity: 0;
+  animation:
+    aura-in 1.5s ease forwards,
+    aura-breathe 8s ease-in-out 1.5s infinite;
+}
+
+@keyframes aura-in {
+  from { opacity: 0; transform: scale(0.72); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes aura-breathe {
+  0%, 100% { opacity: 0.95; transform: scale(1); }
+  50%      { opacity: 0.68; transform: scale(1.07); }
+}
+
+/* --- the intro logo ---------------------------------------------- */
+
+.intro-logo {
+  position: relative;
+  z-index: 2;
+  width: min(440px, 66vw);
+  padding: 26px;
+  overflow: hidden;          /* clips the sheen sweep to the logo box */
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity, filter;
+  animation:
+    logo-in var(--intro-in) cubic-bezier(0.16, 1, 0.3, 1) forwards,
+    logo-out 0.9s cubic-bezier(0.65, 0, 0.85, 0) var(--intro-out-at) forwards;
+}
+
+.intro-logo img {
+  width: 100%;
+  filter: drop-shadow(0 18px 44px rgba(29, 78, 216, 0.35));
+}
+
+@keyframes logo-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.9);
+    filter: blur(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes logo-out {
+  from {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-36px) scale(1.16);
+    filter: blur(22px);
+  }
+}
+
+.intro-sheen {
+  position: absolute;
+  inset: 26px;              /* matches .intro-logo padding = the image box */
+  /* A brand-tinted light sweep. Pure white is invisible here because
+     the logo is already near-white, so the band carries the brand
+     gradient instead. */
+  background: linear-gradient(
+    100deg,
+    transparent 38%,
+    rgba(125, 140, 255, 0.8) 47%,
+    rgba(120, 235, 215, 0.9) 53%,
+    transparent 62%
+  );
+  background-size: 300% 100%;
+  background-position: 0% 0;
+  /* Clip the light to the logo artwork itself. */
+  -webkit-mask-image: url("assets/logo.png");
+  mask-image: url("assets/logo.png");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: sheen 1.2s cubic-bezier(0.35, 0, 0.25, 1) calc(var(--intro-in) - 0.2s) forwards;
+}
+
+@keyframes sheen {
+  from { background-position: 0% 0; }
+  to   { background-position: 100% 0; }
+}
+
+/* --- the copy that rises out of the dissolve --------------------- */
+
+.hero-copy {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1040px;
+}
+
+.step {
+  opacity: 0;
+  animation: step-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--copy-at) + var(--i) * var(--copy-step));
+}
+
+@keyframes step-in {
+  from { opacity: 0; transform: translateY(18px); filter: blur(9px); }
+  to   { opacity: 1; transform: none; filter: blur(0); }
+}
+
+/* Headline lines are masked so they slide up from behind their own
+   baseline rather than just fading. */
+.line-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.16em;   /* room for descenders inside the mask */
+}
+
+.hero-copy h1 .line {
+  display: block;
+  text-wrap: balance;
+  animation-name: line-rise;
+  animation-duration: 0.95s;
+}
+
+@keyframes line-rise {
+  from { opacity: 0; transform: translateY(120%); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* --- shared type styles (also used by the sections below) -------- */
 
 .eyebrow {
   margin: 0 0 16px;
@@ -215,38 +407,69 @@ a {
   font-weight: 800;
 }
 
+/* Hero variant: no full stops, lighter weight, wider tracking, and a
+   small raised dot between each word. */
+.eyebrow-hero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 24px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.eyebrow-hero > span {
+  letter-spacing: 0.38em;
+  /* cancel the trailing letter-space so the dots sit optically centred */
+  margin-right: -0.38em;
+}
+
+.eyebrow-hero .eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  margin-right: 0;
+  flex: 0 0 auto;
+  transform: rotate(45deg);
+  border-radius: 1px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  box-shadow: 0 0 10px rgba(108, 226, 209, 0.55);
+}
+
 .hero-copy h1,
 .section-heading h2,
 .cta-panel h2 {
   margin: 0;
-  letter-spacing: -0.06em;
-  line-height: 1.02;
+  letter-spacing: -0.055em;
+  line-height: 1.05;
 }
 
 .hero-copy h1 {
-  font-size: clamp(3rem, 4vw, 5rem);
-  max-width: 620px;
+  font-size: clamp(2.3rem, 5vw, 3.9rem);
 }
 
 .subtitle {
-  font-size: 1.12rem;
+  font-size: 1.1rem;
+  text-wrap: pretty;
   color: var(--muted);
   line-height: 1.7;
-  max-width: 600px;
-  margin-top: 22px;
+  max-width: 620px;
+  margin: 24px auto 0;
 }
 
 .cta-row {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 16px;
-  margin-top: 28px;
+  margin-top: 32px;
 }
 
 .proof-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 30px;
+  justify-content: center;
+  gap: 40px;
   margin-top: 38px;
 }
 
@@ -263,229 +486,168 @@ a {
   letter-spacing: -0.05em;
 }
 
-.hero-visual {
-  position: relative;
-  min-height: 560px;
-  display: grid;
-  place-items: center;
-}
+/* --- social links in the header ---------------------------------- */
 
-.browser-window {
-  width: min(100%, 620px);
-  border: 1px solid var(--line);
-  background: rgba(9, 18, 30, 0.86);
-  border-radius: 24px;
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  position: relative;
-  transform: rotate(2deg);
-}
-
-.browser-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 56px;
-  padding: 0 20px;
-  background: rgba(255, 255, 255, 0.04);
-  border-bottom: 1px solid var(--line);
-}
-
-.browser-bar span {
-  width: 12px;
-  height: 12px;
-  display: block;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.24);
-}
-
-.browser-bar span:nth-child(1) { background: #ff6b6b; }
-.browser-bar span:nth-child(2) { background: #ffca62; }
-.browser-bar span:nth-child(3) { background: #5de59a; }
-
-.dashboard-content {
-  padding: 25px;
-}
-
-.overview-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 18px;
-}
-
-.mini-card,
-.chart-card,
-.list-card,
-.pulse-card {
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 18px;
-}
-
-.mini-card {
-  padding: 18px 18px 16px;
-}
-
-.mini-card.accent {
-  background: linear-gradient(135deg, rgba(125, 140, 255, 0.18), rgba(108, 226, 209, 0.08));
-}
-
-.mini-card small,
-.list-card p,
-.chart-head span:first-child {
-  color: var(--muted);
-}
-
-.mini-card strong {
-  display: block;
-  margin-top: 8px;
-  font-size: 1.9rem;
-  letter-spacing: -0.05em;
-}
-
-.chart-card {
-  padding: 18px 18px 12px;
-}
-
-.chart-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-
-.chip {
+.social-nav {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 72px;
-  border-radius: 999px;
-  padding: 7px 10px;
-  font-size: 0.78rem;
-  color: #d9fff6;
-  background: rgba(108, 226, 209, 0.15);
-}
-
-.bars {
-  height: 150px;
-  display: flex;
-  align-items: end;
-  gap: 12px;
-  padding-top: 8px;
-}
-
-.bars span {
-  display: block;
-  flex: 1;
-  border-radius: 10px 10px 0 0;
-  background: linear-gradient(180deg, var(--primary-2), var(--primary));
-}
-
-.bottom-row {
-  display: grid;
-  grid-template-columns: 1.3fr 0.7fr;
-  gap: 16px;
-  margin-top: 18px;
-}
-
-.list-card,
-.pulse-card {
-  padding: 18px;
-}
-
-.list-card ul {
-  list-style: none;
-  margin: 12px 0 0;
-  padding: 0;
-  display: grid;
   gap: 10px;
-  color: var(--text);
 }
 
-.list-card li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.social-link {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--muted);
+  transition:
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
-.list-card li span {
-  width: 8px;
-  height: 8px;
-  display: block;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+.social-link svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
 }
 
-.pulse-card {
+.social-link:hover {
+  transform: translateY(-3px);
+  color: #fff;
+  border-color: rgba(125, 140, 255, 0.55);
+  background: linear-gradient(135deg, rgba(125, 140, 255, 0.24), rgba(108, 226, 209, 0.14));
+  box-shadow: 0 12px 26px rgba(109, 117, 255, 0.3);
+}
+
+.social-link:focus-visible {
+  outline: 2px solid var(--primary-2);
+  outline-offset: 3px;
+}
+
+/* --- respect the user's motion preference ------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-logo,
+  .hero-aura {
+    display: none;
+  }
+
+  .step,
+  .hero-copy h1 .line {
+    opacity: 1 !important;
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .pulse-dot {
+    animation: none;
+  }
+
+  .marquee-track {
+    animation: none;
+  }
+
+  .marquee {
+    overflow-x: auto;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* =================================================================
+   CLIENT MARQUEE — logos scroll continuously and dissolve at both
+   edges. The track is cloned once by script.js, so the -50% shift
+   lands exactly one set along and the loop is seamless.
+   ================================================================= */
+
+.client-strip {
+  padding: 34px 0 0;
+}
+
+.marquee {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  /* logos fade out on one side and fade in on the other */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+
+.marquee-track {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  font-weight: 700;
-  color: var(--text);
-  background: rgba(108, 226, 209, 0.06);
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  animation: marquee 42s linear infinite;
 }
 
-.pulse-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--primary-2);
-  box-shadow: 0 0 0 0 rgba(108, 226, 209, 0.8);
-  animation: pulse 1.8s infinite;
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
 }
 
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(108, 226, 209, 0.8); }
-  70% { box-shadow: 0 0 0 14px rgba(108, 226, 209, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(108, 226, 209, 0); }
+@keyframes marquee {
+  to { transform: translateX(-50%); }
 }
 
-.floating-badge {
-  position: absolute;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(11, 19, 29, 0.85);
-  color: var(--text);
-  padding: 10px 14px;
-  border-radius: 14px;
-  font-weight: 700;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(10px);
-  animation: float 5s ease-in-out infinite;
-}
-
-.badge-one {
-  right: -10px;
-  bottom: 70px;
-}
-
-.badge-two {
-  left: -18px;
-  top: 50px;
-  animation-delay: 0.8s;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-.logo-strip {
-  padding: 18px 0 0;
-}
-
-.logo-row {
+/* Fixed-size chips are what actually makes every logo read as the same
+   size — the image is capped on BOTH axes and centred, so a wide
+   wordmark and a square mark occupy identical space. */
+.marquee-item {
+  flex: 0 0 auto;
+  width: 220px;
+  height: 94px;
+  /* margin, not flex gap: gap would add a trailing space to only one
+     copy of the list and the loop would visibly jump */
+  margin-right: 18px;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 18px;
-  padding: 16px 24px 0;
-  color: rgba(237, 245, 255, 0.5);
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  font-size: 0.8rem;
-  text-align: center;
+  place-items: center;
+  padding: 14px 15px;
+  border-radius: 18px;
+  /* Each client keeps their own background colour — set per item via
+     --tile in index.html. Sample it from the logo's own artwork. */
+  background: var(--tile, rgba(255, 255, 255, 0.04));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 14px 30px rgba(3, 8, 16, 0.42);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.marquee-item:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 20px 40px rgba(3, 8, 16, 0.55);
+}
+
+.marquee-item a {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.marquee-item a:focus-visible {
+  outline: 2px solid var(--primary-2);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.marquee-item img {
+  max-width: 100%;
+  max-height: 42px;
+  width: auto;
+  object-fit: contain;
 }
 
 .section-heading {
@@ -966,7 +1128,10 @@ a {
 }
 
 @media (max-width: 940px) {
-  .hero-grid,
+  .hero {
+    --header-h: 165px;
+  }
+
   .team-shell,
   .card-grid,
   .process-grid,
@@ -976,7 +1141,6 @@ a {
     display: grid;
   }
 
-  .hero-grid,
   .team-shell {
     gap: 30px;
   }
@@ -997,10 +1161,6 @@ a {
     flex-wrap: wrap;
   }
 
-  .logo-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .cta-panel {
     display: grid;
     text-align: center;
@@ -1016,13 +1176,33 @@ a {
     padding: 85px 0;
   }
 
-  .main-nav {
-    gap: 12px 18px;
-    font-size: 0.82rem;
+  .marquee-item {
+    width: 148px;
+    height: 76px;
+    margin-right: 12px;
+    padding: 12px 16px;
   }
 
-  .button,
-  .nav-button {
+  .marquee-item img {
+    max-height: 36px;
+  }
+
+  .main-nav {
+    gap: 10px 14px;
+    font-size: 0.78rem;
+  }
+
+  /* the aura reads as a wash at phone size — pull it back */
+  .hero-aura {
+    width: 70vw;
+    opacity: 0.4;
+  }
+
+  .intro-logo {
+    width: 78vw;
+  }
+
+  .button {
     width: 100%;
   }
 
@@ -1037,16 +1217,8 @@ a {
     gap: 16px;
   }
 
-  .hero-copy h1 {
-    font-size: 2.8rem;
-  }
-
-  .browser-window {
-    transform: none;
-  }
-
-  .floating-badge {
-    display: none;
+  .proof-row {
+    justify-items: center;
   }
 
   .footer-wrap {

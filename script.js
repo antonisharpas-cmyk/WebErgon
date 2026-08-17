@@ -59,3 +59,23 @@ if (contactForm) {
     }
   });
 }
+
+/* Clone the client marquee once so the -50% scroll loops seamlessly.
+   Doing it here rather than in the HTML means the logo list only has to
+   be maintained in one place. */
+const marqueeTrack = document.querySelector('.marquee-track');
+
+if (marqueeTrack) {
+  const originals = Array.from(marqueeTrack.children);
+
+  originals.forEach((item) => {
+    const clone = item.cloneNode(true);
+    clone.setAttribute('aria-hidden', 'true');
+    // Keep the duplicated logos out of the tab order, otherwise keyboard
+    // users hit every client link twice.
+    clone.querySelectorAll('a').forEach((link) => {
+      link.setAttribute('tabindex', '-1');
+    });
+    marqueeTrack.appendChild(clone);
+  });
+}
