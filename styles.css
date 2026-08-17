@@ -218,12 +218,26 @@ a {
   min-height: calc(100vh - var(--header-h) - 110px);
   min-height: calc(100svh - var(--header-h) - 110px);
   position: relative;
+  isolation: isolate;
   display: grid;
   align-items: start;      /* content starts just under the header */
   padding: 44px 0 40px;
 }
 
+.star-canvas,
+.network-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
 .hero > .container {
+  position: relative;
+  z-index: 1;
   display: grid;
   justify-items: center;
 }
@@ -286,7 +300,9 @@ a {
   z-index: 2;
   width: min(440px, 66vw);
   padding: 26px;
-  overflow: hidden;          /* clips the sheen sweep to the logo box */
+  /* No overflow:hidden here. The sheen is masked to the logo artwork, so
+     clipping is unnecessary — and it used to cut the image's blue
+     drop-shadow off at the box edge, which read as a rectangle. */
   pointer-events: none;
   opacity: 0;
   will-change: transform, opacity, filter;
@@ -437,8 +453,7 @@ a {
 }
 
 .hero-copy h1,
-.section-heading h2,
-.cta-panel h2 {
+.section-heading h2 {
   margin: 0;
   letter-spacing: -0.055em;
   line-height: 1.05;
@@ -550,8 +565,14 @@ a {
     animation: none;
   }
 
-  .marquee-track {
+  .marquee-track,
+  .member-ring {
     animation: none;
+  }
+
+  .member-photo {
+    opacity: 1;
+    transform: none;
   }
 
   .marquee {
@@ -659,106 +680,147 @@ a {
   max-width: 680px;
 }
 
+/* =================================================================
+   TEAM PAGE
+   ================================================================= */
+
 .team-page {
-  padding-top: 90px;
+  position: relative;
+  overflow: hidden;
+  padding-top: 112px;
 }
 
-.team-shell {
-  display: grid;
-  grid-template-columns: 1fr 1.2fr;
-  gap: 28px;
-  align-items: center;
-  padding: 32px;
-  border: 1px solid var(--line);
-  background: rgba(11, 19, 29, 0.7);
-  border-radius: 30px;
-  box-shadow: var(--shadow);
+.team-page > .container {
+  position: relative;
+  z-index: 1;
 }
 
-.team-copy h2 {
+.team-intro {
+  text-align: center;
+  max-width: 780px;
+  margin: 0 auto 66px;
+}
+
+.team-intro h1 {
   margin: 0;
-  font-size: clamp(2.3rem, 2.8vw, 3.4rem);
-  letter-spacing: -0.06em;
-  line-height: 1.05;
+  font-size: clamp(2.1rem, 4vw, 3.4rem);
+  letter-spacing: -0.055em;
+  line-height: 1.06;
+  text-wrap: balance;
 }
 
-.team-copy p {
+.team-lede {
+  margin: 22px auto 0;
+  max-width: 620px;
   color: var(--muted);
-  line-height: 1.8;
-  margin-top: 18px;
-}
-
-.team-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 22px;
-  margin-top: 28px;
-}
-
-.team-stats div {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 120px;
-}
-
-.team-stats strong {
-  font-size: 1.6rem;
-  letter-spacing: -0.05em;
-}
-
-.team-stats span {
-  color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 1.08rem;
+  line-height: 1.75;
+  text-wrap: pretty;
 }
 
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 26px;
+  max-width: 880px;
+  margin: 0 auto;
 }
 
-.team-card {
-  padding: 22px 18px;
-  border-radius: 22px;
-  border: 1px solid var(--line);
-  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+.member {
   text-align: center;
+  padding: 36px 24px 30px;
+  border-radius: 26px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.012));
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
 }
 
-.avatar {
-  width: 78px;
-  height: 78px;
-  margin: 0 auto 18px;
+.member:hover {
+  transform: translateY(-8px);
+  border-color: rgba(125, 140, 255, 0.45);
+  box-shadow: 0 26px 60px rgba(3, 8, 16, 0.5);
+}
+
+.member-photo {
+  position: relative;
+  width: 186px;
+  height: 186px;
+  margin: 0 auto 24px;
   border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-  color: #fff;
-  box-shadow: 0 18px 30px rgba(125, 140, 255, 0.25);
+  /* the photo scales in slightly after the card, so the two motions
+     read as one gesture rather than a single flat fade */
+  opacity: 0;
+  transform: scale(0.86);
+  transition:
+    opacity 0.8s ease calc(0.18s + var(--i, 0) * 0.12s),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) calc(0.18s + var(--i, 0) * 0.12s);
 }
 
-.avatar-one {
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+.member.visible .member-photo {
+  opacity: 1;
+  transform: none;
 }
 
-.avatar-two {
-  background: linear-gradient(135deg, #ff9e6d, #ff6b9a);
+/* conic gradient behind the photo, turning slowly */
+.member-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    var(--primary),
+    var(--primary-2),
+    var(--accent),
+    var(--primary)
+  );
+  opacity: 0.75;
+  animation: ring-spin 11s linear infinite;
+  transition: opacity 0.35s ease, filter 0.35s ease;
 }
 
-.avatar-three {
-  background: linear-gradient(135deg, #6ce2d1, #7d8cff);
+.member:hover .member-ring {
+  opacity: 1;
+  filter: drop-shadow(0 0 16px rgba(125, 140, 255, 0.5));
 }
 
-.team-card h3 {
-  margin: 0 0 6px;
-  font-size: 1.28rem;
+@keyframes ring-spin {
+  to { transform: rotate(1turn); }
+}
+
+.member-photo img {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  /* the inset border is what turns the gradient behind into a ring */
+  border: 5px solid #0b1626;
+  filter: saturate(0.92);
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s ease;
+}
+
+.member:hover .member-photo img {
+  transform: scale(1.04);
+  filter: saturate(1.06);
+}
+
+.member h2 {
+  margin: 0 0 7px;
+  font-size: 1.42rem;
   letter-spacing: -0.04em;
 }
 
-.team-card p {
+.member-role {
   margin: 0;
-  color: var(--muted);
+  color: var(--primary-2);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .card-grid,
@@ -903,26 +965,10 @@ a {
   gap: 24px;
 }
 
-.cta-panel {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  background: linear-gradient(135deg, rgba(125, 140, 255, 0.2), rgba(108, 226, 209, 0.1));
-  border: 1px solid var(--line);
-  border-radius: 28px;
-  padding: 42px 44px;
-}
-
-.cta-panel h2 {
-  font-size: clamp(2rem, 2.8vw, 3.2rem);
-  max-width: 600px;
-}
-
 .cta-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 14px;
 }
 
 .contact-form {
@@ -1102,6 +1148,142 @@ a {
   padding: 28px 18px;
 }
 
+/* =================================================================
+   CLOSING BANNER — the dot field is a generated PNG; the gradient on
+   top of it keeps the headline readable wherever the wave happens to
+   be bright.
+   ================================================================= */
+
+.cta-banner {
+  padding: 10px 0 40px;
+}
+
+.wave-plate {
+  position: relative;
+  overflow: hidden;
+  border-radius: 30px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  background-color: #071120;
+  /* static fallback; wave.js swaps this out once the canvas is drawing */
+  background-image: url("assets/wave-dots.png");
+  background-size: cover;
+  background-position: center;
+}
+
+.wave-plate.wave-live {
+  background-image: none;
+}
+
+.wave-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* sits above the wave so the headline never fights the bright ribbons */
+.wave-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    rgba(6, 14, 26, 0.9) 0%,
+    rgba(6, 14, 26, 0.62) 34%,
+    rgba(6, 14, 26, 0.06) 62%,
+    rgba(6, 14, 26, 0.24) 100%
+  );
+}
+
+.wave-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  padding: 54px 52px;
+  min-height: 258px;
+}
+
+.wave-content h2 {
+  margin: 0;
+  max-width: 17ch;
+  font-size: clamp(1.9rem, 3.1vw, 3rem);
+  letter-spacing: -0.05em;
+  line-height: 1.06;
+  text-wrap: balance;
+}
+
+.button-light {
+  gap: 10px;
+  flex: 0 0 auto;
+  background: #ffffff;
+  color: #0a1524;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 1.05rem 1.7rem;
+  box-shadow: 0 14px 30px rgba(3, 8, 16, 0.4);
+}
+
+.button-light svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.25s ease;
+}
+
+.button-light:hover svg {
+  transform: translateX(4px);
+}
+
+/* Email and phone share one treatment — matched glass pills. */
+.button-ghost {
+  gap: 11px;
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 0.95rem 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition:
+    transform 0.22s ease,
+    background 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.button-ghost svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  color: var(--primary-2);
+  transition: color 0.22s ease;
+}
+
+.button-ghost:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(108, 226, 209, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 14px 30px rgba(3, 8, 16, 0.4);
+}
+
+.button-ghost:focus-visible {
+  outline: 2px solid var(--primary-2);
+  outline-offset: 3px;
+}
+
+/* =================================================================
+   FOOTER
+   ================================================================= */
+
 .site-footer {
   padding: 20px 0 42px;
 }
@@ -1110,16 +1292,63 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding-top: 14px;
+  flex-wrap: wrap;
+  gap: 18px 26px;
+  padding-top: 24px;
   border-top: 1px solid var(--line);
   color: var(--muted);
+}
+
+.footer-side {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.footer-email {
+  color: var(--text);
+  font-weight: 700;
+  border-bottom: 1px solid rgba(108, 226, 209, 0.35);
+  padding-bottom: 2px;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.footer-email:hover {
+  color: var(--primary-2);
+  border-color: var(--primary-2);
+}
+
+.social-nav-sm .social-link {
+  width: 34px;
+  height: 34px;
+}
+
+.social-nav-sm .social-link svg {
+  width: 15px;
+  height: 15px;
+}
+
+.footer-copy {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+/* current page in the nav */
+.main-nav a.is-current {
+  color: var(--text);
+}
+
+/* contact page needs to clear the sticky header */
+.contact-page {
+  padding-top: 96px;
 }
 
 .reveal {
   opacity: 0;
   transform: translateY(28px);
-  transition: opacity 0.7s ease, transform 0.7s ease;
+  transition:
+    opacity 0.7s ease calc(var(--i, 0) * 0.12s),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--i, 0) * 0.12s);
 }
 
 .reveal.visible {
@@ -1132,21 +1361,19 @@ a {
     --header-h: 165px;
   }
 
-  .team-shell,
   .card-grid,
   .process-grid,
-  .work-grid,
-  .cta-panel {
+  .work-grid {
     grid-template-columns: 1fr;
     display: grid;
   }
 
-  .team-shell {
-    gap: 30px;
-  }
-
   .team-grid {
     grid-template-columns: 1fr;
+  }
+
+  .team-intro {
+    margin-bottom: 44px;
   }
 
   .nav-wrap {
@@ -1161,14 +1388,28 @@ a {
     flex-wrap: wrap;
   }
 
-  .cta-panel {
-    display: grid;
-    text-align: center;
+  /* the horizontal scrim does not protect narrow layouts, so switch it
+     to a top-weighted one where the copy actually sits */
+  .wave-scrim {
+    background: linear-gradient(
+      180deg,
+      rgba(6, 14, 26, 0.9) 0%,
+      rgba(6, 14, 26, 0.66) 48%,
+      rgba(6, 14, 26, 0.3) 100%
+    );
   }
 
-  .cta-actions {
-    justify-content: center;
+  .wave-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 26px;
+    padding: 44px 34px;
   }
+
+  .wave-content h2 {
+    max-width: 100%;
+  }
+
 }
 
 @media (max-width: 640px) {
@@ -1224,6 +1465,23 @@ a {
   .footer-wrap {
     flex-direction: column;
     text-align: center;
+  }
+
+  .footer-side {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .wave-content {
+    padding: 34px 22px;
+  }
+
+  .button-light {
+    width: auto;
+  }
+
+  .cta-actions {
+    width: 100%;
   }
 }
 

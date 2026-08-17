@@ -3,9 +3,74 @@ if (yearNode) {
   yearNode.textContent = new Date().getFullYear();
 }
 
-const API_BASE = (window.location.protocol === 'http:' || window.location.protocol === 'https:') && window.location.host
-  ? ''
-  : 'http://localhost:3000';
+/* The enquiry form talks to server.js. If the pages are being served by
+   something else (VS Code Live Server, Live Preview, python -m http.server),
+   that static server has no /api/contact route and returns an empty body,
+   which is what produced "Unexpected end of JSON input". So: try the
+   current origin first, then fall back to the Node server on port 3000. */
+const API_BASES = (function () {
+  const bases = [];
+  const isHttp = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+
+  if (isHttp && window.location.host) {
+    bases.push('');
+  }
+
+  const host = window.location.hostname || 'localhost';
+  const fallback = 'http://' + host + ':3000';
+  if (window.location.origin !== fallback) {
+    bases.push(fallback);
+  }
+
+  return bases;
+})();
+
+async function postJson(path, payload) {
+  let lastError = null;
+
+  for (const base of API_BASES) {
+    let response;
+    try {
+      response = await fetch(base + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (networkError) {
+      lastError = networkError;
+      continue;                       // host unreachable — try the next base
+    }
+
+    const raw = (await response.text()).trim();
+
+    if (!raw) {
+      // reached a server, but not one that speaks our API
+      lastError = new Error('empty response from ' + (base || 'this origin'));
+      continue;
+    }
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (parseError) {
+      lastError = new Error('non-JSON response from ' + (base || 'this origin'));
+      continue;
+    }
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Something went wrong. Please try again.');
+    }
+
+    return data;
+  }
+
+  console.error('Contact API unreachable.', lastError);
+  throw new Error(
+    'Could not reach the server. Open the site through the Node backend ' +
+    '(run "node server.js", then visit the address it prints) rather than a ' +
+    'static preview server.'
+  );
+}
 
 const revealItems = document.querySelectorAll('.reveal');
 
@@ -33,29 +98,21 @@ if (contactForm) {
     const formData = new FormData(contactForm);
     const payload = Object.fromEntries(formData.entries());
 
+    const submitButton = contactForm.querySelector('button[type="submit"]');
+
     formMessage.textContent = 'Sending...';
     formMessage.classList.remove('error');
+    if (submitButton) submitButton.disabled = true;
 
     try {
-      const response = await fetch(`${API_BASE}/api/contact`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Something went wrong.');
-      }
-
-      formMessage.textContent = 'Your details were sent successfully.';
+      await postJson('/api/contact', payload);
+      formMessage.textContent = 'Thank you — your details were sent. We will be in touch shortly.';
       contactForm.reset();
     } catch (error) {
       formMessage.textContent = error.message || 'Failed to send your request.';
       formMessage.classList.add('error');
+    } finally {
+      if (submitButton) submitButton.disabled = false;
     }
   });
 }
