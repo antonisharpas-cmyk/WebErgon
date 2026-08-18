@@ -86,7 +86,7 @@ async function loadSubmissions() {
     renderSubmissions();
   } catch (error) {
     if (tableBody) {
-      tableBody.innerHTML = '<tr><td colspan="6" class="empty-state">Failed to load submissions.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="7" class="empty-state">Failed to load submissions.</td></tr>';
     }
   }
 }
@@ -103,6 +103,7 @@ function renderSubmissions() {
       item.name,
       item.email,
       item.company,
+      item.phone,
       item.message
     ]
       .join(' ')
@@ -112,7 +113,7 @@ function renderSubmissions() {
   });
 
   if (filtered.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="6" class="empty-state">No inquiries match your search.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="7" class="empty-state">No inquiries match your search.</td></tr>';
     return;
   }
 
@@ -125,6 +126,7 @@ function renderSubmissions() {
           <td>${escapeHtml(item.name || '—')}</td>
           <td>${escapeHtml(item.email || '—')}</td>
           <td>${escapeHtml(item.company || '—')}</td>
+          <td>${escapeHtml(item.phone || '—')}</td>
           <td>${escapeHtml(item.message || '—')}</td>
           <td>${formatDate(item.createdAt)}</td>
           <td>

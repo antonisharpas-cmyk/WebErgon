@@ -11,6 +11,12 @@
   --primary-2: #6ce2d1;
   --accent: #ff9e6d;
   --shadow: 0 25px 80px rgba(7, 12, 22, 0.52);
+
+  /* hero intro timeline — the header wordmark reads these too */
+  --intro-in: 0.5s;       /* logo arrives                            */
+  --intro-fly-at: 0.72s;  /* logo sets off for the header, copy fades in */
+  --intro-fly: 1.8s;      /* how long the flight takes               */
+  --copy-step: 0.09s;     /* gap between copy lines                  */
 }
 
 * {
@@ -205,10 +211,7 @@ a {
    ================================================================= */
 
 .hero {
-  --intro-in: 1.25s;      /* how long the logo takes to arrive      */
-  --intro-out-at: 2.4s;   /* when the logo starts dissolving        */
-  --copy-at: 2.65s;       /* when the first line of copy appears    */
-  --copy-step: 0.12s;     /* gap between each line                  */
+  --copy-at: var(--intro-fly-at);   /* copy fades in as the logo leaves */
 
   --header-h: 77px;
 
@@ -308,7 +311,7 @@ a {
   will-change: transform, opacity, filter;
   animation:
     logo-in var(--intro-in) cubic-bezier(0.16, 1, 0.3, 1) forwards,
-    logo-out 0.9s cubic-bezier(0.65, 0, 0.85, 0) var(--intro-out-at) forwards;
+    logo-fly var(--intro-fly) cubic-bezier(0.55, 0, 0.25, 1) var(--intro-fly-at) forwards;
 }
 
 .intro-logo img {
@@ -329,18 +332,25 @@ a {
   }
 }
 
-@keyframes logo-out {
+/* Travels to where the header wordmark sits. script.js measures both
+   elements and writes --fly-x / --fly-y / --fly-s; the values below are
+   only a rough fallback for the split second before that runs. */
+@keyframes logo-fly {
   from {
     opacity: 1;
     transform: none;
-    filter: blur(0);
+  }
+  60% {
+    opacity: 0.55;
   }
   to {
     opacity: 0;
-    transform: translateY(-36px) scale(1.16);
-    filter: blur(22px);
+    transform:
+      translate(var(--fly-x, -34vw), var(--fly-y, -32vh))
+      scale(var(--fly-s, 0.34));
   }
 }
+
 
 .intro-sheen {
   position: absolute;
@@ -364,7 +374,7 @@ a {
   mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
-  animation: sheen 1.2s cubic-bezier(0.35, 0, 0.25, 1) calc(var(--intro-in) - 0.2s) forwards;
+  animation: sheen 0.55s cubic-bezier(0.35, 0, 0.25, 1) calc(var(--intro-in) - 0.22s) forwards;
 }
 
 @keyframes sheen {
@@ -383,7 +393,7 @@ a {
 
 .step {
   opacity: 0;
-  animation: step-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: step-in 1.05s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   animation-delay: calc(var(--copy-at) + var(--i) * var(--copy-step));
 }
 
@@ -404,7 +414,7 @@ a {
   display: block;
   text-wrap: balance;
   animation-name: line-rise;
-  animation-duration: 0.95s;
+  animation-duration: 1.15s;
 }
 
 @keyframes line-rise {
@@ -1281,6 +1291,376 @@ a {
 }
 
 /* =================================================================
+   REVEAL BUTTONS — label collapses, value expands, on hover.
+
+   The width morph uses grid-template-columns 1fr -> 0fr, which is the
+   only reliable way to animate to a content-sized width. Both spans
+   stay in the DOM, so the link text is always available to assistive
+   tech and to search engines.
+   ================================================================= */
+
+.reveal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  /* One collapsed width for the set; the expanded width is measured
+     per button in script.js so each opens only as far as its own text
+     needs. The left edge stays put — the button grows to the right. */
+  --rb-min: 186px;
+  width: var(--rb-min);
+  padding: 0.9rem 1.45rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  font-weight: 700;
+  transition:
+    width 0.48s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.22s ease,
+    background 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.reveal-btn:hover,
+.reveal-btn:focus-visible {
+  width: var(--rb-open, 282px);
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(108, 226, 209, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 14px 30px rgba(3, 8, 16, 0.4);
+}
+
+.reveal-btn:focus-visible {
+  outline: 2px solid var(--primary-2);
+  outline-offset: 3px;
+}
+
+.rb-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--primary-2);
+}
+
+.rb-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.rb-swap {
+  position: relative;
+  display: grid;
+  width: 100%;
+  align-items: center;
+  /* clipped so the longer detail never spills while collapsed */
+  overflow: hidden;
+}
+
+.rb-swap > span {
+  grid-area: 1 / 1;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.rb-label,
+.rb-value {
+  transition:
+    opacity 0.34s ease,
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rb-value {
+  opacity: 0;
+  transform: translateY(9px);
+  transition-delay: 0s;
+}
+
+.rb-label {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0.1s;
+}
+
+/* on the way in, the outgoing label leads and the value follows */
+.reveal-btn:hover .rb-label,
+.reveal-btn:focus-visible .rb-label {
+  opacity: 0;
+  transform: translateY(-9px);
+  transition-delay: 0s;
+}
+
+.reveal-btn:hover .rb-value,
+.reveal-btn:focus-visible .rb-value {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0.1s;
+}
+
+/* No hover on touch: show the detail outright rather than hiding it
+   behind a gesture that will never happen. */
+@media (hover: none) {
+  .reveal-btn { width: var(--rb-open, 282px); }
+  .rb-label { opacity: 0; }
+  .rb-value { opacity: 1; transform: none; }
+}
+
+/* Stacked, and the column is pinned to the expanded width. Without a
+   fixed width the column resizes as a button grows, which drags the
+   whole set sideways instead of letting one button extend. */
+.wave-content .cta-actions {
+  flex: 0 0 auto;
+  width: 282px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* =================================================================
+   COUNTRY DIAL-CODE PICKER
+   ================================================================= */
+
+.contact-form select.is-enhanced {
+  /* kept in the DOM as the form value, driven by phone-field.js */
+  display: none;
+}
+
+.dial-picker {
+  position: relative;
+  min-width: 0;
+}
+
+.dial-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dial-trigger::after {
+  content: "";
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-right: 2px solid rgba(168, 186, 210, 0.9);
+  border-bottom: 2px solid rgba(168, 186, 210, 0.9);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.25s ease;
+}
+
+.dial-trigger[aria-expanded="true"] {
+  border-color: rgba(125, 140, 255, 0.7);
+  box-shadow: 0 0 0 4px rgba(125, 140, 255, 0.12);
+}
+
+.dial-trigger[aria-expanded="true"]::after {
+  transform: translateY(2px) rotate(225deg);
+}
+
+.dial-current {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dial-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  left: 0;
+  width: max(100%, 280px);
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(10, 19, 32, 0.98);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 24px 50px rgba(3, 8, 16, 0.6);
+}
+
+.dial-search {
+  width: 100%;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 0.94rem;
+  outline: none;
+}
+
+.dial-search:focus {
+  border-color: rgba(125, 140, 255, 0.7);
+}
+
+.dial-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 246px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.dial-option {
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.94rem;
+  cursor: pointer;
+}
+
+.dial-option.is-active {
+  background: rgba(125, 140, 255, 0.18);
+}
+
+.dial-option[aria-selected="true"] {
+  color: var(--primary-2);
+  font-weight: 700;
+}
+
+.dial-empty {
+  padding: 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.dial-other {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+  padding: 14px 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  outline: none;
+}
+
+.dial-other:focus {
+  border-color: rgba(125, 140, 255, 0.7);
+  box-shadow: 0 0 0 4px rgba(125, 140, 255, 0.12);
+}
+
+/* when "Other" is picked the row makes room for the manual code box */
+.phone-row:has(.dial-other:not([hidden])) {
+  grid-template-columns: minmax(0, 190px) minmax(0, 110px) minmax(0, 1fr);
+}
+
+/* =================================================================
+   FORM FIELDS
+   ================================================================= */
+
+.contact-form .field {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-optional {
+  font-style: italic;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(168, 186, 210, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.phone-row {
+  display: grid;
+  grid-template-columns: minmax(0, 190px) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.contact-form select {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+  padding: 14px 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  outline: none;
+  appearance: none;
+  /* chevron drawn in the background so the control matches the inputs
+     rather than inheriting the OS select styling */
+  background-image: linear-gradient(45deg, transparent 50%, rgba(168, 186, 210, 0.9) 50%),
+    linear-gradient(135deg, rgba(168, 186, 210, 0.9) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 22px, calc(100% - 14px) 22px;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.contact-form select:focus {
+  border-color: rgba(125, 140, 255, 0.7);
+  box-shadow: 0 0 0 4px rgba(125, 140, 255, 0.12);
+}
+
+.contact-form select option {
+  background: #0d1a2b;
+  color: var(--text);
+}
+
+.field-msg {
+  display: none;
+  color: #ff9aa5;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.field.has-error .field-msg {
+  display: block;
+}
+
+.field.has-error input,
+.field.has-error textarea,
+.field.has-error select {
+  border-color: rgba(255, 154, 165, 0.75);
+}
+
+.field.has-error input:focus,
+.field.has-error textarea:focus,
+.field.has-error select:focus {
+  box-shadow: 0 0 0 4px rgba(255, 154, 165, 0.14);
+}
+
+.button[disabled] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* =================================================================
    FOOTER
    ================================================================= */
 
@@ -1454,6 +1834,11 @@ a {
     width: 100%;
   }
 
+  .field-row,
+  .phone-row {
+    grid-template-columns: 1fr;
+  }
+
   .proof-row {
     gap: 16px;
   }
@@ -1474,6 +1859,13 @@ a {
 
   .wave-content {
     padding: 34px 22px;
+  }
+
+  /* let the pills use the full column on a phone rather than a fixed
+     282px, which overflows a 320px screen */
+  .wave-content .cta-actions,
+  .reveal-btn {
+    width: 100%;
   }
 
   .button-light {

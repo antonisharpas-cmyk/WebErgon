@@ -5,6 +5,10 @@ const { URL } = require('url');
 
 const PORTS = process.env.PORT ? [Number(process.env.PORT)] : [3000, 3001, 3002, 3003];
 const DATA_FILE = path.join(__dirname, 'data', 'submissions.json');
+
+// Mirrors the client-side rule: a real domain, at least one dot, and an
+// alphabetic TLD of two characters or more.
+const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)*\.[A-Za-z]{2,}$/;
 let portIndex = 0;
 
 function ensureDataFile() {
@@ -132,18 +136,50 @@ function createServer() {
       req.on('end', () => {
         try {
           const data = JSON.parse(body || '{}');
+
+          // The browser validates too, but that is a convenience for the
+          // visitor. This is the check that actually counts — anything can
+          // POST to this endpoint.
+          const name = String(data.name || '').trim();
+          const email = String(data.email || '').trim();
+          const company = String(data.company || '').trim();
+          const phone = String(data.phone || '').trim();
+          const message = String(data.message || '').trim();
+
+          const problems = [];
+          if (!name) problems.push('name');
+          if (!company) problems.push('company');
+          if (message.length < 10) problems.push('project details');
+          if (!EMAIL_RE.test(email) || email.length > 254) problems.push('email');
+          if (phone && !/^\+?[0-9\s().-]{6,24}$/.test(phone)) problems.push('phone');
+
+          if (problems.length) {
+            res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({
+              success: false,
+              message: 'Please check these fields: ' + problems.join(', ') + '.'
+            }));
+            return;
+          }
+
+          if (name.length > 120 || company.length > 160 || message.length > 5000) {
+            res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ success: false, message: 'One of the fields is too long.' }));
+            return;
+          }
+
           const submissions = readSubmissions();
 
-          const record = {
+          submissions.push({
             id: Date.now(),
-            name: data.name || '',
-            email: data.email || '',
-            company: data.company || '',
-            message: data.message || '',
+            name: name,
+            email: email,
+            company: company,
+            phone: phone,
+            message: message,
             createdAt: new Date().toISOString()
-          };
+          });
 
-          submissions.push(record);
           writeSubmissions(submissions);
 
           res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
