@@ -112,5 +112,14 @@
     "phone": "",
     "message": "Testing inquiry from another computer on the network.",
     "createdAt": "2026-08-18T06:42:47.976Z"
+  },
+  {
+    "id": 1787036432194,
+    "name": "a",
+    "email": "a@a.com",
+    "company": "kdk",
+    "phone": "+357 999999999",
+    "message": "jksjsjksjskjsks",
+    "createdAt": "2026-08-18T07:00:32.194Z"
   }
 ]

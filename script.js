@@ -3,73 +3,50 @@ if (yearNode) {
   yearNode.textContent = new Date().getFullYear();
 }
 
-/* The enquiry form talks to server.js. If the pages are being served by
-   something else (VS Code Live Server, Live Preview, python -m http.server),
-   that static server has no /api/contact route and returns an empty body,
-   which is what produced "Unexpected end of JSON input". So: try the
-   current origin first, then fall back to the Node server on port 3000. */
-const API_BASES = (function () {
-  const bases = [];
-  const isHttp = window.location.protocol === 'http:' || window.location.protocol === 'https:';
-
-  if (isHttp && window.location.host) {
-    bases.push('');
-  }
-
-  // server.js walks 3000 -> 3003 when a port is busy, so try them all
-  const host = window.location.hostname || 'localhost';
-  [3000, 3001, 3002, 3003].forEach(function (port) {
-    const base = 'http://' + host + ':' + port;
-    if (window.location.origin !== base) bases.push(base);
-  });
-
-  return bases;
-})();
-
+/* Send form data to the API using the same origin (localhost or IP address).
+   This works whether you're accessing from the same machine or another PC. */
 async function postJson(path, payload) {
-  let lastError = null;
-
-  for (const base of API_BASES) {
-    let response;
-    try {
-      response = await fetch(base + path, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } catch (networkError) {
-      lastError = networkError;
-      continue;                       // host unreachable — try the next base
-    }
-
-    const raw = (await response.text()).trim();
-
-    if (!raw) {
-      // reached a server, but not one that speaks our API
-      lastError = new Error('empty response from ' + (base || 'this origin'));
-      continue;
-    }
-
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch (parseError) {
-      lastError = new Error('non-JSON response from ' + (base || 'this origin'));
-      continue;
-    }
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Something went wrong. Please try again.');
-    }
-
-    return data;
+  let response;
+  try {
+    response = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  } catch (networkError) {
+    console.error('Network error:', networkError);
+    throw new Error(
+      'We could not reach the server, so your message was not sent. ' +
+      'Please email us directly at info@ergonsite.com and we will pick it up.'
+    );
   }
 
-  console.error('Contact API unreachable. Last error:', lastError);
-  throw new Error(
-    'We could not reach the server, so your message was not sent. ' +
-    'Please email us directly at info@ergonsite.com and we will pick it up.'
-  );
+  const raw = (await response.text()).trim();
+
+  if (!raw) {
+    console.error('Empty response from server');
+    throw new Error(
+      'We could not reach the server, so your message was not sent. ' +
+      'Please email us directly at info@ergonsite.com and we will pick it up.'
+    );
+  }
+
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch (parseError) {
+    console.error('Non-JSON response:', raw);
+    throw new Error(
+      'We could not reach the server, so your message was not sent. ' +
+      'Please email us directly at info@ergonsite.com and we will pick it up.'
+    );
+  }
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Something went wrong. Please try again.');
+  }
+
+  return data;
 }
 
 /* =====================================================================
