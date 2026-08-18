@@ -310,6 +310,47 @@ if (contactForm) {
   });
 })();
 
+/* =====================================================================
+   Service cards: the highlight follows the cursor. Only two custom
+   properties are written here — the gradient itself lives in the
+   stylesheet — and the writes are throttled to one per frame so a fast
+   mouse cannot flood style recalculation.
+   ===================================================================== */
+(function () {
+  const cards = document.querySelectorAll('.service-card');
+  if (!cards.length) return;
+  // touch devices have no hover state to track; the CSS default centres
+  // the highlight for them
+  if (window.matchMedia && window.matchMedia('(hover: none)').matches) return;
+
+  cards.forEach(function (card) {
+    let frame = null;
+    let point = null;
+
+    card.addEventListener('pointermove', function (event) {
+      point = event;
+      if (frame) return;
+      frame = requestAnimationFrame(function () {
+        frame = null;
+        const box = card.getBoundingClientRect();
+        card.style.setProperty('--mx', Math.round(point.clientX - box.left) + 'px');
+        card.style.setProperty('--my', Math.round(point.clientY - box.top) + 'px');
+      });
+    });
+
+    // hand the highlight back to the centred default, so the next hover
+    // does not start from wherever the pointer happened to leave
+    card.addEventListener('pointerleave', function () {
+      if (frame) {
+        cancelAnimationFrame(frame);
+        frame = null;
+      }
+      card.style.removeProperty('--mx');
+      card.style.removeProperty('--my');
+    });
+  });
+})();
+
 /* Clone the client marquee once so the -50% scroll loops seamlessly.
    Doing it here rather than in the HTML means the logo list only has to
    be maintained in one place. */

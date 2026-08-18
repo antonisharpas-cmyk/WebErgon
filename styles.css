@@ -691,6 +691,25 @@ a {
 }
 
 /* =================================================================
+   SERVICES PAGE — shares the team page's drifting-network backdrop
+   ================================================================= */
+
+.services-page {
+  position: relative;
+  overflow: hidden;
+  padding-top: 104px;
+}
+
+.services-page > .container {
+  position: relative;
+  z-index: 1;
+}
+
+.services-page .page-intro {
+  margin-bottom: 54px;
+}
+
+/* =================================================================
    TEAM PAGE
    ================================================================= */
 
@@ -705,13 +724,15 @@ a {
   z-index: 1;
 }
 
-.team-intro {
+.team-intro,
+.page-intro {
   text-align: center;
   max-width: 780px;
   margin: 0 auto 66px;
 }
 
-.team-intro h1 {
+.team-intro h1,
+.page-intro h1 {
   margin: 0;
   font-size: clamp(2.1rem, 4vw, 3.4rem);
   letter-spacing: -0.055em;
@@ -719,7 +740,8 @@ a {
   text-wrap: balance;
 }
 
-.team-lede {
+.team-lede,
+.page-lede {
   margin: 22px auto 0;
   max-width: 620px;
   color: var(--muted);
@@ -834,7 +856,6 @@ a {
 }
 
 .card-grid,
-.process-grid,
 .work-grid {
   display: grid;
   gap: 24px;
@@ -844,21 +865,159 @@ a {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* =================================================================
+   SERVICES
+
+   Seven cards on a 12-column grid: two rows of three, then a wide
+   seventh that spans the full width and closes the block. Its own
+   class rather than .card-grid, so the single-column responsive rule
+   for the other grids does not reach it.
+   ================================================================= */
+
+/* Three groups, each with its own column count: 3 across for Brand &
+   Web, 4 for Software & Systems, 2 for Growth & Support. The differing
+   rhythm is what makes the groups read as groups without heavy rules
+   between them. */
+
+.service-group + .service-group {
+  margin-top: 54px;
+}
+
+.group-head {
+  margin: 0 0 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--primary-2);
+}
+
+.group-title::before {
+  content: "";
+  width: 26px;
+  height: 2px;
+  border-radius: 2px;
+  flex: 0 0 auto;
+  background: linear-gradient(90deg, var(--primary-2), var(--primary));
+}
+
+.group-lede {
+  margin: 10px 0 0 38px;
+  color: var(--muted);
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.services-grid .service-card {
+  grid-column: span 4;
+}
+
+.services-grid-four .service-card {
+  grid-column: span 3;
+}
+
+.services-grid-two .service-card {
+  grid-column: span 6;
+}
+
 .service-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   background: rgba(14, 25, 39, 0.68);
   border: 1px solid var(--line);
   border-radius: 24px;
-  padding: 30px 24px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
-  transition: transform 0.25s ease, border-color 0.25s ease;
+  padding: 30px 26px 34px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.35s ease;
 }
 
-.service-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(125, 140, 255, 0.4);
+/* Cursor-tracked spotlight. script.js writes --mx / --my; with no
+   pointer (touch, keyboard) the fallback centres it, so the card still
+   lights up on :focus-within rather than staying flat. */
+.service-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background: radial-gradient(
+    260px circle at var(--mx, 50%) var(--my, 40%),
+    rgba(108, 226, 209, 0.16),
+    rgba(125, 140, 255, 0.08) 45%,
+    transparent 70%
+  );
+  transition: opacity 0.4s ease;
+}
+
+.service-card:hover,
+.service-card:focus-within {
+  transform: translateY(-8px);
+  border-color: rgba(108, 226, 209, 0.45);
+  background: rgba(17, 30, 48, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 22px 50px rgba(4, 10, 20, 0.5);
+}
+
+.service-card:hover::before,
+.service-card:focus-within::before {
+  opacity: 1;
+}
+
+/* the oversized glyph bleeding off the bottom-right corner */
+.sc-watermark {
+  position: absolute;
+  right: -34px;
+  bottom: -38px;
+  z-index: -1;
+  width: 178px;
+  height: 178px;
+  color: var(--primary);
+  opacity: 0.07;
+  pointer-events: none;
+  transition: opacity 0.45s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: sc-drift 9s ease-in-out infinite;
+}
+
+.sc-watermark svg {
+  width: 100%;
+  height: 100%;
+}
+
+.service-card:hover .sc-watermark,
+.service-card:focus-within .sc-watermark {
+  opacity: 0.16;
+  transform: translate(-8px, -10px) rotate(-4deg) scale(1.06);
+  color: var(--primary-2);
+}
+
+@keyframes sc-drift {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -9px; }
 }
 
 .icon-wrap {
+  position: relative;
   width: 56px;
   height: 56px;
   display: inline-flex;
@@ -866,52 +1025,495 @@ a {
   justify-content: center;
   border-radius: 16px;
   font-size: 1.4rem;
+  color: var(--primary-2);
   background: linear-gradient(135deg, rgba(125, 140, 255, 0.18), rgba(108, 226, 209, 0.12));
   margin-bottom: 22px;
+  transition:
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.35s ease,
+    box-shadow 0.35s ease;
 }
 
-.service-card h3 {
+.icon-wrap svg {
+  width: 27px;
+  height: 27px;
+  overflow: visible;
+}
+
+/* the ring that expands out of the tile on hover */
+.icon-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(108, 226, 209, 0.55);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.service-card:hover .icon-wrap,
+.service-card:focus-within .icon-wrap {
+  transform: translateY(-3px) scale(1.06);
+  background: linear-gradient(135deg, rgba(125, 140, 255, 0.3), rgba(108, 226, 209, 0.24));
+  box-shadow: 0 12px 26px rgba(4, 10, 20, 0.45);
+}
+
+.service-card:hover .icon-wrap::after,
+.service-card:focus-within .icon-wrap::after {
+  opacity: 1;
+  animation: sc-ring 1.6s ease-out infinite;
+}
+
+@keyframes sc-ring {
+  0%   { transform: scale(1);    opacity: 0.7; }
+  70%  { transform: scale(1.32); opacity: 0; }
+  100% { transform: scale(1.32); opacity: 0; }
+}
+
+.service-card h3,
+.service-card h4 {
   margin: 0 0 12px;
-  font-size: 1.5rem;
-  letter-spacing: -0.05em;
+  font-size: 1.35rem;
+  letter-spacing: -0.04em;
+  line-height: 1.25;
 }
 
 .service-card p {
   margin: 0;
   color: var(--muted);
-  line-height: 1.75;
+  line-height: 1.7;
 }
 
-.process-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+/* accent rule along the bottom edge, drawn in from the left on hover */
+.sc-underline {
+  position: absolute;
+  left: 26px;
+  right: 26px;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(90deg, var(--primary-2), var(--primary));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.process-step {
-  position: relative;
-  padding: 28px 22px;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  background: rgba(10, 18, 29, 0.52);
+.service-card:hover .sc-underline,
+.service-card:focus-within .sc-underline {
+  transform: scaleX(1);
 }
 
-.process-step span {
+/* the seventh card runs wide, so the icon sits beside the copy */
+.service-card-wide {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 26px 26px 30px;
+}
+
+.service-card-wide .icon-wrap {
+  margin-bottom: 0;
+  flex: 0 0 auto;
+}
+
+.service-card-wide .sc-text {
+  min-width: 0;
+}
+
+.services-more {
+  margin: 30px 0 0;
+  text-align: center;
+}
+
+.link-arrow {
   display: inline-flex;
-  padding: 7px 10px;
-  border-radius: 999px;
-  margin-bottom: 18px;
-  background: rgba(125, 140, 255, 0.14);
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
   color: var(--primary-2);
-  font-weight: 800;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 2px;
+  transition: color 0.25s ease, border-color 0.25s ease, gap 0.25s ease;
 }
 
-.process-step h3 {
-  margin: 0 0 12px;
-  font-size: 1.4rem;
+.link-arrow svg {
+  width: 17px;
+  height: 17px;
 }
 
-.process-step p {
-  margin: 0;
+.link-arrow:hover {
+  gap: 14px;
+  color: var(--text);
+  border-color: rgba(108, 226, 209, 0.6);
+}
+
+/* the list of what each service actually covers — services page only;
+   the home page keeps the one-line version */
+.sc-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sc-list li {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.03);
   color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: border-color 0.3s ease, color 0.3s ease, background 0.3s ease;
+}
+
+.service-card:hover .sc-list li,
+.service-card:focus-within .sc-list li {
+  border-color: rgba(108, 226, 209, 0.32);
+  background: rgba(108, 226, 209, 0.07);
+  color: var(--text);
+}
+
+/* four across gets tight before three across does, so it folds first */
+@media (max-width: 1180px) {
+  .services-grid-four .service-card {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 1040px) {
+  .services-grid .service-card {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 760px) {
+  .services-grid .service-card {
+    grid-column: span 12;
+  }
+
+  .service-group + .service-group {
+    margin-top: 40px;
+  }
+
+  .group-lede {
+    margin-left: 0;
+  }
+}
+
+/* the drifting glyph and the pulsing ring are decoration; drop them
+   for anyone who has asked the OS to calm animation down */
+@media (prefers-reduced-motion: reduce) {
+  .sc-watermark {
+    animation: none;
+  }
+
+  .service-card:hover .icon-wrap::after,
+  .service-card:focus-within .icon-wrap::after {
+    animation: none;
+  }
+}
+
+/* =================================================================
+   PROCESS RAIL
+
+   One system, two densities. Vertical is the base: the track runs down
+   the left edge and each step stacks against it, which is what the
+   services page uses at every width because its steps carry a
+   paragraph and a list. The home page adds .process-rail-row, which
+   lays the same rail out horizontally above 900px for the short
+   one-line version.
+
+   Vertical-first is deliberate. It is the layout with no ceiling on
+   copy length, so it is the one that should not need overriding.
+
+   The connector is a single element whose fill scales from 0 to 1 on
+   reveal; every dot is timed off its own --i so it lights up exactly
+   as the fill sweeps past. Add or remove a step and the choreography
+   still lands — nothing hardcodes "five" but the row column count.
+   ================================================================= */
+
+.process-rail {
+  position: relative;
+  padding-top: 4px;
+}
+
+.process-steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 30px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.process-node {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  column-gap: 20px;
+}
+
+.rail-track {
+  position: absolute;
+  top: 17px;
+  /* runs the full height of the list rather than stopping at the last
+     dot: the arrowhead then lands at the very bottom of the last step,
+     which is the one that is supposed to keep going */
+  bottom: 0;
+  left: 12px;
+  width: 2px;
+  border-radius: 2px;
+  background: rgba(165, 195, 255, 0.14);
+}
+
+.rail-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, var(--primary), var(--primary-2));
+  transform: scaleY(0);
+  transform-origin: center top;
+  transition: transform 1.7s cubic-bezier(0.16, 1, 0.3, 1) 0.25s;
+}
+
+.process-rail.visible .rail-fill {
+  transform: scaleY(1);
+}
+
+/* one arrowhead at the finish. A chevron between every step is noise;
+   a single one at the end reads as direction */
+.rail-tip {
+  position: absolute;
+  left: 50%;
+  bottom: -3px;
+  width: 11px;
+  height: 11px;
+  background: var(--primary-2);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  transform: translateX(-50%) rotate(90deg) scale(0);
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 1.85s;
+}
+
+.process-rail.visible .rail-tip {
+  transform: translateX(-50%) rotate(90deg) scale(1);
+}
+
+.node-dot {
+  position: relative;
+  z-index: 1;
+  align-self: start;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgba(165, 195, 255, 0.28);
+  background: #0a1424;
+  /* the fill takes 1.7s from 0.25s, so step i is reached at
+     0.25s + 1.7s x (i / 4) */
+  transition:
+    border-color 0.4s ease,
+    box-shadow 0.4s ease,
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(0.25s + var(--i, 0) * 0.42s);
+}
+
+.node-dot::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(165, 195, 255, 0.3);
+  transition: background 0.4s ease;
+  transition-delay: inherit;
+}
+
+.process-rail.visible .node-dot {
+  border-color: var(--primary-2);
+  box-shadow: 0 0 0 5px rgba(108, 226, 209, 0.09);
+  transform: scale(1.08);
+}
+
+.process-rail.visible .node-dot::after {
+  background: var(--primary-2);
+}
+
+/* the last step is a retainer, not a milestone — its ring keeps going
+   after the line has arrived */
+.is-ongoing .node-dot::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 1px solid rgba(108, 226, 209, 0.5);
+  opacity: 0;
+}
+
+.process-rail.visible .is-ongoing .node-dot::before {
+  animation: node-pulse 2.8s ease-out 2.1s infinite;
+}
+
+@keyframes node-pulse {
+  0%   { transform: scale(0.72); opacity: 0.75; }
+  70%  { transform: scale(1.35); opacity: 0; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+.node-num,
+.process-node h3,
+.process-node p,
+.node-list {
+  grid-column: 2;
+}
+
+.node-num {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: rgba(168, 186, 210, 0.55);
+  transition: color 0.4s ease;
+  transition-delay: calc(0.25s + var(--i, 0) * 0.42s);
+}
+
+.process-rail.visible .node-num {
+  color: var(--primary-2);
+}
+
+.process-node h3 {
+  margin: 0 0 10px;
+  font-size: 1.25rem;
+  letter-spacing: -0.03em;
+}
+
+.process-node p {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 0.96rem;
+  line-height: 1.7;
+}
+
+/* what actually happens inside a step — services page only */
+.node-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 26px;
+  max-width: 62ch;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.node-list li {
+  position: relative;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.node-list li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.62em;
+  width: 8px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--primary-2);
+  opacity: 0.75;
+}
+
+@media (max-width: 600px) {
+  .node-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- the home page variant: same rail, laid out across ------------- */
+
+@media (min-width: 901px) {
+  .process-rail-row .process-steps {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  .process-rail-row .process-node {
+    display: block;
+    text-align: center;
+    padding: 0 6px;
+  }
+
+  .process-rail-row .node-dot {
+    margin: 0 auto 20px;
+  }
+
+  .process-rail-row .process-node p {
+    max-width: none;
+    font-size: 0.92rem;
+  }
+
+  /* the last dot centre sits at 90% of the row; the track runs 32px
+     past it so the arrowhead clears the dot instead of hiding behind it */
+  .process-rail-row .rail-track {
+    top: 17px;
+    bottom: auto;
+    left: 10%;
+    right: calc(10% - 32px);
+    width: auto;
+    height: 2px;
+  }
+
+  .process-rail-row .rail-fill {
+    background: linear-gradient(90deg, var(--primary), var(--primary-2));
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+
+  .process-rail-row.visible .rail-fill {
+    transform: scaleX(1);
+  }
+
+  .process-rail-row .rail-tip {
+    top: 50%;
+    bottom: auto;
+    left: auto;
+    right: -3px;
+    transform: translateY(-50%) scale(0);
+    transform-origin: left center;
+  }
+
+  .process-rail-row.visible .rail-tip {
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+/* the sweep is the whole point of the graphic, so reduced motion gets
+   the finished state at once rather than a still frame of nothing */
+@media (prefers-reduced-motion: reduce) {
+  .rail-fill,
+  .rail-tip,
+  .node-dot,
+  .node-num {
+    transition-duration: 0.01ms;
+    transition-delay: 0ms;
+  }
+
+  .process-rail.visible .is-ongoing .node-dot::before {
+    animation: none;
+  }
+}
+
+.section-lede {
+  margin: 16px 0 0;
+  max-width: 620px;
+  color: var(--muted);
+  font-size: 1.02rem;
   line-height: 1.7;
 }
 
@@ -972,7 +1574,7 @@ a {
 
 .contact-wrap {
   display: grid;
-  gap: 24px;
+  gap: 18px;
 }
 
 .cta-actions {
@@ -1718,9 +2320,117 @@ a {
   color: var(--text);
 }
 
-/* contact page needs to clear the sticky header */
+/* =================================================================
+   CONTACT PAGE
+
+   Stacked, the banner pushed the enquiry form off the bottom of the
+   screen, so the page read as "call or email us" and the form was
+   never found. On anything desktop-shaped the two now sit side by
+   side and the whole form is visible without scrolling; below that
+   the banner goes back on top, where a phone has to scroll anyway.
+   ================================================================= */
+
 .contact-page {
-  padding-top: 96px;
+  padding-top: 74px;
+  padding-bottom: 78px;
+}
+
+.contact-page .wave-content {
+  min-height: 0;
+  padding: 34px 46px;
+}
+
+.contact-page .wave-content h2 {
+  font-size: clamp(1.7rem, 2.4vw, 2.45rem);
+}
+
+@media (min-width: 1000px) {
+  .contact-page {
+    padding-top: 54px;
+    padding-bottom: 40px;
+  }
+
+  .contact-wrap {
+    /* the form carries two fields per row, so it takes the wider half */
+    grid-template-columns: minmax(0, 0.84fr) minmax(0, 1.16fr);
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  /* the banner is a tall column here, not a wide strip */
+  .contact-page .wave-content {
+    height: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 30px;
+    padding: 44px 42px;
+  }
+
+  /* the horizontal scrim was lit for a wide plate; a tall one needs the
+     dark end at the top, where the headline sits */
+  .contact-page .wave-scrim {
+    background: linear-gradient(
+      170deg,
+      rgba(6, 14, 26, 0.9) 0%,
+      rgba(6, 14, 26, 0.62) 42%,
+      rgba(6, 14, 26, 0.2) 100%
+    );
+  }
+
+  /* tightened so the send button clears the fold on a 720px-tall
+     laptop viewport — every value here is bought from vertical space */
+  .contact-form {
+    gap: 11px;
+    padding: 22px 26px 22px;
+    align-content: start;
+  }
+
+  .contact-form h3 {
+    margin-bottom: 2px;
+    font-size: 1.45rem;
+  }
+
+  .contact-page .field-row,
+  .contact-page .phone-row {
+    gap: 13px;
+  }
+
+  .contact-page .contact-form .field {
+    gap: 6px;
+  }
+
+  .contact-form input,
+  .contact-form select,
+  .contact-form textarea {
+    padding: 11px 15px;
+  }
+
+  .contact-form select {
+    background-position: calc(100% - 20px) 19px, calc(100% - 14px) 19px;
+  }
+
+  .contact-form textarea {
+    min-height: 84px;
+  }
+
+  .contact-page .form-message {
+    min-height: 0;
+  }
+}
+
+/* more specific than the responsive .wave-content rules further down,
+   so the contact banner keeps its own padding at every width */
+@media (max-width: 940px) {
+  .contact-page .wave-content {
+    padding: 32px 30px;
+  }
+}
+
+@media (max-width: 640px) {
+  .contact-page .wave-content {
+    padding: 26px 20px;
+  }
 }
 
 .reveal {
@@ -1742,7 +2452,6 @@ a {
   }
 
   .card-grid,
-  .process-grid,
   .work-grid {
     grid-template-columns: 1fr;
     display: grid;
