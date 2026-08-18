@@ -103,5 +103,14 @@
     "phone": "+357 12222222",
     "message": "21222222222",
     "createdAt": "2026-08-18T06:39:59.358Z"
+  },
+  {
+    "id": 1787035367976,
+    "name": "Network Test PC",
+    "email": "test@example.com",
+    "company": "Remote Office",
+    "phone": "",
+    "message": "Testing inquiry from another computer on the network.",
+    "createdAt": "2026-08-18T06:42:47.976Z"
   }
 ]
