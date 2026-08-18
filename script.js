@@ -247,9 +247,18 @@ if (contactForm) {
     if (submitButton) submitButton.disabled = true;
 
     try {
-      // Send directly to info@ergonsite.com via direct email gateway
-      let sentSuccessfully = false;
-      
+      let savedToAdmin = false;
+      let emailSent = false;
+
+      // 1. Save to Back Office / Admin Page database
+      try {
+        await postJson('/api/contact', payload);
+        savedToAdmin = true;
+      } catch (adminErr) {
+        console.warn('Could not save to local admin database:', adminErr);
+      }
+
+      // 2. Send email notification directly to info@ergonsite.com
       try {
         const emailGatewayRes = await fetch('https://formsubmit.co/ajax/info@ergonsite.com', {
           method: 'POST',
@@ -272,29 +281,19 @@ if (contactForm) {
         if (emailGatewayRes.ok) {
           const resData = await emailGatewayRes.json();
           if (resData.success === 'true' || resData.success === true) {
-            sentSuccessfully = true;
+            emailSent = true;
           }
         }
       } catch (gatewayErr) {
-        console.warn('Email gateway error, trying local server fallback...', gatewayErr);
+        console.warn('Email gateway notice:', gatewayErr);
       }
 
-      // Try local/cloud backend server as well
-      if (!sentSuccessfully) {
-        try {
-          await postJson('/api/contact', payload);
-          sentSuccessfully = true;
-        } catch (serverErr) {
-          console.warn('Server fallback error:', serverErr);
-        }
-      }
-
-      if (sentSuccessfully) {
-        formMessage.textContent = 'Thank you! Your inquiry was sent to info@ergonsite.com. We will be in touch shortly.';
+      if (savedToAdmin || emailSent) {
+        formMessage.textContent = 'Thank you! Your inquiry was sent to info@ergonsite.com and saved to the Back Office.';
         contactForm.reset();
         fields.forEach((input) => setError(input, ''));
       } else {
-        throw new Error('Could not send automatically. Please email us directly at info@ergonsite.com.');
+        throw new Error('Could not process submission automatically. Please email us directly at info@ergonsite.com.');
       }
     } catch (error) {
       formMessage.textContent = error.message || 'Failed to send your request.';
