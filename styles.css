@@ -1,0 +1,2891 @@
+:root {
+  --bg: #07111f;
+  --bg-2: #101d30;
+  --panel: rgba(14, 25, 39, 0.72);
+  --panel-strong: rgba(9, 18, 30, 0.94);
+  --card: rgba(17, 28, 46, 0.82);
+  --text: #edf5ff;
+  --muted: #a8bad2;
+  --line: rgba(165, 195, 255, 0.16);
+  --primary: #7d8cff;
+  --primary-2: #6ce2d1;
+  --accent: #ff9e6d;
+  --shadow: 0 25px 80px rgba(7, 12, 22, 0.52);
+
+  /* hero intro timeline — the header wordmark reads these too */
+  --intro-in: 0.5s;       /* logo arrives                            */
+  --intro-fly-at: 0.72s;  /* logo sets off for the header, copy fades in */
+  --intro-fly: 1.8s;      /* how long the flight takes               */
+  --copy-step: 0.09s;     /* gap between copy lines                  */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(125, 140, 255, 0.2), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(108, 226, 209, 0.14), transparent 38%),
+    var(--bg);
+  color: var(--text);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.page-shell {
+  position: relative;
+  min-height: 100vh;
+  /* clip, NOT hidden. Both crop the orbs to the shell, but overflow:
+     hidden makes this element a scroll container, and that silently
+     kills position: sticky on the header inside it — the bar scrolled
+     away with the page instead of staying put. overflow: clip crops
+     without creating a scroll container, so the header sticks. */
+  overflow: clip;
+}
+
+.container {
+  width: min(1160px, calc(100% - 40px));
+  margin: 0 auto;
+}
+
+.section {
+  padding: 110px 0;
+}
+
+.orb {
+  position: absolute;
+  filter: blur(70px);
+  opacity: 0.45;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.orb-1 {
+  width: 340px;
+  height: 340px;
+  background: rgba(125, 140, 255, 0.8);
+  top: 90px;
+  left: -60px;
+}
+
+.orb-2 {
+  width: 300px;
+  height: 300px;
+  background: rgba(108, 226, 209, 0.65);
+  right: 10%;
+  top: 220px;
+}
+
+.orb-3 {
+  width: 260px;
+  height: 260px;
+  background: rgba(255, 158, 109, 0.5);
+  right: 18%;
+  bottom: 80px;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(14px);
+  background: rgba(7, 17, 31, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.nav-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+}
+
+.brand,
+.brand-footer {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+}
+
+.brand-logo-img {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  transition: transform 0.25s ease, filter 0.25s ease;
+  filter: drop-shadow(0 4px 12px rgba(29, 78, 216, 0.25));
+}
+
+.brand:hover .brand-logo-img {
+  transform: translateY(-1px) scale(1.02);
+  filter: drop-shadow(0 6px 18px rgba(37, 99, 235, 0.45));
+}
+
+.brand-footer-img {
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  opacity: 0.9;
+}
+
+.brand-footer:hover .brand-footer-img {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.brand-mark {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  color: #fff;
+  box-shadow: 0 10px 25px rgba(109, 117, 255, 0.45);
+}
+
+.main-nav {
+  display: flex;
+  gap: 24px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.main-nav a {
+  transition: color 0.2s ease;
+}
+
+.main-nav a:hover {
+  color: var(--text);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.95rem 1.5rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+}
+
+.button-primary {
+  background: linear-gradient(135deg, var(--primary), #8b8bff 48%, var(--primary-2));
+  box-shadow: 0 18px 34px rgba(109, 117, 255, 0.35);
+}
+
+.button-secondary {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+}
+
+/* =================================================================
+   HERO — the logo animates in, holds, dissolves, and the headline
+   rises through it.
+
+   Retune the whole sequence from these four variables; everything
+   downstream is derived from them, so you never have to hand-edit
+   individual delays.
+   ================================================================= */
+
+.hero {
+  --copy-at: var(--intro-fly-at);   /* copy fades in as the logo leaves */
+
+  --header-h: 77px;
+
+  /* Fill the space under the header exactly, then centre everything in
+     it. This is what puts the intro logo at the optical centre of the
+     screen instead of low on the page. */
+  min-height: calc(100vh - var(--header-h) - 110px);
+  min-height: calc(100svh - var(--header-h) - 110px);
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  align-items: start;      /* content starts just under the header */
+  padding: 44px 0 40px;
+}
+
+.star-canvas,
+.network-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+.hero > .container {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+}
+
+.hero-stage {
+  position: relative;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+/* Everything in the stage shares one grid cell, so the logo sits
+   exactly on top of the copy it dissolves into. */
+.hero-stage > * {
+  grid-area: 1 / 1;
+}
+
+/* --- ambient glow behind the whole thing ------------------------- */
+
+.hero-aura {
+  /* Out of flow: a 720px-tall glow would otherwise set the height of the
+     whole hero and push the copy back down to the middle of the screen.
+     inset+margin:auto centres it without touching transform, which the
+     breathe animation needs. */
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(720px, 92vw);
+  height: min(720px, 92vw);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(125, 140, 255, 0.26),
+    rgba(108, 226, 209, 0.1) 45%,
+    transparent 70%
+  );
+  filter: blur(24px);
+  opacity: 0;
+  animation:
+    aura-in 1.5s ease forwards,
+    aura-breathe 8s ease-in-out 1.5s infinite;
+}
+
+@keyframes aura-in {
+  from { opacity: 0; transform: scale(0.72); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes aura-breathe {
+  0%, 100% { opacity: 0.95; transform: scale(1); }
+  50%      { opacity: 0.68; transform: scale(1.07); }
+}
+
+/* --- the intro logo ---------------------------------------------- */
+
+.intro-logo {
+  position: relative;
+  z-index: 2;
+  width: min(440px, 66vw);
+  padding: 26px;
+  /* No overflow:hidden here. The sheen is masked to the logo artwork, so
+     clipping is unnecessary — and it used to cut the image's blue
+     drop-shadow off at the box edge, which read as a rectangle. */
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity, filter;
+  animation:
+    logo-in var(--intro-in) cubic-bezier(0.16, 1, 0.3, 1) forwards,
+    logo-fly var(--intro-fly) cubic-bezier(0.55, 0, 0.25, 1) var(--intro-fly-at) forwards;
+}
+
+.intro-logo img {
+  width: 100%;
+  filter: drop-shadow(0 18px 44px rgba(29, 78, 216, 0.35));
+}
+
+@keyframes logo-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.9);
+    filter: blur(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+/* Travels to where the header wordmark sits. script.js measures both
+   elements and writes --fly-x / --fly-y / --fly-s; the values below are
+   only a rough fallback for the split second before that runs. */
+@keyframes logo-fly {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  60% {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 0;
+    transform:
+      translate(var(--fly-x, -34vw), var(--fly-y, -32vh))
+      scale(var(--fly-s, 0.34));
+  }
+}
+
+
+.intro-sheen {
+  position: absolute;
+  inset: 26px;              /* matches .intro-logo padding = the image box */
+  /* A brand-tinted light sweep. Pure white is invisible here because
+     the logo is already near-white, so the band carries the brand
+     gradient instead. */
+  background: linear-gradient(
+    100deg,
+    transparent 38%,
+    rgba(125, 140, 255, 0.8) 47%,
+    rgba(120, 235, 215, 0.9) 53%,
+    transparent 62%
+  );
+  background-size: 300% 100%;
+  background-position: 0% 0;
+  /* Clip the light to the logo artwork itself. */
+  -webkit-mask-image: url("assets/logo.png");
+  mask-image: url("assets/logo.png");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: sheen 0.55s cubic-bezier(0.35, 0, 0.25, 1) calc(var(--intro-in) - 0.22s) forwards;
+}
+
+@keyframes sheen {
+  from { background-position: 0% 0; }
+  to   { background-position: 100% 0; }
+}
+
+/* --- the copy that rises out of the dissolve --------------------- */
+
+.hero-copy {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1040px;
+}
+
+.step {
+  opacity: 0;
+  animation: step-in 1.05s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--copy-at) + var(--i) * var(--copy-step));
+}
+
+@keyframes step-in {
+  from { opacity: 0; transform: translateY(18px); filter: blur(9px); }
+  to   { opacity: 1; transform: none; filter: blur(0); }
+}
+
+/* Headline lines are masked so they slide up from behind their own
+   baseline rather than just fading. */
+.line-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.16em;   /* room for descenders inside the mask */
+}
+
+.hero-copy h1 .line {
+  display: block;
+  text-wrap: balance;
+  animation-name: line-rise;
+  animation-duration: 1.15s;
+}
+
+@keyframes line-rise {
+  from { opacity: 0; transform: translateY(120%); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* --- shared type styles (also used by the sections below) -------- */
+
+.eyebrow {
+  margin: 0 0 16px;
+  color: var(--primary-2);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+/* Hero variant: no full stops, lighter weight, wider tracking, and a
+   small raised dot between each word. */
+.eyebrow-hero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 24px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.eyebrow-hero > span {
+  letter-spacing: 0.38em;
+  /* cancel the trailing letter-space so the dots sit optically centred */
+  margin-right: -0.38em;
+}
+
+.eyebrow-hero .eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  margin-right: 0;
+  flex: 0 0 auto;
+  transform: rotate(45deg);
+  border-radius: 1px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  box-shadow: 0 0 10px rgba(108, 226, 209, 0.55);
+}
+
+.hero-copy h1,
+.section-heading h2 {
+  margin: 0;
+  letter-spacing: -0.055em;
+  line-height: 1.05;
+}
+
+.hero-copy h1 {
+  font-size: clamp(2.3rem, 5vw, 3.9rem);
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  text-wrap: pretty;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 620px;
+  margin: 24px auto 0;
+}
+
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.proof-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 38px;
+}
+
+.proof-row div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.proof-row strong {
+  color: var(--text);
+  font-size: 1.5rem;
+  letter-spacing: -0.05em;
+}
+
+/* --- social links in the header ---------------------------------- */
+
+.social-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.social-link {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+  transition:
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.social-link svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+}
+
+.social-link:hover {
+  transform: translateY(-3px);
+  color: #fff;
+  border-color: rgba(125, 140, 255, 0.55);
+  background: linear-gradient(135deg, rgba(125, 140, 255, 0.24), rgba(108, 226, 209, 0.14));
+  box-shadow: 0 12px 26px rgba(109, 117, 255, 0.3);
+}
+
+.social-link:focus-visible {
+  outline: 2px solid var(--primary-2);
+  outline-offset: 3px;
+}
+
+/* --- respect the user's motion preference ------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-logo,
+  .hero-aura {
+    display: none;
+  }
+
+  .step,
+  .hero-copy h1 .line {
+    opacity: 1 !important;
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .pulse-dot {
+    animation: none;
+  }
+
+  .marquee-track,
+  .member-ring {
+    animation: none;
+  }
+
+  .member-photo {
+    opacity: 1;
+    transform: none;
+  }
+
+  .marquee {
+    overflow-x: auto;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* =================================================================
+   CLIENT MARQUEE — logos scroll continuously and dissolve at both
+   edges. The track is cloned once by script.js, so the -50% shift
+   lands exactly one set along and the loop is seamless.
+   ================================================================= */
+
+.client-strip {
+  padding: 34px 0 0;
+}
+
+.marquee {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  /* logos fade out on one side and fade in on the other */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  animation: marquee 42s linear infinite;
+}
+
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+
+/* Fixed-size chips are what actually makes every logo read as the same
+   size — the image is capped on BOTH axes and centred, so a wide
+   wordmark and a square mark occupy identical space. */
+.marquee-item {
+  flex: 0 0 auto;
+  width: 220px;
+  height: 94px;
+  /* margin, not flex gap: gap would add a trailing space to only one
+     copy of the list and the loop would visibly jump */
+  margin-right: 18px;
+  display: grid;
+  place-items: center;
+  padding: 14px 15px;
+  border-radius: 18px;
+  /* Each client keeps their own background colour — set per item via
+     --tile in index.html. Sample it from the logo's own artwork. */
+  background: var(--tile, rgba(255, 255, 255, 0.04));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 14px 30px rgba(3, 8, 16, 0.42);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.marquee-item:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 20px 40px rgba(3, 8, 16, 0.55);
+}
+
+.marquee-item a {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.marquee-item a:focus-visible {
+  outline: 2px solid var(--primary-2);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.marquee-item img {
+  max-width: 100%;
+  max-height: 42px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* =================================================================
+   CLOSING CLIENT BAND — the same logos as the marquee, small and
+   static, sitting above the footer on every page. At the foot of a
+   page this is reassurance rather than a headline, so it does not
+   move and it does not compete with the CTA above it.
+   ================================================================= */
+
+.client-band {
+  padding: 2px 0 22px;
+}
+
+.client-band .container {
+  display: grid;
+  justify-items: center;
+  gap: 11px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.client-band-label {
+  margin: 0;
+  color: rgba(168, 186, 210, 0.6);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.client-band-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.client-band-list li {
+  width: 104px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: var(--tile, rgba(255, 255, 255, 0.04));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.client-band-list li:hover,
+.client-band-list li:focus-within {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 10px 20px rgba(3, 8, 16, 0.45);
+}
+
+.client-band-list a {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.client-band-list a:focus-visible {
+  outline: 2px solid var(--primary-2);
+  outline-offset: 4px;
+  border-radius: 10px;
+}
+
+.client-band-list img {
+  max-width: 100%;
+  max-height: 21px;
+  width: auto;
+  object-fit: contain;
+}
+
+@media (max-width: 420px) {
+  .client-band-list li {
+    width: 94px;
+    height: 38px;
+  }
+}
+
+/* the footer already carries its own top rule; two lines stacked reads
+   as a mistake, so the band absorbs it */
+.client-band + .site-footer .footer-wrap {
+  border-top: 0;
+  padding-top: 8px;
+}
+
+.section-heading {
+  margin-bottom: 38px;
+}
+
+.section-heading h2 {
+  font-size: clamp(2.3rem, 3vw, 3.4rem);
+  max-width: 680px;
+}
+
+/* =================================================================
+   SERVICES PAGE — shares the team page's drifting-network backdrop
+   ================================================================= */
+
+.services-page {
+  position: relative;
+  overflow: hidden;
+  padding-top: 104px;
+}
+
+.services-page > .container {
+  position: relative;
+  z-index: 1;
+}
+
+.services-page .page-intro {
+  margin-bottom: 54px;
+}
+
+/* =================================================================
+   TEAM PAGE
+   ================================================================= */
+
+.team-page {
+  position: relative;
+  overflow: hidden;
+  padding-top: 112px;
+}
+
+.team-page > .container {
+  position: relative;
+  z-index: 1;
+}
+
+.team-intro,
+.page-intro {
+  text-align: center;
+  max-width: 780px;
+  margin: 0 auto 66px;
+}
+
+.team-intro h1,
+.page-intro h1 {
+  margin: 0;
+  font-size: clamp(2.1rem, 4vw, 3.4rem);
+  letter-spacing: -0.055em;
+  line-height: 1.06;
+  text-wrap: balance;
+}
+
+.team-lede,
+.page-lede {
+  margin: 22px auto 0;
+  max-width: 620px;
+  color: var(--muted);
+  font-size: 1.08rem;
+  line-height: 1.75;
+  text-wrap: pretty;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 26px;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.member {
+  text-align: center;
+  padding: 36px 24px 30px;
+  border-radius: 26px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.012));
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.member:hover {
+  transform: translateY(-8px);
+  border-color: rgba(125, 140, 255, 0.45);
+  box-shadow: 0 26px 60px rgba(3, 8, 16, 0.5);
+}
+
+.member-photo {
+  position: relative;
+  width: 186px;
+  height: 186px;
+  margin: 0 auto 24px;
+  border-radius: 50%;
+  /* the photo scales in slightly after the card, so the two motions
+     read as one gesture rather than a single flat fade */
+  opacity: 0;
+  transform: scale(0.86);
+  transition:
+    opacity 0.8s ease calc(0.18s + var(--i, 0) * 0.12s),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) calc(0.18s + var(--i, 0) * 0.12s);
+}
+
+.member.visible .member-photo {
+  opacity: 1;
+  transform: none;
+}
+
+/* conic gradient behind the photo, turning slowly */
+.member-ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    var(--primary),
+    var(--primary-2),
+    var(--accent),
+    var(--primary)
+  );
+  opacity: 0.75;
+  animation: ring-spin 11s linear infinite;
+  transition: opacity 0.35s ease, filter 0.35s ease;
+}
+
+.member:hover .member-ring {
+  opacity: 1;
+  filter: drop-shadow(0 0 16px rgba(125, 140, 255, 0.5));
+}
+
+@keyframes ring-spin {
+  to { transform: rotate(1turn); }
+}
+
+.member-photo img {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  /* A centred square crop of a full-length portrait lands on the torso,
+     not the face. --photo-y, set per member in the HTML, slides the
+     crop up so the face sits in the middle of the circle. Portraits
+     shot head-and-shoulders need nothing; full-length ones want
+     something in the 15-25% range. */
+  object-position: 50% var(--photo-y, 50%);
+  /* the inset border is what turns the gradient behind into a ring */
+  border: 5px solid #0b1626;
+  filter: saturate(0.92);
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s ease;
+}
+
+.member:hover .member-photo img {
+  transform: scale(1.04);
+  filter: saturate(1.06);
+}
+
+.member h2 {
+  margin: 0 0 7px;
+  font-size: 1.42rem;
+  letter-spacing: -0.04em;
+}
+
+.member-role {
+  margin: 0;
+  color: var(--primary-2);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.card-grid,
+.work-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.card-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* =================================================================
+   SERVICES
+
+   Seven cards on a 12-column grid: two rows of three, then a wide
+   seventh that spans the full width and closes the block. Its own
+   class rather than .card-grid, so the single-column responsive rule
+   for the other grids does not reach it.
+   ================================================================= */
+
+/* Three groups, each with its own column count: 3 across for Brand &
+   Web, 4 for Software & Systems, 2 for Growth & Support. The differing
+   rhythm is what makes the groups read as groups without heavy rules
+   between them. */
+
+.service-group + .service-group {
+  margin-top: 54px;
+}
+
+.group-head {
+  margin: 0 0 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--primary-2);
+}
+
+.group-title::before {
+  content: "";
+  width: 26px;
+  height: 2px;
+  border-radius: 2px;
+  flex: 0 0 auto;
+  background: linear-gradient(90deg, var(--primary-2), var(--primary));
+}
+
+.group-lede {
+  margin: 10px 0 0 38px;
+  color: var(--muted);
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.services-grid .service-card {
+  grid-column: span 4;
+}
+
+.services-grid-four .service-card {
+  grid-column: span 3;
+}
+
+.services-grid-two .service-card {
+  grid-column: span 6;
+}
+
+.service-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: rgba(14, 25, 39, 0.68);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 30px 26px 34px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.35s ease;
+}
+
+/* Cursor-tracked spotlight. script.js writes --mx / --my; with no
+   pointer (touch, keyboard) the fallback centres it, so the card still
+   lights up on :focus-within rather than staying flat. */
+.service-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background: radial-gradient(
+    260px circle at var(--mx, 50%) var(--my, 40%),
+    rgba(108, 226, 209, 0.16),
+    rgba(125, 140, 255, 0.08) 45%,
+    transparent 70%
+  );
+  transition: opacity 0.4s ease;
+}
+
+.service-card:hover,
+.service-card:focus-within {
+  transform: translateY(-8px);
+  border-color: rgba(108, 226, 209, 0.45);
+  background: rgba(17, 30, 48, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 22px 50px rgba(4, 10, 20, 0.5);
+}
+
+.service-card:hover::before,
+.service-card:focus-within::before {
+  opacity: 1;
+}
+
+/* the oversized glyph bleeding off the bottom-right corner */
+.sc-watermark {
+  position: absolute;
+  right: -34px;
+  bottom: -38px;
+  z-index: -1;
+  width: 178px;
+  height: 178px;
+  color: var(--primary);
+  opacity: 0.07;
+  pointer-events: none;
+  transition: opacity 0.45s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: sc-drift 9s ease-in-out infinite;
+}
+
+.sc-watermark svg {
+  width: 100%;
+  height: 100%;
+}
+
+.service-card:hover .sc-watermark,
+.service-card:focus-within .sc-watermark {
+  opacity: 0.16;
+  transform: translate(-8px, -10px) rotate(-4deg) scale(1.06);
+  color: var(--primary-2);
+}
+
+@keyframes sc-drift {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -9px; }
+}
+
+.icon-wrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  font-size: 1.4rem;
+  color: var(--primary-2);
+  background: linear-gradient(135deg, rgba(125, 140, 255, 0.18), rgba(108, 226, 209, 0.12));
+  margin-bottom: 22px;
+  transition:
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.icon-wrap svg {
+  width: 27px;
+  height: 27px;
+  overflow: visible;
+}
+
+/* the ring that expands out of the tile on hover */
+.icon-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(108, 226, 209, 0.55);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.service-card:hover .icon-wrap,
+.service-card:focus-within .icon-wrap {
+  transform: translateY(-3px) scale(1.06);
+  background: linear-gradient(135deg, rgba(125, 140, 255, 0.3), rgba(108, 226, 209, 0.24));
+  box-shadow: 0 12px 26px rgba(4, 10, 20, 0.45);
+}
+
+.service-card:hover .icon-wrap::after,
+.service-card:focus-within .icon-wrap::after {
+  opacity: 1;
+  animation: sc-ring 1.6s ease-out infinite;
+}
+
+@keyframes sc-ring {
+  0%   { transform: scale(1);    opacity: 0.7; }
+  70%  { transform: scale(1.32); opacity: 0; }
+  100% { transform: scale(1.32); opacity: 0; }
+}
+
+.service-card h3,
+.service-card h4 {
+  margin: 0 0 12px;
+  font-size: 1.35rem;
+  letter-spacing: -0.04em;
+  line-height: 1.25;
+}
+
+.service-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+/* accent rule along the bottom edge, drawn in from the left on hover */
+.sc-underline {
+  position: absolute;
+  left: 26px;
+  right: 26px;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(90deg, var(--primary-2), var(--primary));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.service-card:hover .sc-underline,
+.service-card:focus-within .sc-underline {
+  transform: scaleX(1);
+}
+
+/* the seventh card runs wide, so the icon sits beside the copy */
+.service-card-wide {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 26px 26px 30px;
+}
+
+.service-card-wide .icon-wrap {
+  margin-bottom: 0;
+  flex: 0 0 auto;
+}
+
+.service-card-wide .sc-text {
+  min-width: 0;
+}
+
+.services-more {
+  margin: 30px 0 0;
+  text-align: center;
+}
+
+.link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: var(--primary-2);
+  border-bottom: 1px solid transparent;
+  padding-bottom: 2px;
+  transition: color 0.25s ease, border-color 0.25s ease, gap 0.25s ease;
+}
+
+.link-arrow svg {
+  width: 17px;
+  height: 17px;
+}
+
+.link-arrow:hover {
+  gap: 14px;
+  color: var(--text);
+  border-color: rgba(108, 226, 209, 0.6);
+}
+
+/* the list of what each service actually covers — services page only;
+   the home page keeps the one-line version */
+.sc-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sc-list li {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: border-color 0.3s ease, color 0.3s ease, background 0.3s ease;
+}
+
+.service-card:hover .sc-list li,
+.service-card:focus-within .sc-list li {
+  border-color: rgba(108, 226, 209, 0.32);
+  background: rgba(108, 226, 209, 0.07);
+  color: var(--text);
+}
+
+/* four across gets tight before three across does, so it folds first */
+@media (max-width: 1180px) {
+  .services-grid-four .service-card {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 1040px) {
+  .services-grid .service-card {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 760px) {
+  .services-grid .service-card {
+    grid-column: span 12;
+  }
+
+  .service-group + .service-group {
+    margin-top: 40px;
+  }
+
+  .group-lede {
+    margin-left: 0;
+  }
+}
+
+/* the drifting glyph and the pulsing ring are decoration; drop them
+   for anyone who has asked the OS to calm animation down */
+@media (prefers-reduced-motion: reduce) {
+  .sc-watermark {
+    animation: none;
+  }
+
+  .service-card:hover .icon-wrap::after,
+  .service-card:focus-within .icon-wrap::after {
+    animation: none;
+  }
+}
+
+/* =================================================================
+   PROCESS RAIL
+
+   One system, two densities. Vertical is the base: the track runs down
+   the left edge and each step stacks against it, which is what the
+   services page uses at every width because its steps carry a
+   paragraph and a list. The home page adds .process-rail-row, which
+   lays the same rail out horizontally above 900px for the short
+   one-line version.
+
+   Vertical-first is deliberate. It is the layout with no ceiling on
+   copy length, so it is the one that should not need overriding.
+
+   The connector is a single element whose fill scales from 0 to 1 on
+   reveal; every dot is timed off its own --i so it lights up exactly
+   as the fill sweeps past. Add or remove a step and the choreography
+   still lands — nothing hardcodes "five" but the row column count.
+   ================================================================= */
+
+.process-rail {
+  position: relative;
+  padding-top: 4px;
+}
+
+.process-steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 30px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.process-node {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  column-gap: 20px;
+}
+
+.rail-track {
+  position: absolute;
+  top: 17px;
+  /* runs the full height of the list rather than stopping at the last
+     dot: the arrowhead then lands at the very bottom of the last step,
+     which is the one that is supposed to keep going */
+  bottom: 0;
+  left: 12px;
+  width: 2px;
+  border-radius: 2px;
+  background: rgba(165, 195, 255, 0.14);
+}
+
+.rail-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, var(--primary), var(--primary-2));
+  transform: scaleY(0);
+  transform-origin: center top;
+  transition: transform 1.7s cubic-bezier(0.16, 1, 0.3, 1) 0.25s;
+}
+
+.process-rail.visible .rail-fill {
+  transform: scaleY(1);
+}
+
+/* one arrowhead at the finish. A chevron between every step is noise;
+   a single one at the end reads as direction */
+.rail-tip {
+  position: absolute;
+  left: 50%;
+  bottom: -3px;
+  width: 11px;
+  height: 11px;
+  background: var(--primary-2);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  transform: translateX(-50%) rotate(90deg) scale(0);
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 1.85s;
+}
+
+.process-rail.visible .rail-tip {
+  transform: translateX(-50%) rotate(90deg) scale(1);
+}
+
+.node-dot {
+  position: relative;
+  z-index: 1;
+  align-self: start;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgba(165, 195, 255, 0.28);
+  background: #0a1424;
+  /* the fill takes 1.7s from 0.25s, so step i is reached at
+     0.25s + 1.7s x (i / 4) */
+  transition:
+    border-color 0.4s ease,
+    box-shadow 0.4s ease,
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(0.25s + var(--i, 0) * 0.42s);
+}
+
+.node-dot::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(165, 195, 255, 0.3);
+  transition: background 0.4s ease;
+  transition-delay: inherit;
+}
+
+.process-rail.visible .node-dot {
+  border-color: var(--primary-2);
+  box-shadow: 0 0 0 5px rgba(108, 226, 209, 0.09);
+  transform: scale(1.08);
+}
+
+.process-rail.visible .node-dot::after {
+  background: var(--primary-2);
+}
+
+/* the last step is a retainer, not a milestone — its ring keeps going
+   after the line has arrived */
+.is-ongoing .node-dot::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 1px solid rgba(108, 226, 209, 0.5);
+  opacity: 0;
+}
+
+.process-rail.visible .is-ongoing .node-dot::before {
+  animation: node-pulse 2.8s ease-out 2.1s infinite;
+}
+
+@keyframes node-pulse {
+  0%   { transform: scale(0.72); opacity: 0.75; }
+  70%  { transform: scale(1.35); opacity: 0; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+.node-num,
+.process-node h3,
+.process-node p,
+.node-list {
+  grid-column: 2;
+}
+
+.node-num {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: rgba(168, 186, 210, 0.55);
+  transition: color 0.4s ease;
+  transition-delay: calc(0.25s + var(--i, 0) * 0.42s);
+}
+
+.process-rail.visible .node-num {
+  color: var(--primary-2);
+}
+
+.process-node h3 {
+  margin: 0 0 10px;
+  font-size: 1.25rem;
+  letter-spacing: -0.03em;
+}
+
+.process-node p {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 0.96rem;
+  line-height: 1.7;
+}
+
+/* what actually happens inside a step — services page only */
+.node-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 26px;
+  max-width: 62ch;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.node-list li {
+  position: relative;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.node-list li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.62em;
+  width: 8px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--primary-2);
+  opacity: 0.75;
+}
+
+@media (max-width: 600px) {
+  .node-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- the home page variant: same rail, laid out across ------------- */
+
+@media (min-width: 901px) {
+  .process-rail-row .process-steps {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  .process-rail-row .process-node {
+    display: block;
+    text-align: center;
+    padding: 0 6px;
+  }
+
+  .process-rail-row .node-dot {
+    margin: 0 auto 20px;
+  }
+
+  .process-rail-row .process-node p {
+    max-width: none;
+    font-size: 0.92rem;
+  }
+
+  /* the last dot centre sits at 90% of the row; the track runs 32px
+     past it so the arrowhead clears the dot instead of hiding behind it */
+  .process-rail-row .rail-track {
+    top: 17px;
+    bottom: auto;
+    left: 10%;
+    right: calc(10% - 32px);
+    width: auto;
+    height: 2px;
+  }
+
+  .process-rail-row .rail-fill {
+    background: linear-gradient(90deg, var(--primary), var(--primary-2));
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+
+  .process-rail-row.visible .rail-fill {
+    transform: scaleX(1);
+  }
+
+  .process-rail-row .rail-tip {
+    top: 50%;
+    bottom: auto;
+    left: auto;
+    right: -3px;
+    transform: translateY(-50%) scale(0);
+    transform-origin: left center;
+  }
+
+  .process-rail-row.visible .rail-tip {
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+/* the sweep is the whole point of the graphic, so reduced motion gets
+   the finished state at once rather than a still frame of nothing */
+@media (prefers-reduced-motion: reduce) {
+  .rail-fill,
+  .rail-tip,
+  .node-dot,
+  .node-num {
+    transition-duration: 0.01ms;
+    transition-delay: 0ms;
+  }
+
+  .process-rail.visible .is-ongoing .node-dot::before {
+    animation: none;
+  }
+}
+
+.section-lede {
+  margin: 16px 0 0;
+  max-width: 620px;
+  color: var(--muted);
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+.work-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+/* =================================================================
+   WORK CARDS
+
+   The preview is the client's own logo on the client's own brand
+   colour, set per card with --tile in index.html. Same treatment as
+   the marquee chip, at poster size.
+
+   To use a real screenshot instead, replace the <img> inside
+   .project-preview with the screenshot and drop the inline --tile:
+   .project-preview img switches to object-fit: cover automatically
+   for anything wider than a logo.
+   ================================================================= */
+
+.project-card {
+  background: rgba(10, 18, 29, 0.62);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  overflow: hidden;
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease,
+    box-shadow 0.35s ease;
+}
+
+.project-card:hover,
+.project-card:focus-within {
+  transform: translateY(-8px);
+  border-color: rgba(108, 226, 209, 0.45);
+  box-shadow: 0 24px 52px rgba(4, 10, 20, 0.5);
+}
+
+/* the whole card is the link, so the click target is the card and not
+   a small line of text inside it */
+.project-card > a {
+  display: block;
+  height: 100%;
+}
+
+.project-card > a:focus-visible {
+  outline: 2px solid var(--primary-2);
+  outline-offset: -4px;
+  border-radius: 20px;
+}
+
+.project-preview {
+  display: grid;
+  place-items: center;
+  height: 210px;
+  padding: 26px 30px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  background: var(--tile, rgba(255, 255, 255, 0.04));
+}
+
+.project-preview img {
+  max-width: 100%;
+  max-height: 72px;
+  width: auto;
+  object-fit: contain;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.project-card:hover .project-preview img,
+.project-card:focus-within .project-preview img {
+  transform: scale(1.05);
+}
+
+.project-info {
+  display: grid;
+  gap: 8px;
+  padding: 20px 20px 22px;
+}
+
+.project-name {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+/* a project can involve more than one service, so the tag is a list */
+.project-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-tags li {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+  transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
+}
+
+.project-card:hover .project-tags li,
+.project-card:focus-within .project-tags li {
+  border-color: rgba(108, 226, 209, 0.3);
+  background: rgba(108, 226, 209, 0.07);
+  color: var(--text);
+}
+
+.project-visit {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 4px;
+  color: var(--primary-2);
+  font-size: 0.86rem;
+  font-weight: 700;
+  transition: gap 0.25s ease;
+}
+
+.project-visit svg {
+  width: 15px;
+  height: 15px;
+}
+
+.project-card:hover .project-visit,
+.project-card:focus-within .project-visit {
+  gap: 11px;
+}
+
+.contact-wrap {
+  display: grid;
+  gap: 18px;
+}
+
+.cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.contact-form {
+  display: grid;
+  gap: 18px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(12, 20, 32, 0.8);
+  box-shadow: var(--shadow);
+}
+
+.contact-form h3 {
+  margin: 0 0 8px;
+  font-size: 1.6rem;
+  letter-spacing: -0.05em;
+}
+
+.contact-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.02);
+  color: var(--text);
+  padding: 14px 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  border-color: rgba(125, 140, 255, 0.7);
+  box-shadow: 0 0 0 4px rgba(125, 140, 255, 0.12);
+}
+
+.contact-form textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.form-message {
+  min-height: 24px;
+  margin: 0;
+  color: var(--primary-2);
+  font-weight: 700;
+}
+
+.form-message.error {
+  color: #ff9aa5;
+}
+
+.admin-page {
+  padding-top: 90px;
+}
+
+.admin-panel {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: rgba(11, 19, 29, 0.78);
+  box-shadow: var(--shadow);
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: clamp(2.2rem, 3vw, 3rem);
+  letter-spacing: -0.06em;
+}
+
+.admin-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 18px;
+}
+
+.search-field {
+  display: grid;
+  gap: 8px;
+  min-width: min(100%, 320px);
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.search-field input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font: inherit;
+  color: var(--text);
+  background: rgba(255,255,255,0.02);
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.admin-table th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  background: rgba(255,255,255,0.02);
+}
+
+.admin-table td {
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.delete-button {
+  border: 1px solid rgba(255, 154, 165, 0.35);
+  background: rgba(255, 154, 165, 0.08);
+  color: #ffd7dc;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.delete-button:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--muted);
+  padding: 28px 18px;
+}
+
+/* =================================================================
+   CLOSING BANNER — the dot field is a generated PNG; the gradient on
+   top of it keeps the headline readable wherever the wave happens to
+   be bright.
+   ================================================================= */
+
+.cta-banner {
+  padding: 10px 0 40px;
+}
+
+.wave-plate {
+  position: relative;
+  overflow: hidden;
+  border-radius: 30px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  background-color: #071120;
+  /* static fallback; wave.js swaps this out once the canvas is drawing */
+  background-image: url("assets/wave-dots.png");
+  background-size: cover;
+  background-position: center;
+}
+
+.wave-plate.wave-live {
+  background-image: none;
+}
+
+.wave-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* sits above the wave so the headline never fights the bright ribbons */
+.wave-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    rgba(6, 14, 26, 0.9) 0%,
+    rgba(6, 14, 26, 0.62) 34%,
+    rgba(6, 14, 26, 0.06) 62%,
+    rgba(6, 14, 26, 0.24) 100%
+  );
+}
+
+.wave-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  padding: 54px 52px;
+  min-height: 258px;
+}
+
+.wave-content h2 {
+  margin: 0;
+  max-width: 17ch;
+  font-size: clamp(1.9rem, 3.1vw, 3rem);
+  letter-spacing: -0.05em;
+  line-height: 1.06;
+  text-wrap: balance;
+}
+
+.button-light {
+  gap: 10px;
+  flex: 0 0 auto;
+  background: #ffffff;
+  color: #0a1524;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 1.05rem 1.7rem;
+  box-shadow: 0 14px 30px rgba(3, 8, 16, 0.4);
+}
+
+.button-light svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.25s ease;
+}
+
+.button-light:hover svg {
+  transform: translateX(4px);
+}
+
+/* Email and phone share one treatment — matched glass pills. */
+.button-ghost {
+  gap: 11px;
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 0.95rem 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transition:
+    transform 0.22s ease,
+    background 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.button-ghost svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  color: var(--primary-2);
+  transition: color 0.22s ease;
+}
+
+.button-ghost:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(108, 226, 209, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 14px 30px rgba(3, 8, 16, 0.4);
+}
+
+.button-ghost:focus-visible {
+  outline: 2px solid var(--primary-2);
+  outline-offset: 3px;
+}
+
+/* =================================================================
+   REVEAL BUTTONS — label collapses, value expands, on hover.
+
+   The width morph uses grid-template-columns 1fr -> 0fr, which is the
+   only reliable way to animate to a content-sized width. Both spans
+   stay in the DOM, so the link text is always available to assistive
+   tech and to search engines.
+   ================================================================= */
+
+.reveal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  /* One collapsed width for the set; the expanded width is measured
+     per button in script.js so each opens only as far as its own text
+     needs. The left edge stays put — the button grows to the right. */
+  --rb-min: 186px;
+  width: var(--rb-min);
+  padding: 0.9rem 1.45rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: var(--text);
+  font-weight: 700;
+  transition:
+    width 0.48s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.22s ease,
+    background 0.22s ease,
+    border-color 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.reveal-btn:hover,
+.reveal-btn:focus-visible {
+  width: var(--rb-open, 282px);
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(108, 226, 209, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 14px 30px rgba(3, 8, 16, 0.4);
+}
+
+.reveal-btn:focus-visible {
+  outline: 2px solid var(--primary-2);
+  outline-offset: 3px;
+}
+
+.rb-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--primary-2);
+}
+
+.rb-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.rb-swap {
+  position: relative;
+  display: grid;
+  width: 100%;
+  align-items: center;
+  /* clipped so the longer detail never spills while collapsed */
+  overflow: hidden;
+}
+
+.rb-swap > span {
+  grid-area: 1 / 1;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.rb-label,
+.rb-value {
+  transition:
+    opacity 0.34s ease,
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rb-value {
+  opacity: 0;
+  transform: translateY(9px);
+  transition-delay: 0s;
+}
+
+.rb-label {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0.1s;
+}
+
+/* on the way in, the outgoing label leads and the value follows */
+.reveal-btn:hover .rb-label,
+.reveal-btn:focus-visible .rb-label {
+  opacity: 0;
+  transform: translateY(-9px);
+  transition-delay: 0s;
+}
+
+.reveal-btn:hover .rb-value,
+.reveal-btn:focus-visible .rb-value {
+  opacity: 1;
+  transform: none;
+  transition-delay: 0.1s;
+}
+
+/* No hover on touch: show the detail outright rather than hiding it
+   behind a gesture that will never happen. */
+@media (hover: none) {
+  .reveal-btn { width: var(--rb-open, 282px); }
+  .rb-label { opacity: 0; }
+  .rb-value { opacity: 1; transform: none; }
+}
+
+/* Stacked, and the column is pinned to the expanded width. Without a
+   fixed width the column resizes as a button grows, which drags the
+   whole set sideways instead of letting one button extend. */
+.wave-content .cta-actions {
+  flex: 0 0 auto;
+  width: 282px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* =================================================================
+   COUNTRY DIAL-CODE PICKER
+   ================================================================= */
+
+.contact-form select.is-enhanced {
+  /* kept in the DOM as the form value, driven by phone-field.js */
+  display: none;
+}
+
+.dial-picker {
+  position: relative;
+  min-width: 0;
+}
+
+.dial-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dial-trigger::after {
+  content: "";
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-right: 2px solid rgba(168, 186, 210, 0.9);
+  border-bottom: 2px solid rgba(168, 186, 210, 0.9);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.25s ease;
+}
+
+.dial-trigger[aria-expanded="true"] {
+  border-color: rgba(125, 140, 255, 0.7);
+  box-shadow: 0 0 0 4px rgba(125, 140, 255, 0.12);
+}
+
+.dial-trigger[aria-expanded="true"]::after {
+  transform: translateY(2px) rotate(225deg);
+}
+
+.dial-current {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dial-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  left: 0;
+  width: max(100%, 280px);
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(10, 19, 32, 0.98);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 24px 50px rgba(3, 8, 16, 0.6);
+}
+
+.dial-search {
+  width: 100%;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 0.94rem;
+  outline: none;
+}
+
+.dial-search:focus {
+  border-color: rgba(125, 140, 255, 0.7);
+}
+
+.dial-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 246px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.dial-option {
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.94rem;
+  cursor: pointer;
+}
+
+.dial-option.is-active {
+  background: rgba(125, 140, 255, 0.18);
+}
+
+.dial-option[aria-selected="true"] {
+  color: var(--primary-2);
+  font-weight: 700;
+}
+
+.dial-empty {
+  padding: 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.dial-other {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+  padding: 14px 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  outline: none;
+}
+
+.dial-other:focus {
+  border-color: rgba(125, 140, 255, 0.7);
+  box-shadow: 0 0 0 4px rgba(125, 140, 255, 0.12);
+}
+
+/* when "Other" is picked the row makes room for the manual code box */
+.phone-row:has(.dial-other:not([hidden])) {
+  grid-template-columns: minmax(0, 190px) minmax(0, 110px) minmax(0, 1fr);
+}
+
+/* =================================================================
+   FORM FIELDS
+   ================================================================= */
+
+.contact-form .field {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-optional {
+  font-style: italic;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(168, 186, 210, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.phone-row {
+  display: grid;
+  grid-template-columns: minmax(0, 190px) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.contact-form select {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+  padding: 14px 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  outline: none;
+  appearance: none;
+  /* chevron drawn in the background so the control matches the inputs
+     rather than inheriting the OS select styling */
+  background-image: linear-gradient(45deg, transparent 50%, rgba(168, 186, 210, 0.9) 50%),
+    linear-gradient(135deg, rgba(168, 186, 210, 0.9) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 22px, calc(100% - 14px) 22px;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.contact-form select:focus {
+  border-color: rgba(125, 140, 255, 0.7);
+  box-shadow: 0 0 0 4px rgba(125, 140, 255, 0.12);
+}
+
+.contact-form select option {
+  background: #0d1a2b;
+  color: var(--text);
+}
+
+.field-msg {
+  display: none;
+  color: #ff9aa5;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.field.has-error .field-msg {
+  display: block;
+}
+
+.field.has-error input,
+.field.has-error textarea,
+.field.has-error select {
+  border-color: rgba(255, 154, 165, 0.75);
+}
+
+.field.has-error input:focus,
+.field.has-error textarea:focus,
+.field.has-error select:focus {
+  box-shadow: 0 0 0 4px rgba(255, 154, 165, 0.14);
+}
+
+.button[disabled] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* =================================================================
+   FOOTER
+   ================================================================= */
+
+.site-footer {
+  padding: 20px 0 42px;
+}
+
+.footer-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 18px 26px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.footer-side {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.footer-email {
+  color: var(--text);
+  font-weight: 700;
+  border-bottom: 1px solid rgba(108, 226, 209, 0.35);
+  padding-bottom: 2px;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.footer-email:hover {
+  color: var(--primary-2);
+  border-color: var(--primary-2);
+}
+
+.social-nav-sm .social-link {
+  width: 34px;
+  height: 34px;
+}
+
+.social-nav-sm .social-link svg {
+  width: 15px;
+  height: 15px;
+}
+
+.footer-copy {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+/* current page in the nav */
+.main-nav a.is-current {
+  color: var(--text);
+}
+
+/* =================================================================
+   CONTACT PAGE
+
+   Stacked, the banner pushed the enquiry form off the bottom of the
+   screen, so the page read as "call or email us" and the form was
+   never found. On anything desktop-shaped the two now sit side by
+   side and the whole form is visible without scrolling; below that
+   the banner goes back on top, where a phone has to scroll anyway.
+   ================================================================= */
+
+.contact-page {
+  padding-top: 74px;
+  padding-bottom: 78px;
+}
+
+.contact-page .wave-content {
+  min-height: 0;
+  padding: 34px 46px;
+}
+
+.contact-page .wave-content h2 {
+  font-size: clamp(1.7rem, 2.4vw, 2.45rem);
+}
+
+@media (min-width: 1000px) {
+  .contact-page {
+    padding-top: 54px;
+    padding-bottom: 40px;
+  }
+
+  .contact-wrap {
+    /* the form carries two fields per row, so it takes the wider half */
+    grid-template-columns: minmax(0, 0.84fr) minmax(0, 1.16fr);
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  /* the banner is a tall column here, not a wide strip */
+  .contact-page .wave-content {
+    height: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 30px;
+    padding: 44px 42px;
+  }
+
+  /* the horizontal scrim was lit for a wide plate; a tall one needs the
+     dark end at the top, where the headline sits */
+  .contact-page .wave-scrim {
+    background: linear-gradient(
+      170deg,
+      rgba(6, 14, 26, 0.9) 0%,
+      rgba(6, 14, 26, 0.62) 42%,
+      rgba(6, 14, 26, 0.2) 100%
+    );
+  }
+
+  /* tightened so the send button clears the fold on a 720px-tall
+     laptop viewport — every value here is bought from vertical space */
+  .contact-form {
+    gap: 11px;
+    padding: 22px 26px 22px;
+    align-content: start;
+  }
+
+  .contact-form h3 {
+    margin-bottom: 2px;
+    font-size: 1.45rem;
+  }
+
+  .contact-page .field-row,
+  .contact-page .phone-row {
+    gap: 13px;
+  }
+
+  .contact-page .contact-form .field {
+    gap: 6px;
+  }
+
+  .contact-form input,
+  .contact-form select,
+  .contact-form textarea {
+    padding: 11px 15px;
+  }
+
+  .contact-form select {
+    background-position: calc(100% - 20px) 19px, calc(100% - 14px) 19px;
+  }
+
+  .contact-form textarea {
+    min-height: 84px;
+  }
+
+  .contact-page .form-message {
+    min-height: 0;
+  }
+}
+
+/* more specific than the responsive .wave-content rules further down,
+   so the contact banner keeps its own padding at every width */
+@media (max-width: 940px) {
+  .contact-page .wave-content {
+    padding: 32px 30px;
+  }
+}
+
+@media (max-width: 640px) {
+  .contact-page .wave-content {
+    padding: 26px 20px;
+  }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.7s ease calc(var(--i, 0) * 0.12s),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--i, 0) * 0.12s);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (max-width: 940px) {
+  .hero {
+    --header-h: 165px;
+  }
+
+  .card-grid,
+  .work-grid {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .team-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .team-intro {
+    margin-bottom: 44px;
+  }
+
+  .nav-wrap {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .main-nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* the horizontal scrim does not protect narrow layouts, so switch it
+     to a top-weighted one where the copy actually sits */
+  .wave-scrim {
+    background: linear-gradient(
+      180deg,
+      rgba(6, 14, 26, 0.9) 0%,
+      rgba(6, 14, 26, 0.66) 48%,
+      rgba(6, 14, 26, 0.3) 100%
+    );
+  }
+
+  .wave-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 26px;
+    padding: 44px 34px;
+  }
+
+  .wave-content h2 {
+    max-width: 100%;
+  }
+
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding: 85px 0;
+  }
+
+  .marquee-item {
+    width: 148px;
+    height: 76px;
+    margin-right: 12px;
+    padding: 12px 16px;
+  }
+
+  .marquee-item img {
+    max-height: 36px;
+  }
+
+  .main-nav {
+    gap: 10px 14px;
+    font-size: 0.78rem;
+  }
+
+  /* the aura reads as a wash at phone size — pull it back */
+  .hero-aura {
+    width: 70vw;
+    opacity: 0.4;
+  }
+
+  .intro-logo {
+    width: 78vw;
+  }
+
+  .button {
+    width: 100%;
+  }
+
+  .cta-row,
+  .proof-row,
+  .cta-actions {
+    display: grid;
+    width: 100%;
+  }
+
+  .field-row,
+  .phone-row {
+    grid-template-columns: 1fr;
+  }
+
+  .proof-row {
+    gap: 16px;
+  }
+
+  .proof-row {
+    justify-items: center;
+  }
+
+  .footer-wrap {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .footer-side {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .wave-content {
+    padding: 34px 22px;
+  }
+
+  /* let the pills use the full column on a phone rather than a fixed
+     282px, which overflows a 320px screen */
+  .wave-content .cta-actions,
+  .reveal-btn {
+    width: 100%;
+  }
+
+  .button-light {
+    width: auto;
+  }
+
+  .cta-actions {
+    width: 100%;
+  }
+}
+
+.hidden {
+  display: none !important;
+}
+
+.admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Login Modal Styles */
+.login-modal-overlay {
+  padding-top: 100px;
+  padding-bottom: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 200px);
+}
+
+.login-modal-card {
+  width: min(100%, 420px);
+  padding: 36px 32px;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: rgba(11, 19, 29, 0.85);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-modal-header {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.login-modal-mark-img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  margin: 0 auto 16px;
+  display: block;
+  filter: drop-shadow(0 8px 22px rgba(29, 78, 216, 0.4));
+}
+
+.login-modal-header .brand-mark {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 16px;
+  font-size: 1.2rem;
+}
+
+.login-modal-header h2 {
+  margin: 0 0 8px;
+  font-size: 1.8rem;
+  letter-spacing: -0.04em;
+}
+
+.login-modal-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.login-form {
+  display: grid;
+  gap: 16px;
+}
+
+.login-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.login-form input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  padding: 13px 16px;
+  font-family: inherit;
+  font-size: 0.98rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-form input:focus {
+  border-color: rgba(125, 140, 255, 0.7);
+  box-shadow: 0 0 0 4px rgba(125, 140, 255, 0.12);
+}
+
+.login-hint {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+  color: var(--muted);
+}
+
+.login-hint code {
+  color: var(--primary-2);
+  background: rgba(108, 226, 209, 0.1);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-family: inherit;
+}
