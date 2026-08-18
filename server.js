@@ -266,8 +266,12 @@ function createServer() {
     }
 
     let filePath = requestUrl.pathname === '/' ? 'index.html' : requestUrl.pathname.replace(/^\//, '');
-    if (filePath === 'team.html') {
-      filePath = 'team.html';
+
+    /* Clean URLs: /services resolves to services.html, matching what
+       GitHub Pages does in production, so links can be written without
+       the extension and behave identically on localhost and live. */
+    if (!path.extname(filePath) && fs.existsSync(path.join(__dirname, filePath + '.html'))) {
+      filePath = filePath + '.html';
     }
 
     if (filePath.includes('..')) {
