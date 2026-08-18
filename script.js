@@ -247,10 +247,55 @@ if (contactForm) {
     if (submitButton) submitButton.disabled = true;
 
     try {
-      await postJson('/api/contact', payload);
-      formMessage.textContent = 'Thank you — your details were sent. We will be in touch shortly.';
-      contactForm.reset();
-      fields.forEach((input) => setError(input, ''));
+      // Send directly to info@ergonsite.com via direct email gateway
+      let sentSuccessfully = false;
+      
+      try {
+        const emailGatewayRes = await fetch('https://formsubmit.co/ajax/info@ergonsite.com', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            _subject: `New ErgonSite Inquiry from ${payload.name}`,
+            _template: 'table',
+            _captcha: 'false',
+            name: payload.name,
+            email: payload.email,
+            company: payload.company,
+            phone: payload.phone,
+            message: payload.message
+          })
+        });
+
+        if (emailGatewayRes.ok) {
+          const resData = await emailGatewayRes.json();
+          if (resData.success === 'true' || resData.success === true) {
+            sentSuccessfully = true;
+          }
+        }
+      } catch (gatewayErr) {
+        console.warn('Email gateway error, trying local server fallback...', gatewayErr);
+      }
+
+      // Try local/cloud backend server as well
+      if (!sentSuccessfully) {
+        try {
+          await postJson('/api/contact', payload);
+          sentSuccessfully = true;
+        } catch (serverErr) {
+          console.warn('Server fallback error:', serverErr);
+        }
+      }
+
+      if (sentSuccessfully) {
+        formMessage.textContent = 'Thank you! Your inquiry was sent to info@ergonsite.com. We will be in touch shortly.';
+        contactForm.reset();
+        fields.forEach((input) => setError(input, ''));
+      } else {
+        throw new Error('Could not send automatically. Please email us directly at info@ergonsite.com.');
+      }
     } catch (error) {
       formMessage.textContent = error.message || 'Failed to send your request.';
       formMessage.classList.add('error');
