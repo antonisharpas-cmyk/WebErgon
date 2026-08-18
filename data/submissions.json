@@ -94,5 +94,14 @@
     "company": "sad",
     "message": "sd",
     "createdAt": "2026-08-17T14:34:02.065Z"
+  },
+  {
+    "id": 1787035199358,
+    "name": "Antonis Harpas",
+    "email": "crapantonis@gmail.com",
+    "company": "sd",
+    "phone": "+357 12222222",
+    "message": "21222222222",
+    "createdAt": "2026-08-18T06:39:59.358Z"
   }
 ]

@@ -277,8 +277,13 @@ function createServer() {
 function startServer() {
   const port = PORTS[portIndex];
   const server = createServer();
-  server.listen(port, () => {
-    console.log(`ErgonSite backend running at http://localhost:${port}`);
+  server.listen(port, '0.0.0.0', () => {
+    const localIp = require('os').networkInterfaces();
+    const ipAddress = Object.values(localIp)
+      .flat()
+      .find(iface => iface.family === 'IPv4' && !iface.internal)?.address || 'localhost';
+    console.log(`ErgonSite backend running at http://${ipAddress}:${port}`);
+    console.log(`Local access: http://localhost:${port}`);
   });
 }
 

@@ -13,9 +13,9 @@ if (yearNode) {
   yearNode.textContent = new Date().getFullYear();
 }
 
-const API_BASE = (window.location.protocol === 'http:' || window.location.protocol === 'https:') && window.location.host
-  ? ''
-  : 'http://localhost:3000';
+/* Always use the same origin (IP or localhost) that served this page.
+   This ensures the admin works from any PC accessing via IP address. */
+const API_BASE = '';
 
 function getToken() {
   return sessionStorage.getItem('adminToken') || '';
