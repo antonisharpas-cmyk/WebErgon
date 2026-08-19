@@ -3169,41 +3169,86 @@ a {
   cursor: pointer;
 }
 
+/* The knob is a node, not a plain disc: a bright core with a soft aura,
+   the same visual language as the process-rail dots and the star field.
+   Off, it sits dim at the left of a dark track; on, it slides right,
+   lights up teal, and its aura breathes — echoing the "ongoing" pulse
+   used elsewhere on the site. */
 .consent-slider {
-  width: 44px;
+  width: 46px;
   height: 24px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  transition: background 0.25s ease, border-color 0.25s ease;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  transition: background 0.3s ease, border-color 0.3s ease;
   position: relative;
 }
 
+/* the node core */
 .consent-slider::after {
   content: "";
   position: absolute;
-  top: 2px;
-  left: 2px;
+  top: 50%;
+  left: 4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(237, 245, 255, 0.75);
+  transform: translateY(-50%);
+  transition:
+    left 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+/* the node aura — invisible until the toggle is on */
+.consent-slider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 11px;
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--text);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease;
+  transform: translate(-50%, -50%) scale(0.6);
+  background: radial-gradient(circle, rgba(108, 226, 209, 0.55), transparent 70%);
+  opacity: 0;
+  transition: left 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .consent-toggle input:checked + .consent-slider {
-  background: rgba(108, 226, 209, 0.35);
-  border-color: rgba(108, 226, 209, 0.7);
+  background: linear-gradient(90deg, rgba(125, 140, 255, 0.3), rgba(108, 226, 209, 0.4));
+  border-color: rgba(108, 226, 209, 0.75);
 }
 
 .consent-toggle input:checked + .consent-slider::after {
-  transform: translateX(20px);
+  left: 28px;
   background: var(--primary-2);
+  box-shadow: 0 0 10px rgba(108, 226, 209, 0.9);
+}
+
+.consent-toggle input:checked + .consent-slider::before {
+  left: 35px;
+  opacity: 1;
+  animation: consent-node-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes consent-node-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.7); opacity: 0.35; }
+  50%      { transform: translate(-50%, -50%) scale(1.5); opacity: 0.9; }
 }
 
 .consent-toggle input:focus-visible + .consent-slider {
   outline: 2px solid var(--primary-2);
   outline-offset: 3px;
+}
+
+/* the breathing aura is decoration; hold it still for reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .consent-toggle input:checked + .consent-slider::before {
+    animation: none;
+  }
 }
 
 .sr-only {
