@@ -1,21 +1,24 @@
 /* =====================================================================
-   Google Analytics 4 + cookie consent, in one place.
+   Google Analytics 4 + cookie consent.
 
-   Consent Mode v2, default DENIED: the Google tag loads immediately
-   (so Analytics' own "tag detected" check passes and reporting starts
-   the moment someone accepts), but every storage category starts
-   denied and no analytics cookie is written until the visitor accepts
-   the banner. Decline is remembered and respected. Ad categories stay
-   denied permanently — we run no advertising.
+   Three-way banner (Decline all / Customise / Accept all) plus a
+   preferences dialog with per-category control. Two categories exist:
+   essential (always on — it is what remembers this very choice) and
+   analytics (GA4, off until allowed).
 
-   The choice is stored in localStorage under COOKIE_CHOICE_KEY.
-   "Cookie settings" in the footer calls window.showCookieBanner() to
-   let a visitor change their mind later — required for the consent to
-   be as easy to withdraw as it was to give.
+   Consent Mode v2, default DENIED: the Google tag itself loads up
+   front so Analytics' "tag detected" check passes and reporting can
+   begin the instant someone allows it, but no analytics cookie is
+   written while consent is denied. Ad categories are denied
+   permanently — we run no advertising.
+
+   The choice is stored in localStorage under CHOICE_KEY. Footer
+   "Cookie settings" links (data-cookie-settings) reopen the dialog,
+   so withdrawing consent is as easy as giving it.
    ===================================================================== */
 (function () {
   var GA_ID = 'G-GFSCB12JCB';
-  var COOKIE_CHOICE_KEY = 'ergonsite-consent';
+  var CHOICE_KEY = 'ergonsite-consent';
 
   /* no tracking of ourselves while developing locally */
   var IS_LOCAL = /^(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/
@@ -37,52 +40,119 @@
   gtag('config', GA_ID);
 
   if (!IS_LOCAL) {
-    var s = document.createElement('script');
-    s.async = true;
-    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
-    document.head.appendChild(s);
+    var tag = document.createElement('script');
+    tag.async = true;
+    tag.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+    document.head.appendChild(tag);
   }
 
   function applyChoice(choice) {
-    if (choice === 'accepted') {
-      gtag('consent', 'update', { analytics_storage: 'granted' });
-    }
+    gtag('consent', 'update', {
+      analytics_storage: choice === 'accepted' ? 'granted' : 'denied'
+    });
   }
 
   function saveChoice(choice) {
-    try { localStorage.setItem(COOKIE_CHOICE_KEY, choice); } catch (e) {}
+    try { localStorage.setItem(CHOICE_KEY, choice); } catch (e) {}
     applyChoice(choice);
   }
 
   function storedChoice() {
-    try { return localStorage.getItem(COOKIE_CHOICE_KEY); } catch (e) { return null; }
+    try { return localStorage.getItem(CHOICE_KEY); } catch (e) { return null; }
   }
 
+  function removeUi() {
+    var b = document.querySelector('.consent-banner');
+    var d = document.querySelector('.consent-overlay');
+    if (b) b.remove();
+    if (d) d.remove();
+  }
+
+  /* ---------------- banner ---------------- */
   function buildBanner() {
+    if (document.querySelector('.consent-banner')) return;
     var el = document.createElement('div');
     el.className = 'consent-banner';
     el.setAttribute('role', 'dialog');
-    el.setAttribute('aria-label', 'Cookie consent');
+    el.setAttribute('aria-label', 'Privacy options');
     el.innerHTML =
-      '<p>We use Google Analytics to understand how this site is used. ' +
-      'It sets cookies only if you accept. ' +
-      '<a href="/privacy">Privacy policy</a></p>' +
+      '<div class="consent-copy">' +
+      '<strong>Your privacy, your call.</strong>' +
+      '<p>Essential cookies keep this site working. Optional analytics help us see ' +
+      'which pages matter &mdash; they stay off unless you allow them. ' +
+      '<a href="/privacy">Privacy &amp; cookies</a></p></div>' +
       '<div class="consent-actions">' +
-      '<button type="button" class="consent-btn consent-accept">Accept</button>' +
-      '<button type="button" class="consent-btn consent-decline">Decline</button>' +
+      '<button type="button" class="consent-btn" data-act="decline">Decline all</button>' +
+      '<button type="button" class="consent-btn" data-act="customise">Customise</button>' +
+      '<button type="button" class="consent-btn consent-btn-primary" data-act="accept">Accept all</button>' +
       '</div>';
-    el.querySelector('.consent-accept').addEventListener('click', function () {
-      saveChoice('accepted'); el.remove();
-    });
-    el.querySelector('.consent-decline').addEventListener('click', function () {
-      saveChoice('declined'); el.remove();
+    el.addEventListener('click', function (ev) {
+      var btn = ev.target.closest('[data-act]');
+      if (!btn) return;
+      var act = btn.getAttribute('data-act');
+      if (act === 'accept') { saveChoice('accepted'); removeUi(); }
+      if (act === 'decline') { saveChoice('declined'); removeUi(); }
+      if (act === 'customise') { buildDialog(); }
     });
     document.body.appendChild(el);
   }
 
-  window.showCookieBanner = function () {
-    if (!document.querySelector('.consent-banner')) buildBanner();
-  };
+  /* ---------------- preferences dialog ---------------- */
+  function buildDialog() {
+    if (document.querySelector('.consent-overlay')) return;
+    var analyticsOn = storedChoice() === 'accepted';
+    var ov = document.createElement('div');
+    ov.className = 'consent-overlay';
+    ov.innerHTML =
+      '<div class="consent-dialog" role="dialog" aria-modal="true" aria-label="Cookie preferences">' +
+      '<h2>Cookie preferences</h2>' +
+      '<p class="consent-intro">Pick what this site is allowed to remember. Essential ' +
+      'cookies cannot be switched off &mdash; one of them is what stores the choice you ' +
+      'make here. Change your mind anytime via &ldquo;Cookie settings&rdquo; in the footer.</p>' +
+
+      '<div class="consent-cat">' +
+      '<div class="consent-cat-head"><h3>Essential</h3>' +
+      '<span class="consent-lock">Always on</span></div>' +
+      '<p>Remembers your consent choice and keeps core features like the contact form working.</p>' +
+      '</div>' +
+
+      '<div class="consent-cat">' +
+      '<div class="consent-cat-head"><h3>Analytics</h3>' +
+      '<label class="consent-toggle"><input type="checkbox" id="consentAnalytics"' +
+      (analyticsOn ? ' checked' : '') + '><span class="consent-slider" aria-hidden="true"></span>' +
+      '<span class="sr-only">Allow analytics cookies</span></label></div>' +
+      '<p>Google Analytics page-view measurement, so we can tell which pages are read and ' +
+      'which are ignored. Nothing loads until you allow it. Never used for advertising.</p>' +
+      '</div>' +
+
+      '<p class="consent-more"><a href="/privacy">Read the full privacy &amp; cookies policy</a></p>' +
+
+      '<div class="consent-actions consent-dialog-actions">' +
+      '<button type="button" class="consent-btn" data-act="cancel">Cancel</button>' +
+      '<button type="button" class="consent-btn" data-act="save">Save my choices</button>' +
+      '<button type="button" class="consent-btn consent-btn-primary" data-act="accept">Accept all</button>' +
+      '</div></div>';
+
+    ov.addEventListener('click', function (ev) {
+      if (ev.target === ov) { ov.remove(); return; }   // click outside closes
+      var btn = ev.target.closest('[data-act]');
+      if (!btn) return;
+      var act = btn.getAttribute('data-act');
+      if (act === 'cancel') { ov.remove(); return; }
+      if (act === 'accept') { saveChoice('accepted'); removeUi(); return; }
+      if (act === 'save') {
+        var on = ov.querySelector('#consentAnalytics').checked;
+        saveChoice(on ? 'accepted' : 'declined');
+        removeUi();
+      }
+    });
+    document.addEventListener('keydown', function esc(ev) {
+      if (ev.key === 'Escape') { ov.remove(); document.removeEventListener('keydown', esc); }
+    });
+    document.body.appendChild(ov);
+  }
+
+  window.showCookieBanner = buildDialog;   // settings links open the dialog directly
 
   function init() {
     var choice = storedChoice();
@@ -91,11 +161,10 @@
     } else {
       buildBanner();
     }
-    /* footer "Cookie settings" links reopen the banner */
     document.querySelectorAll('[data-cookie-settings]').forEach(function (a) {
       a.addEventListener('click', function (ev) {
         ev.preventDefault();
-        window.showCookieBanner();
+        buildDialog();
       });
     });
   }
