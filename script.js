@@ -379,6 +379,15 @@ if (contactForm) {
         // fire-and-forget on purpose: the enquiry is already delivered,
         // so a hiccup here must not turn the thank-you into an error
         sendConfirmationEmail(payload);
+
+        /* Tell Analytics an enquiry happened. generate_lead is GA4's
+           standard name for this, so it appears in reports without any
+           configuration. window.gtag always exists (consent.js defines
+           it), and if the visitor declined analytics the call goes
+           nowhere, which is exactly right. */
+        if (typeof window.gtag === 'function') {
+          window.gtag('event', 'generate_lead', { form: 'contact' });
+        }
       }
       formMessage.textContent = 'Thank you, your details were sent. We will be in touch shortly.';
       contactForm.reset();
