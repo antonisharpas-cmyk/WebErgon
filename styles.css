@@ -3085,19 +3085,80 @@ a {
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(4, 9, 17, 0.7);
-  backdrop-filter: blur(6px);
+  background: rgba(4, 9, 17, 0.72);
+  backdrop-filter: blur(7px);
+  /* the overlay scrolls on short screens so the dialog itself never
+     needs overflow, which would clip its corner nodes */
+  overflow-y: auto;
+}
+
+/* THE CONSTELLATION FRAME
+   Not a card: the boundary is drawn in the site's network language.
+   A glowing node sits on each corner (spans injected by consent.js);
+   between them runs a hairline conic-gradient border with one brighter
+   segment that slowly travels around the frame. The interior is glass,
+   so the dimmed page shows through instead of a solid slab. Browsers
+   without @property support simply get the border without the moving
+   glow, which still reads correctly. */
+
+@property --cf-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
 }
 
 .consent-dialog {
+  position: relative;
   width: min(560px, 100%);
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;
-  padding: 28px 28px 24px;
-  border: 1px solid var(--line);
-  border-radius: 22px;
-  background: rgba(11, 21, 35, 0.98);
+  margin: auto 0;
+  padding: 30px 30px 26px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  /* layer 1 fills the inside, layer 2 paints the 1px border */
+  background:
+    linear-gradient(rgba(10, 19, 32, 0.82), rgba(10, 19, 32, 0.82)) padding-box,
+    conic-gradient(
+      from var(--cf-angle, 0deg),
+      rgba(165, 195, 255, 0.22),
+      rgba(108, 226, 209, 0.95) 8%,
+      rgba(165, 195, 255, 0.22) 16%,
+      rgba(165, 195, 255, 0.22) 55%,
+      rgba(125, 140, 255, 0.7) 62%,
+      rgba(165, 195, 255, 0.22) 70%
+    ) border-box;
+  backdrop-filter: blur(18px);
   box-shadow: 0 30px 90px rgba(3, 8, 16, 0.7);
+  animation: cf-travel 9s linear infinite;
+}
+
+@keyframes cf-travel {
+  to { --cf-angle: 360deg; }
+}
+
+/* the corner nodes */
+.cf-node {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--primary-2);
+  box-shadow: 0 0 9px rgba(108, 226, 209, 0.9), 0 0 0 3px rgba(108, 226, 209, 0.12);
+  animation: cf-breathe 3.4s ease-in-out infinite;
+}
+
+.cf-tl { top: -4px; left: -4px; }
+.cf-tr { top: -4px; right: -4px; animation-delay: 0.85s; }
+.cf-br { bottom: -4px; right: -4px; animation-delay: 1.7s; }
+.cf-bl { bottom: -4px; left: -4px; animation-delay: 2.55s; }
+
+@keyframes cf-breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(0.72); opacity: 0.65; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .consent-dialog { animation: none; }
+  .cf-node { animation: none; }
 }
 
 .consent-dialog h2 {

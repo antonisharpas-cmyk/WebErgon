@@ -132,6 +132,12 @@
     ov.className = 'consent-overlay';
     ov.innerHTML =
       '<div class="consent-dialog" role="dialog" aria-modal="true" aria-label="Cookie preferences">' +
+      /* the four corner nodes of the constellation frame; the connecting
+         lines are the dialog's own animated gradient border */
+      '<span class="cf-node cf-tl" aria-hidden="true"></span>' +
+      '<span class="cf-node cf-tr" aria-hidden="true"></span>' +
+      '<span class="cf-node cf-bl" aria-hidden="true"></span>' +
+      '<span class="cf-node cf-br" aria-hidden="true"></span>' +
       '<h2>Cookie preferences</h2>' +
       '<p class="consent-intro">Pick what this site is allowed to remember. Essential ' +
       'cookies cannot be switched off, because one of them stores the choice you make ' +
