@@ -3465,3 +3465,19 @@ a {
 .legal-list strong {
   color: var(--text);
 }
+
+/* location line in the footer + contact plate */
+.footer-copy {
+  line-height: 1.75;
+}
+
+.footer-copy a[href^='tel:'] {
+  white-space: nowrap;
+}
+
+.contact-location {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}

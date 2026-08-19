@@ -64,7 +64,7 @@ function setSecurityHeaders(res) {
     "form-action 'self' https://api.web3forms.com https://api.emailjs.com; " +
     "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; " +
     "font-src 'self'; style-src 'self' 'unsafe-inline'; " +
-    "script-src 'self' https://www.googletagmanager.com; " +
+    "script-src 'self' 'sha256-DkEYyiWaacnj0jRLm7uAXz1Gech8g696QnAmFEqj2Cc=' https://www.googletagmanager.com; " +
     "connect-src 'self' https://api.web3forms.com https://api.emailjs.com " +
     "https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com");
   res.setHeader('X-Content-Type-Options', 'nosniff');
