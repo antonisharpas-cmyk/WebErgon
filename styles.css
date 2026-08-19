@@ -1,3 +1,46 @@
+/* =================================================================
+   SELF-HOSTED MANROPE
+
+   The font files live in assets/fonts/ and are served from our own
+   domain instead of fonts.googleapis.com. Two reasons: privacy (no
+   visitor IP is sent to Google just for a typeface — a German court
+   ruled that alone a GDPR breach in 2022) and speed (no extra DNS +
+   TLS handshake to two Google hosts before text can render).
+
+   These are variable fonts: one file covers every weight from 200 to
+   800, so the old five-weight Google URL collapses into one request.
+   The family name stays "Manrope" — nothing else in this file or the
+   HTML changes. unicode-range keeps the greek file from downloading
+   at all unless greek text actually appears on a page.
+   ================================================================= */
+
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('assets/fonts/manrope-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('assets/fonts/manrope-latin-ext-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('assets/fonts/manrope-greek-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF;
+}
+
 :root {
   --bg: #07111f;
   --bg-2: #101d30;
@@ -2888,4 +2931,64 @@ a {
   padding: 2px 6px;
   border-radius: 6px;
   font-family: inherit;
+}
+
+/* =================================================================
+   LEGAL PAGES (privacy policy)
+   ================================================================= */
+
+.legal-page {
+  padding-top: 104px;
+}
+
+.legal-page .page-intro {
+  margin-bottom: 44px;
+}
+
+.legal-body {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.legal-body h2 {
+  margin: 38px 0 12px;
+  font-size: 1.25rem;
+  letter-spacing: -0.03em;
+}
+
+.legal-body h2:first-child {
+  margin-top: 0;
+}
+
+.legal-body p {
+  margin: 0 0 14px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.legal-body a {
+  color: var(--primary-2);
+  font-weight: 600;
+}
+
+.form-consent {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.form-consent a {
+  color: var(--primary-2);
+  font-weight: 600;
+}
+
+.footer-legal {
+  color: var(--muted);
+  font-size: 0.85rem;
+  transition: color 0.2s ease;
+}
+
+.footer-legal:hover {
+  color: var(--text);
 }
