@@ -235,7 +235,7 @@ function validateEmail(raw) {
   if (at < 1) return 'An email address needs an @ symbol.';
   if (value.slice(0, at).length > 64) return 'The part before the @ is too long.';
   if (!EMAIL_RE.test(value)) {
-    return 'That does not look like a complete email address — check the part after the @.';
+    return 'That does not look like a complete email address. Check the part after the @.';
   }
 
   const domain = value.slice(at + 1).toLowerCase();
@@ -252,7 +252,7 @@ function validatePhone(raw) {
   const value = raw.trim();
   if (!value) return '';                 // optional
   if (!/^[0-9\s().-]+$/.test(value)) {
-    return 'Digits only please — pick the country code from the list.';
+    return 'Digits only please, and pick the country code from the list.';
   }
   const digits = value.replace(/[^0-9]/g, '');
   if (digits.length < 6 || digits.length > 14) {
@@ -380,7 +380,7 @@ if (contactForm) {
         // so a hiccup here must not turn the thank-you into an error
         sendConfirmationEmail(payload);
       }
-      formMessage.textContent = 'Thank you — your details were sent. We will be in touch shortly.';
+      formMessage.textContent = 'Thank you, your details were sent. We will be in touch shortly.';
       contactForm.reset();
       fields.forEach((input) => setError(input, ''));
     } catch (error) {

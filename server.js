@@ -53,6 +53,26 @@ function setCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
+/* Real HTTP security headers, for local runs and for the day the site
+   sits behind a host that can send headers (a VPS, or Cloudflare in
+   front of Pages). GitHub Pages itself cannot send these, which is why
+   the pages also carry a CSP <meta> and a frame-buster; these headers
+   are the stronger, belt-and-braces version. */
+function setSecurityHeaders(res) {
+  res.setHeader('Content-Security-Policy',
+    "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; " +
+    "form-action 'self' https://api.web3forms.com https://api.emailjs.com; " +
+    "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; " +
+    "font-src 'self'; style-src 'self' 'unsafe-inline'; " +
+    "script-src 'self' https://www.googletagmanager.com; " +
+    "connect-src 'self' https://api.web3forms.com https://api.emailjs.com " +
+    "https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com");
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=(), payment=()');
+}
+
 function serveStaticFile(res, filePath) {
   const ext = path.extname(filePath).toLowerCase();
   const mimeTypes = {
@@ -124,6 +144,7 @@ function isAuthenticated(req) {
 function createServer() {
   const server = http.createServer((req, res) => {
     setCorsHeaders(res);
+    setSecurityHeaders(res);
 
     if (req.method === 'OPTIONS') {
       res.writeHead(204);

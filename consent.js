@@ -1,3 +1,15 @@
+/* Anti-clickjacking. GitHub Pages cannot send an X-Frame-Options or
+   frame-ancestors header, so if this page is ever loaded inside an
+   <iframe> on another site (the setup for a clickjacking attack), break
+   out of the frame — or, if that is blocked, hide the page rather than
+   let it be framed invisibly. */
+(function () {
+  if (window.top !== window.self) {
+    try { window.top.location = window.self.location; }
+    catch (e) { document.documentElement.style.display = 'none'; }
+  }
+})();
+
 /* =====================================================================
    Google Analytics 4 + cookie consent.
 
@@ -125,18 +137,29 @@
       'cookies cannot be switched off, because one of them stores the choice you make ' +
       'here. You can change your mind anytime via &ldquo;Cookie settings&rdquo; in the footer.</p>' +
 
-      '<div class="consent-cat">' +
+      /* The categories sit on the same rail-and-nodes system as the
+         process timeline: a track down the left, one glowing node per
+         category. The essential node is always lit; the analytics node
+         lights up with its toggle (via :has), so the graphic itself
+         shows what is on. */
+      '<div class="consent-flow">' +
+      '<span class="consent-rail" aria-hidden="true"></span>' +
+
+      '<div class="consent-item is-on">' +
+      '<span class="cat-node" aria-hidden="true"></span>' +
       '<div class="consent-cat-head"><h3>Essential</h3>' +
       '<span class="consent-lock">Always on</span></div>' +
       '<p>Remembers your consent choice and keeps core features like the contact form working.</p>' +
       '</div>' +
 
-      '<div class="consent-cat">' +
+      '<div class="consent-item consent-item-optional">' +
+      '<span class="cat-node" aria-hidden="true"></span>' +
       '<div class="consent-cat-head"><h3>Analytics</h3>' +
       '<label class="consent-toggle"><input type="checkbox" id="consentAnalytics"' +
       (analyticsOn ? ' checked' : '') + '><span class="consent-slider" aria-hidden="true"></span>' +
       '<span class="sr-only">Allow analytics cookies</span></label></div>' +
       '<p>These cookies help us understand how you use our website and improve your experience.</p>' +
+      '</div>' +
       '</div>' +
 
       '<p class="consent-more"><a href="/privacy">Read the full privacy &amp; cookies policy</a></p>' +

@@ -3113,12 +3113,52 @@ a {
   line-height: 1.6;
 }
 
-.consent-cat {
-  padding: 16px 18px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.025);
-  margin-bottom: 12px;
+/* Categories on the site's rail: a soft track down the left with one
+   node per category, instead of boxes. The essential node is always
+   lit; the analytics node follows its toggle. */
+.consent-flow {
+  position: relative;
+  padding-left: 36px;
+  margin-bottom: 6px;
+}
+
+.consent-rail {
+  position: absolute;
+  left: 11px;
+  top: 10px;
+  bottom: 12px;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(108, 226, 209, 0.55), rgba(125, 140, 255, 0.25));
+}
+
+.consent-item {
+  position: relative;
+  padding: 2px 0 22px;
+}
+
+.consent-item:last-child {
+  padding-bottom: 4px;
+}
+
+.cat-node {
+  position: absolute;
+  left: -32px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #0a1424;
+  border: 2px solid rgba(165, 195, 255, 0.35);
+  transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* lit state: essential always, analytics when its toggle is on */
+.consent-item.is-on .cat-node,
+.consent-item-optional:has(input:checked) .cat-node {
+  border-color: var(--primary-2);
+  background: var(--primary-2);
+  box-shadow: 0 0 10px rgba(108, 226, 209, 0.8), 0 0 0 4px rgba(108, 226, 209, 0.12);
 }
 
 .consent-cat-head {
@@ -3129,13 +3169,13 @@ a {
   margin-bottom: 6px;
 }
 
-.consent-cat h3 {
+.consent-cat-head h3 {
   margin: 0;
   font-size: 1rem;
   letter-spacing: -0.02em;
 }
 
-.consent-cat p {
+.consent-item p {
   margin: 0;
   color: var(--muted);
   font-size: 0.84rem;
