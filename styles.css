@@ -2992,3 +2992,76 @@ a {
 .footer-legal:hover {
   color: var(--text);
 }
+
+/* =================================================================
+   COOKIE CONSENT BANNER — injected by consent.js. Accept and Decline
+   carry identical visual weight on purpose: a consent where refusing
+   is harder than agreeing is not a valid consent.
+   ================================================================= */
+
+.consent-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: min(680px, calc(100% - 32px));
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(9, 18, 30, 0.96);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 20px 60px rgba(3, 8, 16, 0.65);
+}
+
+.consent-banner p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.consent-banner a {
+  color: var(--primary-2);
+  font-weight: 600;
+}
+
+.consent-actions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.consent-btn {
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 0.6rem 1.15rem;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.consent-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(108, 226, 209, 0.5);
+  background: rgba(108, 226, 209, 0.1);
+}
+
+@media (max-width: 560px) {
+  .consent-banner {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .consent-actions {
+    justify-content: center;
+  }
+}
