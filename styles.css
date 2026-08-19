@@ -2946,7 +2946,7 @@ a {
 }
 
 .legal-body {
-  max-width: 720px;
+  max-width: 820px;
   margin: 0 auto;
 }
 
@@ -3008,8 +3008,9 @@ a {
   z-index: 100;
   display: flex;
   align-items: center;
-  gap: 22px;
-  width: min(760px, calc(100% - 32px));
+  gap: 26px;
+  justify-content: space-between;
+  width: min(1160px, calc(100% - 32px));
   padding: 16px 20px;
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -3264,6 +3265,17 @@ a {
   color: var(--primary-2);
 }
 
+/* cookie names stay on one line; the description column absorbs the width */
+.legal-table td:first-child {
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .legal-table td:first-child {
+    white-space: normal;
+  }
+}
+
 .legal-settings-btn {
   font-size: 0.88rem;
   padding: 0.7rem 1.3rem;
@@ -3291,4 +3303,19 @@ a {
     border-top: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.03);
   }
+}
+
+.legal-list {
+  margin: 0 0 14px;
+  padding-left: 20px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.legal-list li {
+  margin-bottom: 10px;
+}
+
+.legal-list strong {
+  color: var(--text);
 }

@@ -52,13 +52,29 @@
     });
   }
 
+  /* consent is stored with a timestamp and expires after 360 days, at
+     which point the banner asks again — a consent given once should
+     not be treated as given forever */
+  var CHOICE_TTL_DAYS = 360;
+
   function saveChoice(choice) {
-    try { localStorage.setItem(CHOICE_KEY, choice); } catch (e) {}
+    try {
+      localStorage.setItem(CHOICE_KEY, JSON.stringify({ v: choice, t: Date.now() }));
+    } catch (e) {}
     applyChoice(choice);
   }
 
   function storedChoice() {
-    try { return localStorage.getItem(CHOICE_KEY); } catch (e) { return null; }
+    try {
+      var raw = localStorage.getItem(CHOICE_KEY);
+      if (!raw) return null;
+      /* pre-expiry versions stored a bare string; honour it once but
+         let the next save upgrade the format */
+      if (raw === 'accepted' || raw === 'declined') return raw;
+      var data = JSON.parse(raw);
+      if (Date.now() - data.t > CHOICE_TTL_DAYS * 86400000) return null;
+      return data.v;
+    } catch (e) { return null; }
   }
 
   function removeUi() {
@@ -77,9 +93,8 @@
     el.setAttribute('aria-label', 'Privacy options');
     el.innerHTML =
       '<div class="consent-copy">' +
-      '<strong>Your privacy, your call.</strong>' +
-      '<p>Essential cookies keep this site working. Optional analytics help us see ' +
-      'which pages matter &mdash; they stay off unless you allow them. ' +
+      '<strong>We care about your privacy.</strong>' +
+      '<p>We are using cookies to give you the best experience on our website. ' +
       '<a href="/privacy">Privacy &amp; cookies</a></p></div>' +
       '<div class="consent-actions">' +
       '<button type="button" class="consent-btn" data-act="decline">Decline all</button>' +
@@ -107,8 +122,8 @@
       '<div class="consent-dialog" role="dialog" aria-modal="true" aria-label="Cookie preferences">' +
       '<h2>Cookie preferences</h2>' +
       '<p class="consent-intro">Pick what this site is allowed to remember. Essential ' +
-      'cookies cannot be switched off &mdash; one of them is what stores the choice you ' +
-      'make here. Change your mind anytime via &ldquo;Cookie settings&rdquo; in the footer.</p>' +
+      'cookies cannot be switched off, because one of them stores the choice you make ' +
+      'here. You can change your mind anytime via &ldquo;Cookie settings&rdquo; in the footer.</p>' +
 
       '<div class="consent-cat">' +
       '<div class="consent-cat-head"><h3>Essential</h3>' +
@@ -121,8 +136,7 @@
       '<label class="consent-toggle"><input type="checkbox" id="consentAnalytics"' +
       (analyticsOn ? ' checked' : '') + '><span class="consent-slider" aria-hidden="true"></span>' +
       '<span class="sr-only">Allow analytics cookies</span></label></div>' +
-      '<p>Google Analytics page-view measurement, so we can tell which pages are read and ' +
-      'which are ignored. Nothing loads until you allow it. Never used for advertising.</p>' +
+      '<p>These cookies help us understand how you use our website and improve your experience.</p>' +
       '</div>' +
 
       '<p class="consent-more"><a href="/privacy">Read the full privacy &amp; cookies policy</a></p>' +
