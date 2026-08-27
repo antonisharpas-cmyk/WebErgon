@@ -652,6 +652,18 @@ a {
   padding: 34px 0 0;
 }
 
+/* Centred eyebrow above the moving logos. Same treatment as the
+   closing client band so the two read as one system. */
+.client-strip-label {
+  margin: 0 0 18px;
+  text-align: center;
+  color: rgba(168, 186, 210, 0.6);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
 .marquee {
   position: relative;
   width: 100%;
@@ -667,7 +679,7 @@ a {
   margin: 0;
   padding: 0;
   list-style: none;
-  animation: marquee 42s linear infinite;
+  animation: marquee 41s linear infinite;
 }
 
 .marquee:hover .marquee-track,
