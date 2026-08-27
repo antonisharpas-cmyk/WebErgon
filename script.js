@@ -551,3 +551,19 @@ if (contactForm) {
     resizeTimer = setTimeout(fill, 200);
   });
 })();
+
+/* =====================================================================
+   SERVICE WORKER
+
+   Registered from here rather than an inline <script> because the CSP
+   whitelists one specific inline hash; a new inline block would be
+   blocked. Failure is non-fatal — the site works fine without it, we
+   just lose the install prompt and offline fallback.
+   ===================================================================== */
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/sw.js').catch(function (error) {
+      console.warn('Service worker registration failed:', error);
+    });
+  });
+}

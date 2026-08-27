@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; img-src 'self' data:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Add ErgonSite to your home screen." />
+    <meta name="robots" content="noindex" />
+    <title>Add ErgonSite to your phone</title>
+    <link rel="icon" type="image/png" href="/assets/favicon.png" />
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#07111f" />
+    <style>
+      @font-face {
+        font-family: 'Manrope';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 200 800;
+        src: url('/assets/fonts/manrope-latin-wght-normal.woff2') format('woff2-variations');
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; }
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 22px 56px;
+        font-family: 'Manrope', system-ui, sans-serif;
+        color: #edf5ff;
+        background:
+          radial-gradient(circle at top left, rgba(125, 140, 255, 0.18), transparent 32%),
+          radial-gradient(circle at bottom right, rgba(108, 226, 209, 0.12), transparent 38%),
+          #07111f;
+      }
+      .card { width: 100%; max-width: 30rem; text-align: center; }
+      .mark { width: 76px; height: 76px; border-radius: 18px; margin: 0 auto 22px; display: block; }
+      h1 { font-size: 1.72rem; line-height: 1.18; letter-spacing: -0.03em; margin: 0 0 12px; }
+      .sub { color: #a8bad2; line-height: 1.65; margin: 0 0 30px; }
+      #installBtn {
+        display: none;
+        width: 100%;
+        padding: 1rem 1.6rem;
+        border: 0;
+        border-radius: 999px;
+        font: inherit;
+        font-weight: 800;
+        font-size: 1rem;
+        color: #07111f;
+        background: linear-gradient(135deg, #7d8cff, #8b8bff 48%, #6ce2d1);
+        cursor: pointer;
+      }
+      #installBtn:focus-visible { outline: 2px solid #6ce2d1; outline-offset: 3px; }
+      .steps {
+        display: none;
+        text-align: left;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        counter-reset: s;
+      }
+      .steps li {
+        counter-increment: s;
+        position: relative;
+        padding: 14px 0 14px 46px;
+        border-top: 1px solid rgba(165, 195, 255, 0.16);
+        line-height: 1.6;
+        color: #cfdcee;
+      }
+      .steps li:last-child { border-bottom: 1px solid rgba(165, 195, 255, 0.16); }
+      .steps li::before {
+        content: counter(s);
+        position: absolute;
+        left: 0;
+        top: 13px;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(108, 226, 209, 0.14);
+        border: 1px solid rgba(108, 226, 209, 0.45);
+        color: #6ce2d1;
+        font-size: 0.8rem;
+        font-weight: 800;
+        display: grid;
+        place-items: center;
+      }
+      .steps b { color: #edf5ff; }
+      .note { color: #7f93ad; font-size: 0.85rem; line-height: 1.6; margin: 26px 0 0; }
+      .back { display: inline-block; margin-top: 26px; color: #6ce2d1; font-weight: 700; text-decoration: none; }
+      .back:hover { text-decoration: underline; }
+      .done { display: none; color: #6ce2d1; font-weight: 700; margin: 0; }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <img src="/assets/apple-touch-icon.png" alt="" class="mark" width="76" height="76" />
+
+      <h1>Add ErgonSite to your home screen</h1>
+      <p class="sub" id="lede">One tap and it sits with your apps &mdash; opens full screen, no browser bars.</p>
+
+      <button type="button" id="installBtn">Install ErgonSite</button>
+      <p class="done" id="doneMsg">Installed. Look for the ErgonSite icon with your apps.</p>
+
+      <ol class="steps" id="iosSteps">
+        <li>Tap the <b>Share</b> button at the bottom of Safari &mdash; the square with an arrow pointing up.</li>
+        <li>Scroll down and tap <b>Add to Home Screen</b>.</li>
+        <li>Tap <b>Add</b> in the top right.</li>
+      </ol>
+
+      <ol class="steps" id="androidSteps">
+        <li>Tap the <b>&#8942;</b> menu in the top right of Chrome.</li>
+        <li>Tap <b>Add to Home screen</b>, or <b>Install app</b> if you see it.</li>
+        <li>Confirm with <b>Install</b>.</li>
+      </ol>
+
+      <ol class="steps" id="desktopSteps">
+        <li>Look for the <b>install icon</b> at the right-hand end of the address bar.</li>
+        <li>Click it, then choose <b>Install</b>.</li>
+      </ol>
+
+      <p class="note" id="note"></p>
+      <a class="back" href="/">Go to the website instead &rarr;</a>
+    </main>
+
+    <script src="/install.js"></script>
+  </body>
+</html>
