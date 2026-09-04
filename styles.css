@@ -3503,37 +3503,38 @@ a {
    ================================================================= */
 
 /* --- home marquee chip --- */
-.marquee-item .wip-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  width: 100%;
-  height: 100%;
+/* The note sits BELOW the chip, not on top of the logo — a badge inside
+   the tile competes with the wordmark it is describing. The track gets
+   padding so the marquee's overflow:hidden doesn't clip it. */
+.marquee-track {
+  padding-bottom: 24px;
 }
 
-/* the badge needs the room, so the logo gives some back */
-.marquee-item.is-wip img {
-  max-height: 32px;
+.marquee-item {
+  position: relative;
 }
 
-.wip-badge {
-  font-size: 0.54rem;
-  font-weight: 800;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  padding: 3px 9px;
-  border-radius: 999px;
-  color: #eaf2ff;
-  background: rgba(9, 15, 26, 0.88);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
-}
-
-/* nothing is clickable, so nothing should invite a click */
 .marquee-item.is-wip {
   cursor: default;
+}
+
+.marquee-item.is-wip::after {
+  content: "Under construction";
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(168, 186, 210, 0.7);
+}
+
+/* a chip that goes nowhere should not lift on hover */
+.marquee-item.is-wip:hover {
+  transform: none;
 }
 
 /* --- footer client band --- */
