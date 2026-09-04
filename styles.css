@@ -3495,7 +3495,7 @@ a {
 }
 
 /* =================================================================
-   UNDER CONSTRUCTION — clients whose site is not live yet.
+   IN DEVELOPMENT — clients whose site is not live yet.
 
    The chip still shows, because the work is real and the logo earns
    its place in "Trusted by"; what changes is that it stops being a
@@ -3519,7 +3519,7 @@ a {
 }
 
 .marquee-item.is-wip::after {
-  content: "Under construction";
+  content: "In development";
   position: absolute;
   top: calc(100% + 7px);
   left: 50%;
@@ -3552,7 +3552,7 @@ a {
 }
 
 .client-band-list li.is-wip::after {
-  content: "Under construction";
+  content: "In development";
   position: absolute;
   top: calc(100% + 5px);
   left: 50%;
