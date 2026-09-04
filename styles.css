@@ -773,7 +773,7 @@ a {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 10px;
+  gap: 18px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -3492,4 +3492,115 @@ a {
   color: var(--muted);
   font-size: 0.95rem;
   line-height: 1.7;
+}
+
+/* =================================================================
+   UNDER CONSTRUCTION — clients whose site is not live yet.
+
+   The chip still shows, because the work is real and the logo earns
+   its place in "Trusted by"; what changes is that it stops being a
+   link to a page that would disappoint, and says so plainly instead.
+   ================================================================= */
+
+/* --- home marquee chip --- */
+.marquee-item .wip-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  height: 100%;
+}
+
+/* the badge needs the room, so the logo gives some back */
+.marquee-item.is-wip img {
+  max-height: 32px;
+}
+
+.wip-badge {
+  font-size: 0.54rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: #eaf2ff;
+  background: rgba(9, 15, 26, 0.88);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+/* nothing is clickable, so nothing should invite a click */
+.marquee-item.is-wip {
+  cursor: default;
+}
+
+/* --- footer client band --- */
+/* the caption hangs below a 42px chip, so the row aligns from the top
+   and the list reserves the space rather than clipping it */
+.client-band-list {
+  align-items: flex-start;
+  padding-bottom: 26px;
+}
+
+.client-band-list li.is-wip {
+  position: relative;
+  overflow: visible;
+  cursor: default;
+}
+
+.client-band-list li.is-wip::after {
+  content: "Under construction";
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 104px;
+  text-align: center;
+  line-height: 1.25;
+  font-size: 0.47rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(168, 186, 210, 0.72);
+}
+
+/* a chip that goes nowhere should not lift on hover */
+.client-band-list li.is-wip:hover,
+.client-band-list li.is-wip:focus-within {
+  transform: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+
+/* --- work page card --- */
+/* mirrors .project-card > a so a non-linking card keeps the same shape */
+.project-card > .project-static {
+  display: block;
+  height: 100%;
+}
+
+.project-card.is-wip:hover,
+.project-card.is-wip:focus-within {
+  transform: translateY(-4px);
+  border-color: rgba(255, 158, 109, 0.38);
+}
+
+.project-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  color: var(--accent);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.project-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(255, 158, 109, 0.16);
 }
