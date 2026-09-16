@@ -1741,6 +1741,13 @@ a {
   transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* A stacked lockup (mark above wordmark) is close to square. Capped at
+   the same 72px as the wide, one-line logos it reads as shrunken rather
+   than smaller, so it gets its own ceiling. */
+.project-preview.is-stacked img {
+  max-height: 124px;
+}
+
 .project-card:hover .project-preview img,
 .project-card:focus-within .project-preview img {
   transform: scale(1.05);
