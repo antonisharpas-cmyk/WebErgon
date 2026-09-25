@@ -487,10 +487,35 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* four widely-tracked words do not fit one phone line, so let it wrap
+     rather than run off the edge */
+  flex-wrap: wrap;
+  row-gap: 10px;
   gap: 18px;
   margin-bottom: 24px;
   font-size: 0.7rem;
   font-weight: 600;
+}
+
+/* "The People Behind ErgonSite" is four widely-tracked words; at phone
+   widths the tracking has to come in for it to stay on one line, and a
+   dot stranded at the end of a wrapped line reads as a typo. */
+@media (max-width: 560px) {
+  .eyebrow-hero {
+    gap: 9px;
+    row-gap: 8px;
+    font-size: 0.62rem;
+  }
+
+  .eyebrow-hero > span {
+    letter-spacing: 0.16em;
+    margin-right: -0.16em;
+  }
+
+  .eyebrow-hero .eyebrow-dot {
+    width: 5px;
+    height: 5px;
+  }
 }
 
 .eyebrow-hero > span {
@@ -902,6 +927,19 @@ a {
   text-wrap: pretty;
 }
 
+/* Core team and Advisory network are different kinds of relationship,
+   so they get a label each rather than one undifferentiated 2x2. The
+   heading parts are the same .group-head / .group-title the services
+   page uses — one idea, reused, not a second one invented. */
+.team-group {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.team-group + .team-group {
+  margin-top: 54px;
+}
+
 .team-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -998,7 +1036,7 @@ a {
   filter: saturate(1.06);
 }
 
-.member h2 {
+.member h3 {
   margin: 0 0 7px;
   font-size: 1.42rem;
   letter-spacing: -0.04em;
@@ -1011,6 +1049,16 @@ a {
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+/* one line, and only one: what this person actually covers */
+.member-expertise {
+  margin: 12px auto 0;
+  max-width: 28ch;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  text-wrap: pretty;
 }
 
 .card-grid,
@@ -1068,6 +1116,30 @@ a {
   background: linear-gradient(90deg, var(--primary-2), var(--primary));
 }
 
+/* Where the groups are an ordered argument rather than a list, the rule
+   is replaced by the step number — the order is the message. */
+.group-title.has-num::before {
+  display: none;
+}
+
+.group-num {
+  flex: 0 0 auto;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: rgba(125, 140, 255, 0.95);
+}
+
+.group-num::after {
+  content: "\2014";
+  margin: 0 2px 0 9px;
+  color: rgba(165, 195, 255, 0.35);
+}
+
+.group-title.has-num + .group-lede {
+  margin-left: 0;
+}
+
 .group-lede {
   margin: 10px 0 0 38px;
   color: var(--muted);
@@ -1091,6 +1163,13 @@ a {
 
 .services-grid-two .service-card {
   grid-column: span 6;
+}
+
+/* A single card closing a group reads better across the full width than
+   stranded in a half-empty row. Both classes so it outranks the
+   responsive .services-grid .service-card rules further down. */
+.services-grid.services-grid-one .service-card {
+  grid-column: span 12;
 }
 
 .service-card {
@@ -1276,6 +1355,16 @@ a {
 
 .service-card-wide .sc-text {
   min-width: 0;
+}
+
+/* side by side needs width; on a phone the icon goes back on top */
+@media (max-width: 760px) {
+  .service-card-wide {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 26px 22px 28px;
+  }
 }
 
 .services-more {
@@ -2073,6 +2162,36 @@ a {
   text-wrap: balance;
 }
 
+.wave-lede {
+  margin: 16px 0 0;
+  max-width: 48ch;
+  color: var(--muted);
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+/* The closing banner is a short, wide plate, so the wave stays bright
+   right under the copy. Darken the scrim further across before leaning
+   on text shadows. Wide layouts only: below 940px the copy stacks and
+   the top-weighted scrim further down already covers it, and applying
+   this there flattens the wave to black. */
+@media (min-width: 941px) {
+  .cta-banner .wave-scrim {
+    background: linear-gradient(
+      100deg,
+      rgba(6, 14, 26, 0.95) 0%,
+      rgba(6, 14, 26, 0.84) 38%,
+      rgba(6, 14, 26, 0.34) 64%,
+      rgba(6, 14, 26, 0.26) 100%
+    );
+  }
+}
+
+.cta-banner .wave-lede {
+  margin-top: 12px;
+  color: rgba(214, 228, 247, 0.92);
+}
+
 .button-light {
   gap: 10px;
   flex: 0 0 auto;
@@ -2485,6 +2604,175 @@ a {
   line-height: 1.45;
 }
 
+/* =================================================================
+   MULTI-SELECT ("What do you need?")
+
+   Deliberately built from the same parts as .dial-picker above so the
+   two custom controls in this form look like one idea, not two. The
+   panel is a plain checkbox list, which is what makes picking several
+   things obvious — a native <select multiple> hides that behind
+   ctrl-click, and renders as an unlabelled scroll box on phones.
+   ================================================================= */
+
+.multiselect {
+  position: relative;
+  min-width: 0;
+}
+
+/* an explicit display beats the browser's own [hidden] rule, so the
+   two states have to be spelled out */
+.multiselect-trigger[hidden],
+.multiselect-panel[hidden] {
+  display: none;
+}
+
+.multiselect-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text);
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.multiselect-trigger::after {
+  content: "";
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-right: 2px solid rgba(168, 186, 210, 0.9);
+  border-bottom: 2px solid rgba(168, 186, 210, 0.9);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.25s ease;
+}
+
+.multiselect-trigger[aria-expanded="true"] {
+  border-color: rgba(125, 140, 255, 0.7);
+  box-shadow: 0 0 0 4px rgba(125, 140, 255, 0.12);
+}
+
+.multiselect-trigger[aria-expanded="true"]::after {
+  transform: translateY(2px) rotate(225deg);
+}
+
+.multiselect-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.multiselect-value.is-placeholder {
+  color: rgba(168, 186, 210, 0.75);
+}
+
+.multiselect-panel {
+  width: 100%;
+  margin-top: 2px;
+  max-height: 290px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(10, 19, 32, 0.98);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 24px 50px rgba(3, 8, 16, 0.6);
+}
+
+/* .contact-form label is a grid; these rows are not */
+.contact-form .multiselect-option {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 0.94rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.contact-form .multiselect-option:hover {
+  background: rgba(125, 140, 255, 0.14);
+}
+
+/* The form's input rule sizes text boxes, and the browser's own checkbox
+   is a white square that shouts on a dark panel. Drawn from scratch: a
+   quiet outline until it is ticked, then solid brand teal. */
+.contact-form .multiselect-option input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 auto;
+  width: 19px;
+  height: 19px;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.contact-form .multiselect-option input[type="checkbox"]::after {
+  content: "";
+  width: 10px;
+  height: 5px;
+  border-left: 2px solid #07111f;
+  border-bottom: 2px solid #07111f;
+  transform: translateY(-1px) rotate(-45deg) scale(0.4);
+  opacity: 0;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.14s ease;
+}
+
+.contact-form .multiselect-option input[type="checkbox"]:checked {
+  background: var(--primary-2);
+  border-color: var(--primary-2);
+}
+
+.contact-form .multiselect-option input[type="checkbox"]:checked::after {
+  transform: translateY(-1px) rotate(-45deg) scale(1);
+  opacity: 1;
+}
+
+.contact-form .multiselect-option:has(input:checked) {
+  color: var(--primary-2);
+  font-weight: 700;
+}
+
+.contact-form .multiselect-option input[type="checkbox"]:focus-visible {
+  outline: 2px solid rgba(125, 140, 255, 0.9);
+  outline-offset: 2px;
+}
+
+.field.has-error .multiselect-trigger,
+.field.has-error .multiselect-panel {
+  border-color: rgba(255, 154, 165, 0.75);
+}
+
+/* Only once needs-field.js has taken over does the panel float above the
+   page. Before that it sits in the flow as an ordinary checkbox list, so
+   the field still works with scripting off. */
+.multiselect.is-enhanced .multiselect-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  left: 0;
+  margin-top: 0;
+}
+
 .field.has-error .field-msg {
   display: block;
 }
@@ -2703,6 +2991,10 @@ a {
 
   .team-grid {
     grid-template-columns: 1fr;
+  }
+
+  .team-group + .team-group {
+    margin-top: 40px;
   }
 
   .team-intro {
@@ -3599,10 +3891,285 @@ a {
   align-items: center;
   gap: 8px;
   margin-top: 4px;
+  white-space: nowrap;
   color: var(--accent);
   font-size: 0.86rem;
   font-weight: 700;
 }
+
+
+/* =================================================================
+   THE DIFFERENCE — the system stack
+
+   The whole repositioning argument in one picture: the website is one
+   layer, and the layers under it are where the business runs. Built
+   from an ordered list with a rail drawn behind it rather than an
+   illustration, so it stays crisp at any size, needs no image, and
+   still reads as a plain list if the CSS never arrives.
+   ================================================================= */
+
+.difference-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1fr);
+  gap: 60px;
+  align-items: start;
+}
+
+.difference-copy .section-lede {
+  margin-top: 20px;
+  max-width: 46ch;
+}
+
+.difference-note {
+  margin: 22px 0 0;
+  padding-left: 16px;
+  border-left: 2px solid rgba(108, 226, 209, 0.45);
+  max-width: 42ch;
+  color: rgba(205, 222, 245, 0.9);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.stack {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* the line every layer hangs off */
+.stack-rail {
+  position: absolute;
+  left: 11px;
+  top: 14px;
+  bottom: 14px;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    180deg,
+    rgba(125, 140, 255, 0.15),
+    rgba(125, 140, 255, 0.75) 18%,
+    rgba(108, 226, 209, 0.75) 82%,
+    rgba(108, 226, 209, 0.15)
+  );
+}
+
+.stack-layer {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 13px 18px 13px 0;
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 0.6s ease calc(var(--i, 0) * 0.07s),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--i, 0) * 0.07s);
+}
+
+.stack.visible .stack-layer {
+  opacity: 1;
+  transform: none;
+}
+
+.stack-marker {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: 2px solid rgba(108, 226, 209, 0.55);
+  background: #0a1524;
+  display: grid;
+  place-items: center;
+}
+
+.stack-marker::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary-2);
+  box-shadow: 0 0 10px 2px rgba(108, 226, 209, 0.5);
+}
+
+/* the customer is the one layer we do not build — outlined, not filled */
+.stack-layer.is-entry .stack-marker {
+  border-color: rgba(165, 195, 255, 0.4);
+}
+
+.stack-layer.is-entry .stack-marker::after {
+  background: rgba(168, 186, 210, 0.7);
+  box-shadow: none;
+}
+
+.stack-layer.is-entry .stack-name {
+  color: var(--muted);
+}
+
+.stack-body {
+  min-width: 0;
+}
+
+.stack-name {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.stack-note {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+/* .services-more centres itself; here it belongs with the copy */
+.difference-more {
+  margin-top: 26px;
+  text-align: left;
+}
+
+@media (max-width: 980px) {
+  .difference-wrap {
+    grid-template-columns: 1fr;
+    gap: 38px;
+  }
+
+  .difference-copy .section-lede,
+  .difference-note {
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stack-layer {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* =================================================================
+   WORK PAGE CASE CARDS
+
+   The portfolio has to argue that we build systems, not pages, so each
+   card reads sector -> problem -> what was built -> state, rather than
+   a bag of feature chips. Scoped to .work-grid-cases so the homepage's
+   Selected work grid keeps its existing shape.
+   ================================================================= */
+
+.work-grid-cases {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.work-grid-cases .project-info {
+  gap: 0;
+  padding: 22px 22px 24px;
+  /* the foot is pinned to the bottom so Live / In development sits on
+     one line across the row, however tall the copy above it runs */
+  display: flex;
+  flex-direction: column;
+  height: auto;
+}
+
+.work-grid-cases .project-card > a,
+.work-grid-cases .project-card > .project-static {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.work-grid-cases .project-preview {
+  flex: 0 0 auto;
+}
+
+.work-grid-cases .project-info {
+  flex: 1 1 auto;
+}
+
+.project-sector {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(168, 186, 210, 0.78);
+}
+
+.project-block {
+  display: block;
+  margin-top: 16px;
+}
+
+.project-block-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(125, 140, 255, 0.85);
+}
+
+.project-block-text {
+  display: block;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+/* the dot-separated build list: one line of evidence, not twelve chips */
+.project-stack {
+  color: rgba(205, 222, 245, 0.88);
+}
+
+.project-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  /* push it to the bottom of the card */
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+.work-grid-cases .project-status {
+  margin-top: 0;
+}
+
+/* live and in-development are both deliberate states, so they are told
+   apart by colour rather than one of them looking like a warning */
+.project-status.is-live {
+  color: var(--primary-2);
+}
+
+.project-status.is-live::before {
+  background: var(--primary-2);
+  box-shadow: 0 0 0 4px rgba(108, 226, 209, 0.16);
+}
+
+@media (max-width: 1080px) {
+  .work-grid-cases {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .work-grid-cases {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 .project-status::before {
   content: "";

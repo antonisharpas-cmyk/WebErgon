@@ -122,7 +122,13 @@
               <div class="wave-content">
                 <div>
                   <p class="eyebrow">Let&rsquo;s build it</p>
-                  <h2>Let&rsquo;s build your brand together!</h2>
+                  <h2>Have a business problem we can solve?</h2>
+                  <p class="wave-lede">
+                    Tell us what you&rsquo;re trying to build, improve or automate.
+                    Whether it&rsquo;s a website, e&#8209;commerce platform, CRM, web
+                    application, business system or something completely custom,
+                    tell us what you have in mind.
+                  </p>
                 </div>
 
                 <div class="cta-actions">
@@ -174,7 +180,7 @@
             </div>
 
             <form id="contactForm" class="contact-form reveal" novalidate>
-              <h3>Send your project details</h3>
+              <h3>Tell us what you&rsquo;re building.</h3>
 
               <div class="field-row">
                 <label class="field">
@@ -426,13 +432,82 @@
                 <span class="field-msg" aria-live="polite"></span>
               </div>
 
+              <div class="field" id="needsField">
+                <span class="field-label" id="needsLabel">What do you need?</span>
+
+                <!-- Reads as a dropdown, opens to checkboxes: most enquiries
+                     are more than one thing, and a native <select multiple>
+                     hides that behind ctrl-click. The checkboxes carry no
+                     name — needs-field.js writes the answer into the hidden
+                     input below, so the form submits one tidy value.
+                     Without JavaScript the panel simply stays open. -->
+                <div class="multiselect" data-multiselect>
+                  <button
+                    type="button"
+                    class="multiselect-trigger"
+                    aria-expanded="true"
+                    aria-labelledby="needsLabel needsValue"
+                    hidden
+                  >
+                    <span class="multiselect-value is-placeholder" id="needsValue" data-placeholder="Select one or more">Select one or more</span>
+                  </button>
+
+                  <div class="multiselect-panel" role="group" aria-labelledby="needsLabel">
+                      <label class="multiselect-option">
+                        <input type="checkbox" value="Website" />
+                        <span>Website</span>
+                      </label>
+                      <label class="multiselect-option">
+                        <input type="checkbox" value="E-commerce" />
+                        <span>E-commerce</span>
+                      </label>
+                      <label class="multiselect-option">
+                        <input type="checkbox" value="CRM" />
+                        <span>CRM</span>
+                      </label>
+                      <label class="multiselect-option">
+                        <input type="checkbox" value="Web Application" />
+                        <span>Web Application</span>
+                      </label>
+                      <label class="multiselect-option">
+                        <input type="checkbox" value="Business System" />
+                        <span>Business System</span>
+                      </label>
+                      <label class="multiselect-option">
+                        <input type="checkbox" value="Booking System" />
+                        <span>Booking System</span>
+                      </label>
+                      <label class="multiselect-option">
+                        <input type="checkbox" value="Automation / Integrations" />
+                        <span>Automation / Integrations</span>
+                      </label>
+                      <label class="multiselect-option">
+                        <input type="checkbox" value="AI Solution" />
+                        <span>AI Solution</span>
+                      </label>
+                      <label class="multiselect-option">
+                        <input type="checkbox" value="Not sure yet" />
+                        <span>Not sure yet</span>
+                      </label>
+                      <label class="multiselect-option">
+                        <input type="checkbox" value="Something else" />
+                        <span>Something else</span>
+                      </label>
+                  </div>
+
+                  <input type="hidden" name="needs" value="" />
+                </div>
+
+                <span class="field-msg" aria-live="polite"></span>
+              </div>
+
               <label class="field">
                 <span class="field-label">Project details</span>
-                <textarea name="message" rows="5" placeholder="Tell us about your website project..." required></textarea>
+                <textarea name="message" rows="5" placeholder="Tell us what you&rsquo;re trying to build, improve or automate..." required></textarea>
                 <span class="field-msg" aria-live="polite"></span>
               </label>
 
-              <button type="submit" class="button button-primary full-width">Send inquiry</button>
+              <button type="submit" class="button button-primary full-width">Send inquiry &rarr;</button>
               <p id="formMessage" class="form-message" aria-live="polite"></p>
 
               <p class="form-consent">By sending this form you agree to our
@@ -458,8 +533,16 @@
               <li class="is-wip" style="--tile: #ffffff" title="In development">
                 <img src="assets/clients/m-kakoullis.png" alt="M. Kakoullis" loading="lazy" />
               </li>
-              <li class="is-wip" style="--tile: #5a4544" title="In development">
-                <img src="assets/clients/apex-pilates.png" alt="APEX pilates by APEX Fitness Centre" loading="lazy" />
+              <li class="is-wip" style="--tile: #f4f6f2" title="In development">
+                <img src="assets/clients/c-anthouli.png" alt="C. Anthouli &mdash; Tax, Audit &amp; Advisory" loading="lazy" />
+              </li>
+              <li class="is-wip" style="--tile: #f1f6f9" title="In development">
+                <img src="assets/clients/oneeleven.png" alt="OneEleven" loading="lazy" />
+              </li>
+              <li style="--tile: #5a4544">
+                <a href="https://www.apexfitnesscentrecy.com/" target="_blank" rel="noopener noreferrer">
+                  <img src="assets/clients/apex-pilates.png" alt="APEX pilates by APEX Fitness Centre" loading="lazy" />
+                </a>
               </li>
               <li style="--tile: #1a5ce0">
                 <a href="https://rafaelinsurance.com/" target="_blank" rel="noopener noreferrer">
@@ -518,5 +601,6 @@
     <script src="script.js"></script>
     <script src="wave.js"></script>
     <script src="phone-field.js"></script>
+    <script src="needs-field.js"></script>
   </body>
 </html>

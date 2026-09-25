@@ -177,6 +177,7 @@ async function sendConfirmationEmail(payload) {
           name: payload.name,
           email: payload.email,
           company: payload.company,
+          needs: payload.needs,
           message: payload.message
         }
       })
@@ -296,7 +297,10 @@ function checkField(input) {
 }
 
 if (contactForm) {
-  const fields = Array.from(contactForm.querySelectorAll('input, textarea'));
+  // the multi-select writes to a hidden input, which has no label to
+  // flag and cannot take focus, so it is checked separately below
+  const fields = Array.from(contactForm.querySelectorAll('input, textarea'))
+    .filter((el) => el.type !== 'hidden');
 
   fields.forEach((input) => {
     // validate on blur, then live once the field is already flagged, so
@@ -316,6 +320,22 @@ if (contactForm) {
       if (checkField(input) && !firstInvalid) firstInvalid = input;
     });
 
+    /* "What do you need?" is a group of checkboxes, so the loop above
+       cannot see it — an unanswered one still has to stop the send. */
+    const needsInput = contactForm.querySelector('input[name="needs"]');
+    if (needsInput && !needsInput.value.trim()) {
+      const needsField = needsInput.closest('.field');
+      if (needsField) {
+        needsField.classList.add('has-error');
+        const needsMsg = needsField.querySelector('.field-msg');
+        if (needsMsg) needsMsg.textContent = 'Please tell us what you need.';
+        if (!firstInvalid) {
+          firstInvalid = needsField.querySelector('.multiselect-trigger') ||
+            needsField.querySelector('input[type="checkbox"]');
+        }
+      }
+    }
+
     if (firstInvalid) {
       formMessage.textContent = 'Please correct the highlighted fields.';
       formMessage.classList.add('error');
@@ -334,6 +354,7 @@ if (contactForm) {
       email: (data.email || '').trim(),
       company: (data.company || '').trim(),
       phone: localNumber ? (dial + ' ' + localNumber).trim() : '',
+      needs: (data.needs || '').trim(),
       message: (data.message || '').trim()
     };
 
@@ -373,6 +394,7 @@ if (contactForm) {
           email: payload.email,
           company: payload.company,
           phone: payload.phone,
+          needs: payload.needs,
           message: payload.message
         });
 
