@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Security: Content-Security-Policy restricts what the page may load
+         and where it may talk to, which neutralises injected-script and
+         data-exfiltration attacks. Referrer-Policy stops full URLs leaking
+         to other sites. Header-based controls (X-Frame-Options, nosniff,
+         HSTS) are set in server.js for local runs; on GitHub Pages, which
+         cannot send custom headers, framing is blocked by the guard in
+         consent.js instead. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self' https://api.web3forms.com https://api.emailjs.com; img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-iDpB8zSCsS0khCVO2BXDZVjfh20wK5mmCQ3e3s6txlM=' https://www.googletagmanager.com; connect-src 'self' https://api.web3forms.com https://api.emailjs.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="ErgonSite builds digital systems around your business &mdash; from websites and CRM to automation, web applications, e-commerce and integrations. Based in Larnaca, Cyprus."
+    />
+    <title>Digital Systems for Growing Businesses | ErgonSite</title>
+    <link rel="icon" type="image/png" href="/assets/favicon.png" />
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#07111f" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+
+
+      <header class="topbar">
+        <div class="container nav-wrap">
+          <a href="/" class="brand" aria-label="ErgonSite home">
+            <img src="assets/logo.png" alt="ErgonSite Logo" class="brand-logo-img" />
+          </a>
+
+          <nav class="main-nav" aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/services">Services</a>
+            <a href="/team">Team</a>
+            <a href="/work">Work</a>
+            <a href="/contact">Contact</a>
+          </nav>
+
+          <div class="social-nav" aria-label="ErgonSite on social media">
+            <a
+              href="https://www.facebook.com/profile.php?id=61593076966436"
+              class="social-link"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="ErgonSite on Facebook"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>
+            </a>
+            <a
+              href="https://www.instagram.com/ergonsite/"
+              class="social-link"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="ErgonSite on Instagram"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 1 0 0-12.324zM12 16c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm7.846-10.405a1.441 1.441 0 0 1-2.88 0 1.44 1.44 0 0 1 2.88 0z"/></svg>
+            </a>
+            <a
+              href="https://www.linkedin.com/company/ergonsite/"
+              class="social-link"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="ErgonSite on LinkedIn"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <!-- ============ HERO ============ -->
+        <section class="section services-page">
+          <canvas class="network-canvas" aria-hidden="true"></canvas>
+
+          <div class="container">
+            <div class="page-intro">
+              <p class="eyebrow eyebrow-hero reveal">
+                <span>Digital</span>
+                <span class="eyebrow-dot" aria-hidden="true"></span>
+                <span>Systems</span>
+              </p>
+
+              <h1 class="reveal">Build a digital system that works around your business.</h1>
+
+              <p class="page-lede reveal">
+                Your website is only the beginning. We design and build the systems,
+                applications and integrations that let a business run with less manual
+                work &mdash; and keep working as it grows.
+              </p>
+
+              <div class="cta-row reveal">
+                <a href="/contact" class="button button-primary">Talk to us about your business</a>
+                <a href="#what-we-build" class="button button-secondary">Explore our solutions</a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ THE PROBLEM ============ -->
+        <section class="section problem">
+          <div class="container">
+            <div class="section-heading reveal">
+              <p class="eyebrow">The problem</p>
+              <h2>Your website shouldn&rsquo;t have to work alone.</h2>
+              <p class="section-lede">
+                Most businesses do not set out to build a mess. They add a tool when they
+                need one, and each of those tools does its own job perfectly well.
+              </p>
+            </div>
+
+            <!-- The tools as a system diagram that fails: every link between
+                 them is drawn, and every link has a break in the middle. The
+                 point is made by the gaps, on a faint blueprint grid. -->
+            <div class="tool-map reveal">
+              <ul class="tool-grid" aria-label="Tools that often sit separately, unconnected">
+                <li class="tool-node" style="--i: 0">
+                  <span class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="3"/><path d="M2.5 8.6h19"/><path d="M6 12.4h7M6 15.9h11"/></svg></span>
+                  <span class="tool-name">Website</span>
+                </li>
+                <li class="tool-node" style="--i: 1">
+                  <span class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.2" cy="8.4" r="3.4"/><path d="M3.4 20.2a5.8 5.8 0 0 1 11.6 0"/><path d="M16.2 5.6a3.4 3.4 0 0 1 0 6.6"/><path d="M17.4 14.8a5.8 5.8 0 0 1 3.2 5.4"/></svg></span>
+                  <span class="tool-name">CRM</span>
+                </li>
+                <li class="tool-node" style="--i: 2">
+                  <span class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.6"/><path d="M3 9.8h18"/><path d="M8 3v4M16 3v4"/><path d="M8.6 14.8l2.2 2.2 4.6-4.6"/></svg></span>
+                  <span class="tool-name">Booking</span>
+                </li>
+                <li class="tool-node" style="--i: 3">
+                  <span class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.4 7.6h15.2l-1.1 11.2a2.1 2.1 0 0 1-2.1 1.9H7.6a2.1 2.1 0 0 1-2.1-1.9L4.4 7.6Z"/><path d="M8.8 10.2V6.6a3.2 3.2 0 0 1 6.4 0v3.6"/></svg></span>
+                  <span class="tool-name">E-commerce</span>
+                </li>
+                <li class="tool-node" style="--i: 4">
+                  <span class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.8" width="14" height="18.4" rx="2.6"/><path d="M8.4 6.8h7.2"/><path d="M8.7 11.2h.01M12 11.2h.01M15.3 11.2h.01M8.7 14.6h.01M12 14.6h.01M15.3 14.6h.01M8.7 18h.01M12 18h.01M15.3 18h.01"/></svg></span>
+                  <span class="tool-name">Accounting</span>
+                </li>
+                <li class="tool-node" style="--i: 5">
+                  <span class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 9.6h3.4l8.4-4.6v14l-8.4-4.6H3.4a1 1 0 0 1-1-1V10.6a1 1 0 0 1 1-1Z"/><path d="M18.4 9.4a3.6 3.6 0 0 1 0 5.2"/><path d="M6.8 14.4v3.9a1.9 1.9 0 0 0 3.8 0v-2"/></svg></span>
+                  <span class="tool-name">Marketing</span>
+                </li>
+                <li class="tool-node" style="--i: 6">
+                  <span class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.6"/><path d="M3 9.4h18M3 14.6h18M9 4v16M15 4v16"/></svg></span>
+                  <span class="tool-name">Spreadsheets</span>
+                </li>
+                <li class="tool-node" style="--i: 7">
+                  <span class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="3.6" width="18.4" height="6.4" rx="2.1"/><rect x="2.8" y="14" width="18.4" height="6.4" rx="2.1"/><path d="M11 6.8h6.4M11 17.2h6.4"/><circle cx="6.6" cy="6.8" r="1" fill="currentColor" stroke="none"/><circle cx="6.6" cy="17.2" r="1" fill="currentColor" stroke="none"/></svg></span>
+                  <span class="tool-name">Internal systems</span>
+                </li>
+              </ul>
+            </div>
+
+            <p class="problem-punch reveal">
+              The problem is rarely the tools. It is that none of them know what the
+              others just did.
+            </p>
+          </div>
+        </section>
+
+        <!-- ============ WHAT WE BUILD ============ -->
+        <section id="what-we-build" class="section services">
+          <div class="container">
+            <div class="section-heading reveal">
+              <p class="eyebrow">What we build</p>
+              <h2>The pieces, and the wiring between them.</h2>
+              <p class="section-lede">
+                Not every business needs all of this. We work out which combination
+                your business actually needs, and build that.
+              </p>
+            </div>
+
+            <div class="services-grid services-grid-four">
+                <article class="service-card reveal" style="--i: 0">
+                  <span class="sc-watermark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="3"/><path d="M2.5 8.6h19"/><path d="M6 12.4h7M6 15.9h11"/></svg>
+                  </span>
+                  <span class="icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="3"/><path d="M2.5 8.6h19"/><path d="M6 12.4h7M6 15.9h11"/></svg>
+                  </span>
+                  <h3>Websites</h3>
+                  <p>High-performance websites designed around the business and the customer journey.</p>
+                  <span class="sc-underline" aria-hidden="true"></span>
+                </article>
+
+                <article class="service-card reveal" style="--i: 1">
+                  <span class="sc-watermark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.4 7.6h15.2l-1.1 11.2a2.1 2.1 0 0 1-2.1 1.9H7.6a2.1 2.1 0 0 1-2.1-1.9L4.4 7.6Z"/><path d="M8.8 10.2V6.6a3.2 3.2 0 0 1 6.4 0v3.6"/></svg>
+                  </span>
+                  <span class="icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.4 7.6h15.2l-1.1 11.2a2.1 2.1 0 0 1-2.1 1.9H7.6a2.1 2.1 0 0 1-2.1-1.9L4.4 7.6Z"/><path d="M8.8 10.2V6.6a3.2 3.2 0 0 1 6.4 0v3.6"/></svg>
+                  </span>
+                  <h3>E-commerce</h3>
+                  <p>Online stores connected to the processes behind orders, customers and operations.</p>
+                  <span class="sc-underline" aria-hidden="true"></span>
+                </article>
+
+                <article class="service-card reveal" style="--i: 2">
+                  <span class="sc-watermark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.2" cy="8.4" r="3.4"/><path d="M3.4 20.2a5.8 5.8 0 0 1 11.6 0"/><path d="M16.2 5.6a3.4 3.4 0 0 1 0 6.6"/><path d="M17.4 14.8a5.8 5.8 0 0 1 3.2 5.4"/></svg>
+                  </span>
+                  <span class="icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9.2" cy="8.4" r="3.4"/><path d="M3.4 20.2a5.8 5.8 0 0 1 11.6 0"/><path d="M16.2 5.6a3.4 3.4 0 0 1 0 6.6"/><path d="M17.4 14.8a5.8 5.8 0 0 1 3.2 5.4"/></svg>
+                  </span>
+                  <h3>CRM Systems</h3>
+                  <p>Customer management systems that centralise customer information, leads, communication and follow-up.</p>
+                  <span class="sc-underline" aria-hidden="true"></span>
+                </article>
+
+                <article class="service-card reveal" style="--i: 3">
+                  <span class="sc-watermark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 12a8.4 8.4 0 0 1-14.3 5.9"/><path d="M3.6 12a8.4 8.4 0 0 1 14.3-5.9"/><path d="M17.9 2.9v3.6h-3.6"/><path d="M6.1 21.1v-3.6h3.6"/></svg>
+                  </span>
+                  <span class="icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 12a8.4 8.4 0 0 1-14.3 5.9"/><path d="M3.6 12a8.4 8.4 0 0 1 14.3-5.9"/><path d="M17.9 2.9v3.6h-3.6"/><path d="M6.1 21.1v-3.6h3.6"/></svg>
+                  </span>
+                  <h3>Business Automation</h3>
+                  <p>Automate repetitive workflows and connect processes so teams spend less time on manual work.</p>
+                  <span class="sc-underline" aria-hidden="true"></span>
+                </article>
+
+                <article class="service-card reveal" style="--i: 4">
+                  <span class="sc-watermark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="2.4" y="3.6" width="12.4" height="9.6" rx="2.3"/><path d="M2.4 6.9h12.4"/><rect x="9.2" y="10.8" width="12.4" height="9.6" rx="2.3"/><path d="M9.2 14.1h12.4"/></svg>
+                  </span>
+                  <span class="icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.4" y="3.6" width="12.4" height="9.6" rx="2.3"/><path d="M2.4 6.9h12.4"/><rect x="9.2" y="10.8" width="12.4" height="9.6" rx="2.3"/><path d="M9.2 14.1h12.4"/></svg>
+                  </span>
+                  <h3>Web Applications</h3>
+                  <p>Custom web applications and portals built around specific business requirements.</p>
+                  <span class="sc-underline" aria-hidden="true"></span>
+                </article>
+
+                <article class="service-card reveal" style="--i: 5">
+                  <span class="sc-watermark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.6" cy="6.2" r="2.6"/><circle cx="18.4" cy="6.2" r="2.6"/><circle cx="12" cy="18" r="2.6"/><path d="M8.2 6.2h7.6M7.1 8.5l3.6 7.2M16.9 8.5l-3.6 7.2"/></svg>
+                  </span>
+                  <span class="icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.6" cy="6.2" r="2.6"/><circle cx="18.4" cy="6.2" r="2.6"/><circle cx="12" cy="18" r="2.6"/><path d="M8.2 6.2h7.6M7.1 8.5l3.6 7.2M16.9 8.5l-3.6 7.2"/></svg>
+                  </span>
+                  <h3>Integrations</h3>
+                  <p>Connect the systems a business already uses so information can move between them.</p>
+                  <span class="sc-underline" aria-hidden="true"></span>
+                </article>
+
+                <article class="service-card reveal" style="--i: 6">
+                  <span class="sc-watermark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20.6h18"/><rect x="4.4" y="12.2" width="3.6" height="5.9" rx="1.1"/><rect x="10.2" y="8.4" width="3.6" height="9.7" rx="1.1"/><rect x="16" y="4.6" width="3.6" height="13.5" rx="1.1"/></svg>
+                  </span>
+                  <span class="icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20.6h18"/><rect x="4.4" y="12.2" width="3.6" height="5.9" rx="1.1"/><rect x="10.2" y="8.4" width="3.6" height="9.7" rx="1.1"/><rect x="16" y="4.6" width="3.6" height="13.5" rx="1.1"/></svg>
+                  </span>
+                  <h3>Dashboards &amp; Data</h3>
+                  <p>Turn operational data into dashboards and reporting your team can act on.</p>
+                  <span class="sc-underline" aria-hidden="true"></span>
+                </article>
+
+                <article class="service-card reveal" style="--i: 7">
+                  <span class="sc-watermark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.4"/><path d="M10 3.4v3.6M14 3.4v3.6M10 17v3.6M14 17v3.6"/><path d="M3.4 10H7M3.4 14H7M17 10h3.6M17 14h3.6"/><path d="M12 10.1l.66 1.53 1.53.66-1.53.66L12 14.48l-.66-1.53-1.53-.66 1.53-.66Z"/></svg>
+                  </span>
+                  <span class="icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="7" width="10" height="10" rx="2.4"/><path d="M10 3.4v3.6M14 3.4v3.6M10 17v3.6M14 17v3.6"/><path d="M3.4 10H7M3.4 14H7M17 10h3.6M17 14h3.6"/><path d="M12 10.1l.66 1.53 1.53.66-1.53.66L12 14.48l-.66-1.53-1.53-.66 1.53-.66Z"/></svg>
+                  </span>
+                  <h3>AI</h3>
+                  <p>Use AI where it genuinely improves a workflow, a customer experience or an internal process.</p>
+                  <span class="sc-underline" aria-hidden="true"></span>
+                </article>
+            </div>
+
+            <p class="services-more reveal">
+              <a href="/services" class="link-arrow">
+                See what each service covers
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            </p>
+          </div>
+        </section>
+
+        <!-- ============ HOW IT WORKS ============ -->
+        <section class="section process">
+          <div class="container">
+            <div class="section-heading reveal">
+              <p class="eyebrow">How it works</p>
+              <h2>Four steps, starting with your business.</h2>
+            </div>
+
+            <div class="process-rail process-rail-row reveal">
+              <div class="rail-track" aria-hidden="true">
+                <span class="rail-fill"></span>
+                <span class="rail-tip"></span>
+              </div>
+
+              <ol class="process-steps">
+              <li class="process-node" style="--i: 0">
+                <span class="node-dot" aria-hidden="true"></span>
+                <span class="node-num">01</span>
+                <h3>Understand</h3>
+                <p>We start with how the business works today &mdash; the people, the steps and the tools already in use.</p>
+              </li>
+
+              <li class="process-node" style="--i: 1">
+                <span class="node-dot" aria-hidden="true"></span>
+                <span class="node-num">02</span>
+                <h3>Identify</h3>
+                <p>We find the bottlenecks, the manual work, the disconnected systems and the things worth fixing first.</p>
+              </li>
+
+              <li class="process-node" style="--i: 2">
+                <span class="node-dot" aria-hidden="true"></span>
+                <span class="node-num">03</span>
+                <h3>Build</h3>
+                <p>We design and develop the solution that fits &mdash; which is not always new software.</p>
+              </li>
+
+              <li class="process-node" style="--i: 3">
+                <span class="node-dot" aria-hidden="true"></span>
+                <span class="node-num">04</span>
+                <h3>Connect &amp; Improve</h3>
+                <p>We connect the systems, launch, and keep improving as the business grows.</p>
+              </li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ EXAMPLES ============ -->
+        <section class="section examples">
+          <div class="container">
+            <div class="section-heading reveal">
+              <p class="eyebrow">How it fits together</p>
+              <h2>Three shapes a connected system can take.</h2>
+              <p class="section-lede">
+                Illustrations of how the parts join up, not case studies &mdash; the
+                right shape for your business comes out of the first conversation.
+              </p>
+            </div>
+
+            <div class="flow-grid">
+              <article class="flow-card reveal">
+                <p class="flow-label">Lead generation</p>
+                <ol class="flow-chain">
+                  <li class="flow-step" style="--i: 0"><span>Website</span></li>
+                  <li class="flow-step" style="--i: 1"><span>Contact form</span></li>
+                  <li class="flow-step" style="--i: 2"><span>CRM record</span></li>
+                  <li class="flow-step" style="--i: 3"><span>Automated notification</span></li>
+                  <li class="flow-step" style="--i: 4"><span>Follow-up</span></li>
+                  <li class="flow-step" style="--i: 5"><span>Sales dashboard</span></li>
+                </ol>
+              </article>
+
+              <article class="flow-card reveal">
+                <p class="flow-label">E-commerce</p>
+                <ol class="flow-chain">
+                  <li class="flow-step" style="--i: 0"><span>Website</span></li>
+                  <li class="flow-step" style="--i: 1"><span>Product order</span></li>
+                  <li class="flow-step" style="--i: 2"><span>Payment</span></li>
+                  <li class="flow-step" style="--i: 3"><span>Order management</span></li>
+                  <li class="flow-step" style="--i: 4"><span>Customer record</span></li>
+                  <li class="flow-step" style="--i: 5"><span>Notifications</span></li>
+                  <li class="flow-step" style="--i: 6"><span>Reporting</span></li>
+                </ol>
+              </article>
+
+              <article class="flow-card reveal">
+                <p class="flow-label">Service business</p>
+                <ol class="flow-chain">
+                  <li class="flow-step" style="--i: 0"><span>Website</span></li>
+                  <li class="flow-step" style="--i: 1"><span>Booking</span></li>
+                  <li class="flow-step" style="--i: 2"><span>Customer record</span></li>
+                  <li class="flow-step" style="--i: 3"><span>Automated confirmation</span></li>
+                  <li class="flow-step" style="--i: 4"><span>Internal dashboard</span></li>
+                  <li class="flow-step" style="--i: 5"><span>Follow-up</span></li>
+                </ol>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ WHEN YOU NEED ONE ============ -->
+        <section class="section signs">
+          <div class="container">
+            <div class="section-heading reveal">
+              <p class="eyebrow">Worth a look</p>
+              <h2>You may need more than a website if&hellip;</h2>
+            </div>
+
+            <ul class="check-list reveal">
+              <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.6 4.4 4.4L19 7.4"/></svg></span>Your team enters the same information more than once.</li>
+              <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.6 4.4 4.4L19 7.4"/></svg></span>Leads are followed up by hand, or not at all.</li>
+              <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.6 4.4 4.4L19 7.4"/></svg></span>Customer information is scattered across different tools.</li>
+              <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.6 4.4 4.4L19 7.4"/></svg></span>Your website does not talk to your internal systems.</li>
+              <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.6 4.4 4.4L19 7.4"/></svg></span>The business runs on spreadsheets.</li>
+              <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.6 4.4 4.4L19 7.4"/></svg></span>Too much of the week goes on repetitive admin.</li>
+              <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.6 4.4 4.4L19 7.4"/></svg></span>Customers have to call or email for information they could look up themselves.</li>
+              <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.6 4.4 4.4L19 7.4"/></svg></span>The systems that worked at your old size are getting hard to manage.</li>
+            </ul>
+
+            <p class="signs-note reveal">
+              None of these necessarily mean you need more software. Often they just
+              mean the systems you already have need to work better together.
+            </p>
+          </div>
+        </section>
+
+        <!-- ============ WHY ERGONSITE ============ -->
+        <section class="section why">
+          <div class="container">
+            <div class="why-wrap">
+              <div class="why-copy reveal">
+                <p class="eyebrow">Why ErgonSite</p>
+                <h2>We don&rsquo;t start with software. We start with the business.</h2>
+                <p class="section-lede">
+                  The right answer is whatever removes the problem with the least
+                  moving parts. Sometimes that is a new application. Often it is not.
+                </p>
+
+                <p class="why-note">
+                  One team across all of it, rather than a website company, a CRM
+                  consultant and an automation contractor who have never spoken.
+                </p>
+
+                <ul class="sc-list why-caps">
+                  <li>Websites</li>
+                  <li>Applications</li>
+                  <li>CRM</li>
+                  <li>Automation</li>
+                  <li>E-commerce</li>
+                  <li>Integrations</li>
+                  <li>Business systems</li>
+                </ul>
+              </div>
+
+              <ul class="why-list reveal" aria-label="What the solution might be">
+                <li>
+                  <span class="why-name">An existing platform, configured properly</span>
+                  <span class="why-desc">Often the software is fine. The way it is set up is the problem.</span>
+                </li>
+                <li>
+                  <span class="why-name">An integration</span>
+                  <span class="why-desc">Two systems you already pay for, finally passing information to each other.</span>
+                </li>
+                <li>
+                  <span class="why-name">An automation</span>
+                  <span class="why-desc">A repetitive job that no longer needs a person to do it.</span>
+                </li>
+                <li>
+                  <span class="why-name">A CRM</span>
+                  <span class="why-desc">One place where customers, leads and conversations actually live.</span>
+                </li>
+                <li>
+                  <span class="why-name">A custom web application</span>
+                  <span class="why-desc">When nothing off the shelf matches how you work.</span>
+                </li>
+                <li>
+                  <span class="why-name">A combination of these</span>
+                  <span class="why-desc">Which is usually the honest answer.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ FINAL CTA ============ -->
+        <section class="cta-banner">
+          <div class="container">
+            <div class="wave-plate reveal">
+              <canvas class="wave-canvas" aria-hidden="true"></canvas>
+              <div class="wave-scrim" aria-hidden="true"></div>
+
+              <div class="wave-content">
+                <div>
+                  <h2>Your business has its own way of working. Your systems should match it.</h2>
+                  <p class="wave-lede">
+                    Whether you need to improve the website you have, connect what you
+                    already run, automate the repetitive parts or build something new,
+                    we start with how the business works today.
+                  </p>
+                  <p class="wave-links">
+                    <a href="/services">View our services</a>
+                  </p>
+                </div>
+                <a href="/contact" class="button button-light">
+                  Let&rsquo;s talk about your business
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Closing client band. Same three logos as the home marquee but
+           small and static: at the foot of a page it is a reassurance,
+           not a headline. Keep this list and the marquee in index.html
+           in step. -->
+      <section class="client-band" aria-label="Our clients">
+        <div class="container">
+          <p class="client-band-label">Trusted by</p>
+
+          <ul class="client-band-list">
+              <li class="is-wip" style="--tile: #40252a" title="In development">
+                <img src="assets/clients/athanasiadou-law.png" alt="Athanasiadou Law Firm" loading="lazy" />
+              </li>
+              <li class="is-wip" style="--tile: #ffffff" title="In development">
+                <img src="assets/clients/m-kakoullis.png" alt="M. Kakoullis" loading="lazy" />
+              </li>
+              <li class="is-wip" style="--tile: #f4f6f2" title="In development">
+                <img src="assets/clients/c-anthouli.png" alt="C. Anthouli &mdash; Tax, Audit &amp; Advisory" loading="lazy" />
+              </li>
+              <li class="is-wip" style="--tile: #f1f6f9" title="In development">
+                <img src="assets/clients/oneeleven.png" alt="OneEleven" loading="lazy" />
+              </li>
+              <li style="--tile: #5a4544">
+                <a href="https://www.apexfitnesscentrecy.com/" target="_blank" rel="noopener noreferrer">
+                  <img src="assets/clients/apex-pilates.png" alt="APEX pilates by APEX Fitness Centre" loading="lazy" />
+                </a>
+              </li>
+              <li style="--tile: #1a5ce0">
+                <a href="https://rafaelinsurance.com/" target="_blank" rel="noopener noreferrer">
+                  <img src="assets/clients/rafael-insurance.png" alt="Rafael Agathokleous Insurance Advisor" loading="lazy" />
+                </a>
+              </li>
+          </ul>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="container footer-wrap">
+          <a href="/" class="brand-footer" aria-label="ErgonSite home">
+            <img src="assets/logo.png" alt="ErgonSite Logo" class="brand-footer-img" />
+          </a>
+
+          <div class="footer-side">
+            <a href="mailto:info@ergonsite.com" class="footer-email">info@ergonsite.com</a>
+            <div class="social-nav social-nav-sm" aria-label="ErgonSite on social media">
+              <a
+                href="https://www.facebook.com/profile.php?id=61593076966436"
+                class="social-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="ErgonSite on Facebook"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>
+              </a>
+              <a
+                href="https://www.instagram.com/ergonsite/"
+                class="social-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="ErgonSite on Instagram"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 1 0 0-12.324zM12 16c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm7.846-10.405a1.441 1.441 0 0 1-2.88 0 1.44 1.44 0 0 1 2.88 0z"/></svg>
+              </a>
+              <a
+                href="https://www.linkedin.com/company/ergonsite/"
+                class="social-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="ErgonSite on LinkedIn"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <p class="footer-copy"><a href="/privacy" class="footer-legal">Privacy Policy</a> &middot; <a href="#" class="footer-legal" data-cookie-settings>Cookie settings</a> &middot; &copy; <span id="year">2026</span> ErgonSite. All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
+
+    <script src="consent.js"></script>
+    <script src="script.js"></script>
+    <script src="wave.js"></script>
+    <script src="network.js"></script>
+  </body>
+</html>
