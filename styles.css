@@ -4604,3 +4604,439 @@ a {
     text-align: left;
   }
 }
+
+/* =================================================================
+   CASE STUDY PAGE (crm-oneeleven.html)
+
+   For work that lives behind a client's login. The screens are
+   framed like a browser window and every one carries a "Demo data"
+   tag, because none of them show the client's real records.
+   ================================================================= */
+
+.case-hero {
+  padding-bottom: 90px;
+}
+
+.case-hero .page-intro {
+  margin-bottom: 52px;
+}
+
+.case-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 30px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.case-meta li {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 150px;
+  padding: 12px 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(14, 25, 39, 0.6);
+  text-align: left;
+}
+
+.case-meta-label {
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(168, 186, 210, 0.78);
+}
+
+.case-meta-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.case-meta .project-status {
+  margin-top: 0;
+}
+
+/* --- the browser-window frame around each screen --- */
+.shot-frame {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(165, 195, 255, 0.2);
+  border-radius: 18px;
+  background: #0b1420;
+  box-shadow:
+    0 30px 80px rgba(3, 8, 16, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+}
+
+.shot-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 14px;
+  border-bottom: 1px solid rgba(165, 195, 255, 0.12);
+  background: rgba(17, 28, 46, 0.95);
+}
+
+.shot-bar i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(168, 186, 210, 0.28);
+}
+
+.shot-tag {
+  margin-left: auto;
+  padding: 3px 10px;
+  border: 1px solid rgba(255, 158, 109, 0.4);
+  border-radius: 999px;
+  background: rgba(255, 158, 109, 0.08);
+  color: var(--accent);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.shot-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* the hero screen: wide, with a soft glow under it */
+.shot-hero {
+  max-width: 1060px;
+  margin: 0 auto;
+}
+
+.shot-hero {
+  box-shadow:
+    0 30px 90px rgba(3, 8, 16, 0.65),
+    0 0 120px rgba(108, 226, 209, 0.12);
+}
+
+/* --- the challenge --- */
+.case-brief {
+  padding-top: 40px;
+}
+
+.case-brief-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 56px;
+  align-items: start;
+}
+
+.case-brief-wrap .section-heading {
+  margin-bottom: 0;
+}
+
+.case-brief-copy p {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 1.06rem;
+  line-height: 1.8;
+  text-wrap: pretty;
+}
+
+.case-brief-copy p:last-child {
+  margin-bottom: 0;
+}
+
+/* --- what it covers --- */
+.case-covers {
+  padding-top: 40px;
+}
+
+.case-caps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.case-caps li {
+  padding: 22px 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(14, 25, 39, 0.68);
+  transition: border-color 0.3s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.case-caps li:hover {
+  transform: translateY(-4px);
+  border-color: rgba(108, 226, 209, 0.4);
+}
+
+.case-cap-name {
+  display: block;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.case-cap-desc {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.case-extras {
+  justify-content: center;
+  margin-top: 26px;
+}
+
+/* --- inside the system: the screens slider --- */
+.case-inside {
+  padding-top: 40px;
+}
+
+.case-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 22px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px;
+}
+
+.case-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.case-tab {
+  flex: 0 0 auto;
+  padding: 9px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(14, 25, 39, 0.6);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+.case-tab:hover {
+  color: var(--text);
+  border-color: rgba(108, 226, 209, 0.35);
+}
+
+.case-tab.is-active {
+  color: #07111f;
+  border-color: transparent;
+  background: var(--primary-2);
+}
+
+.case-stage {
+  position: relative;
+}
+
+.case-track {
+  display: flex;
+  gap: 24px;
+  margin: 0;
+  padding: 0 0 6px;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.case-track::-webkit-scrollbar {
+  display: none;
+}
+
+.case-track:focus-visible {
+  outline: 2px solid var(--primary-2);
+  outline-offset: 6px;
+  border-radius: 18px;
+}
+
+.case-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+}
+
+/* narrower than the container so the screen and its caption fit on
+   one laptop screen, with room either side for the arrows */
+.case-slide .shot-frame {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.case-slide-copy {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  max-width: 760px;
+  margin: 24px auto 0;
+}
+
+.case-slide-copy .case-row-num {
+  margin: 0;
+}
+
+.case-slide-copy h3 {
+  margin: 0;
+  font-size: clamp(1.3rem, 1.8vw, 1.6rem);
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+}
+
+.case-slide-copy p:not(.case-row-num) {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+/* the arrows sit over the edges of the screen, and only once the
+   script is there to make them work */
+.case-arrow {
+  display: none;
+  position: absolute;
+  top: calc(50% - 60px);
+  z-index: 2;
+  width: 46px;
+  height: 46px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(165, 195, 255, 0.25);
+  border-radius: 50%;
+  background: rgba(9, 18, 30, 0.88);
+  color: var(--text);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+
+.case-arrow svg {
+  width: 18px;
+  height: 18px;
+}
+
+.case-arrow:hover {
+  border-color: rgba(108, 226, 209, 0.6);
+  transform: scale(1.06);
+}
+
+.case-prev {
+  left: 24px;
+}
+
+.case-next {
+  right: 24px;
+}
+
+.case-slider.is-enhanced .case-arrow {
+  display: inline-flex;
+}
+
+.case-progress {
+  width: min(220px, 50%);
+  height: 3px;
+  margin: 26px auto 0;
+  border-radius: 3px;
+  background: rgba(165, 195, 255, 0.14);
+  overflow: hidden;
+}
+
+.case-progress span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--primary-2);
+}
+
+.shot-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #0b1420;
+}
+
+.case-row-num {
+  margin: 0 0 12px;
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+.case-note {
+  max-width: 640px;
+  margin: 64px auto 0;
+  color: rgba(168, 186, 210, 0.8);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  text-align: center;
+}
+
+@media (max-width: 1040px) {
+  .case-caps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .case-brief-wrap {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+}
+
+@media (max-width: 900px) {
+  .case-tabs {
+    justify-content: flex-start;
+  }
+
+  .case-arrow {
+    width: 38px;
+    height: 38px;
+    top: calc(50% - 70px);
+  }
+
+  .case-prev {
+    left: 6px;
+  }
+
+  .case-next {
+    right: 6px;
+  }
+}
+
+@media (max-width: 560px) {
+  .case-caps {
+    grid-template-columns: 1fr;
+  }
+
+  .case-meta li {
+    min-width: calc(50% - 5px);
+    flex: 1 1 calc(50% - 5px);
+  }
+
+  .shot-bar {
+    height: 28px;
+  }
+
+  .case-slide-copy {
+    flex-direction: column;
+    gap: 6px;
+  }
+}

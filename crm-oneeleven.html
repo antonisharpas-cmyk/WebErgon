@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Security: Content-Security-Policy restricts what the page may load
+         and where it may talk to, which neutralises injected-script and
+         data-exfiltration attacks. Referrer-Policy stops full URLs leaking
+         to other sites. Header-based controls (X-Frame-Options, nosniff,
+         HSTS) are set in server.js for local runs; on GitHub Pages, which
+         cannot send custom headers, framing is blocked by the guard in
+         consent.js instead. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self' https://api.web3forms.com https://api.emailjs.com; img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-iDpB8zSCsS0khCVO2BXDZVjfh20wK5mmCQ3e3s6txlM=' https://www.googletagmanager.com; connect-src 'self' https://api.web3forms.com https://api.emailjs.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="How ErgonSite is building OneEleven's private sales and client platform: developments, buyers, contracts, payments, leads and campaigns in one place. Shown with demo data."
+    />
+    <title>OneEleven Case Study: Sales &amp; Client Platform | ErgonSite</title>
+    <link rel="icon" type="image/png" href="/assets/favicon.png" />
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#07111f" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+
+
+      <header class="topbar">
+        <div class="container nav-wrap">
+          <a href="/" class="brand" aria-label="ErgonSite home">
+            <img src="assets/logo.png" alt="ErgonSite Logo" class="brand-logo-img" />
+          </a>
+
+          <nav class="main-nav" aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/services">Services</a>
+            <a href="/team">Team</a>
+            <a href="/work" class="is-current">Work</a>
+            <a href="/contact">Contact</a>
+          </nav>
+
+          <div class="social-nav" aria-label="ErgonSite on social media">
+            <a
+              href="https://www.facebook.com/profile.php?id=61593076966436"
+              class="social-link"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="ErgonSite on Facebook"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>
+            </a>
+            <a
+              href="https://www.instagram.com/ergonsite/"
+              class="social-link"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="ErgonSite on Instagram"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 1 0 0-12.324zM12 16c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm7.846-10.405a1.441 1.441 0 0 1-2.88 0 1.44 1.44 0 0 1 2.88 0z"/></svg>
+            </a>
+            <a
+              href="https://www.linkedin.com/company/ergonsite/"
+              class="social-link"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="ErgonSite on LinkedIn"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            </a>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <!-- ============ HERO ============
+             The system itself is private: it sits behind the client's
+             office sign in, so there is no site to link to. Every screen
+             on this page was taken from a separate copy running on
+             invented demo data. Keep the descriptions at the level of
+             what it does for the office, never how it does it. -->
+        <section class="section services-page case-hero">
+          <canvas class="network-canvas" aria-hidden="true"></canvas>
+
+          <div class="container">
+            <div class="page-intro">
+              <p class="eyebrow eyebrow-hero reveal">
+                <span>Case</span>
+                <span class="eyebrow-dot" aria-hidden="true"></span>
+                <span>Study</span>
+              </p>
+
+              <h1 class="reveal">A sales and client platform for a property developer.</h1>
+
+              <p class="page-lede reveal">
+                OneEleven sells apartments across several developments. We built
+                the private system their office now runs on, so every development,
+                buyer, contract, payment and enquiry lives in one place.
+              </p>
+
+              <ul class="case-meta reveal" aria-label="Project details">
+                <li><span class="case-meta-label">Client</span><span class="case-meta-value">OneEleven</span></li>
+                <li><span class="case-meta-label">Sector</span><span class="case-meta-value">Property development</span></li>
+                <li><span class="case-meta-label">What it is</span><span class="case-meta-value">Private web platform</span></li>
+                <li><span class="case-meta-label">Status</span><span class="case-meta-value"><span class="project-status is-live">Live</span></span></li>
+              </ul>
+            </div>
+
+            <figure class="shot-frame shot-hero reveal">
+              <span class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span class="shot-tag">Demo data</span></span>
+              <video class="shot-video" autoplay muted loop playsinline preload="metadata"
+                     poster="assets/case/oneeleven-dashboard.webp" width="1600" height="1120"
+                     aria-label="A short tour of the OneEleven system with demo data: the dashboard, projects, a contract and its payment schedule, the calendar, leads and a report">
+                <source src="assets/case/oneeleven-tour.webm" type="video/webm" />
+                <source src="assets/case/oneeleven-tour.mp4" type="video/mp4" />
+              </video>
+            </figure>
+          </div>
+        </section>
+
+        <!-- ============ THE CHALLENGE ============ -->
+        <section class="section case-brief">
+          <div class="container">
+            <div class="case-brief-wrap">
+              <div class="section-heading reveal">
+                <p class="eyebrow">The challenge</p>
+                <h2>A property sale has a lot of moving parts.</h2>
+              </div>
+
+              <div class="case-brief-copy reveal">
+                <p>
+                  Every apartment travels from a first enquiry to a viewing, a
+                  reservation, a contract and a schedule of payments that can run
+                  for years, often with an agent involved along the way.
+                </p>
+                <p>
+                  Keeping that straight across several developments, and knowing at
+                  any moment what is sold, what is paid and who needs a call back,
+                  is a job in itself. OneEleven needed one system the office could
+                  trust for all of it, shaped around the way they actually sell.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ WHAT IT COVERS ============ -->
+        <section class="section case-covers">
+          <div class="container">
+            <div class="section-heading reveal">
+              <p class="eyebrow">What we built</p>
+              <h2>Everything the sales office touches, in one place.</h2>
+            </div>
+
+            <ul class="case-caps reveal">
+              <li><span class="case-cap-name">Developments &amp; units</span><span class="case-cap-desc">Every project and apartment, with its status and price always current.</span></li>
+              <li><span class="case-cap-name">Buyers</span><span class="case-cap-desc">One record per buyer, with their apartment, contract and history together.</span></li>
+              <li><span class="case-cap-name">Contracts &amp; payments</span><span class="case-cap-desc">A payment schedule for every sale, showing what is paid and what is due.</span></li>
+              <li><span class="case-cap-name">Leads</span><span class="case-cap-desc">Website enquiries arrive in the system and are followed through to a sale.</span></li>
+              <li><span class="case-cap-name">Calendar</span><span class="case-cap-desc">Viewings, site visits and calls for the whole team in one shared view.</span></li>
+              <li><span class="case-cap-name">Campaigns</span><span class="case-cap-desc">Email and WhatsApp messages to buyers and agents who agreed to hear from them.</span></li>
+              <li><span class="case-cap-name">Agents</span><span class="case-cap-desc">The partner agents behind each sale and the commission they are owed.</span></li>
+              <li><span class="case-cap-name">Reports</span><span class="case-cap-desc">Sales, money and lead reports by development, ready to export.</span></li>
+            </ul>
+
+            <ul class="sc-list case-extras reveal" aria-label="Also included">
+              <li>Greek &amp; English</li>
+              <li>Office only sign in</li>
+              <li>User roles</li>
+              <li>Change history</li>
+              <li>Hosting &amp; maintenance</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- ============ INSIDE THE SYSTEM ============ -->
+        <section class="section case-inside">
+          <div class="container">
+            <div class="section-heading reveal">
+              <p class="eyebrow">Inside the system</p>
+              <h2>A look at the screens the office works in.</h2>
+              <p class="section-lede">
+                Shown with invented demo data. The real system is private to
+                OneEleven&rsquo;s office.
+              </p>
+            </div>
+
+            <!-- The screens as a slider. Without JavaScript it is still a
+                 row you can swipe or scroll sideways; case-slider.js adds
+                 the tabs, arrows and the gentle auto play. -->
+            <div class="case-slider reveal" data-case-slider aria-roledescription="carousel" aria-label="Screens from the OneEleven system">
+              <div class="case-tabs" aria-label="Choose a screen">
+                <button type="button" class="case-tab is-active" data-slide="0" aria-controls="case-slide-1" aria-current="true">Dashboard</button>
+                <button type="button" class="case-tab" data-slide="1" aria-controls="case-slide-2">Projects</button>
+                <button type="button" class="case-tab" data-slide="2" aria-controls="case-slide-3">Clients</button>
+                <button type="button" class="case-tab" data-slide="3" aria-controls="case-slide-4">Contracts</button>
+                <button type="button" class="case-tab" data-slide="4" aria-controls="case-slide-5">Leads</button>
+                <button type="button" class="case-tab" data-slide="5" aria-controls="case-slide-6">Calendar</button>
+                <button type="button" class="case-tab" data-slide="6" aria-controls="case-slide-7">Campaigns</button>
+                <button type="button" class="case-tab" data-slide="7" aria-controls="case-slide-8">Reports</button>
+              </div>
+
+              <div class="case-stage">
+                <ul class="case-track" tabindex="0">
+                <li class="case-slide" id="case-slide-1" aria-roledescription="slide" aria-label="1 of 8: Dashboard">
+                  <figure class="shot-frame">
+                    <span class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span class="shot-tag">Demo data</span></span>
+                    <img src="assets/case/oneeleven-dashboard.webp" width="1600" height="1120" loading="eager" alt="The OneEleven dashboard with demo figures for money collected and outstanding, and the payments that need attention" />
+                  </figure>
+                  <div class="case-slide-copy">
+                    <p class="case-row-num">01</p>
+                    <div>
+                      <h3>The day at a glance</h3>
+                      <p>What came in this month, what is still to come and the payments that need attention, as soon as the office signs in.</p>
+                    </div>
+                  </div>
+                </li>
+                <li class="case-slide" id="case-slide-2" aria-roledescription="slide" aria-label="2 of 8: Projects">
+                  <figure class="shot-frame">
+                    <span class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span class="shot-tag">Demo data</span></span>
+                    <img src="assets/case/oneeleven-projects.webp" width="1600" height="1120" loading="lazy" alt="The projects list with four demo developments, their completion dates, status and units sold" />
+                  </figure>
+                  <div class="case-slide-copy">
+                    <p class="case-row-num">02</p>
+                    <div>
+                      <h3>Every development at a glance</h3>
+                      <p>Units sold, available and in negotiation for each development, alongside the value sold so far.</p>
+                    </div>
+                  </div>
+                </li>
+                <li class="case-slide" id="case-slide-3" aria-roledescription="slide" aria-label="3 of 8: Clients">
+                  <figure class="shot-frame">
+                    <span class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span class="shot-tag">Demo data</span></span>
+                    <img src="assets/case/oneeleven-clients.webp" width="1600" height="1120" loading="lazy" alt="The clients list with demo buyers, their apartments, developments and assigned team members" />
+                  </figure>
+                  <div class="case-slide-copy">
+                    <p class="case-row-num">03</p>
+                    <div>
+                      <h3>Every buyer in one list</h3>
+                      <p>Each buyer with their apartment, development, where they came from and who in the team looks after them.</p>
+                    </div>
+                  </div>
+                </li>
+                <li class="case-slide" id="case-slide-4" aria-roledescription="slide" aria-label="4 of 8: Contracts">
+                  <figure class="shot-frame">
+                    <span class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span class="shot-tag">Demo data</span></span>
+                    <img src="assets/case/oneeleven-contract.webp" width="1600" height="1120" loading="lazy" alt="A demo contract with the price, amount paid, amount outstanding and its payment schedule" />
+                  </figure>
+                  <div class="case-slide-copy">
+                    <p class="case-row-num">04</p>
+                    <div>
+                      <h3>The money side of every sale</h3>
+                      <p>Each contract carries its own payment schedule, so the office can see what has been paid, what is due next and what is running late.</p>
+                    </div>
+                  </div>
+                </li>
+                <li class="case-slide" id="case-slide-5" aria-roledescription="slide" aria-label="5 of 8: Leads">
+                  <figure class="shot-frame">
+                    <span class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span class="shot-tag">Demo data</span></span>
+                    <img src="assets/case/oneeleven-leads.webp" width="1600" height="1120" loading="lazy" alt="The leads list with demo enquiries, their source, the team member assigned and their status" />
+                  </figure>
+                  <div class="case-slide-copy">
+                    <p class="case-row-num">05</p>
+                    <div>
+                      <h3>From enquiry to buyer</h3>
+                      <p>Enquiries from the website and social channels land in one list, each with where it came from, where it stands and who is looking after it.</p>
+                    </div>
+                  </div>
+                </li>
+                <li class="case-slide" id="case-slide-6" aria-roledescription="slide" aria-label="6 of 8: Calendar">
+                  <figure class="shot-frame">
+                    <span class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span class="shot-tag">Demo data</span></span>
+                    <img src="assets/case/oneeleven-calendar.webp" width="1600" height="1120" loading="lazy" alt="A month calendar with demo appointments and follow ups for the sales team" />
+                  </figure>
+                  <div class="case-slide-copy">
+                    <p class="case-row-num">06</p>
+                    <div>
+                      <h3>The team&rsquo;s week in one view</h3>
+                      <p>Appointments and follow ups for everyone, coloured by what is still to happen and what is already done.</p>
+                    </div>
+                  </div>
+                </li>
+                <li class="case-slide" id="case-slide-7" aria-roledescription="slide" aria-label="7 of 8: Campaigns">
+                  <figure class="shot-frame">
+                    <span class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span class="shot-tag">Demo data</span></span>
+                    <img src="assets/case/oneeleven-campaigns.webp" width="1600" height="1120" loading="lazy" alt="The campaigns page with demo campaigns, their audience, channel and status" />
+                  </figure>
+                  <div class="case-slide-copy">
+                    <p class="case-row-num">07</p>
+                    <div>
+                      <h3>Messages that respect consent</h3>
+                      <p>Campaigns reach buyers and agents by email or WhatsApp, and only ever the people who said yes.</p>
+                    </div>
+                  </div>
+                </li>
+                <li class="case-slide" id="case-slide-8" aria-roledescription="slide" aria-label="8 of 8: Reports">
+                  <figure class="shot-frame">
+                    <span class="shot-bar" aria-hidden="true"><i></i><i></i><i></i><span class="shot-tag">Demo data</span></span>
+                    <img src="assets/case/oneeleven-report-leads.webp" width="1600" height="1120" loading="lazy" alt="The leads report with demo figures: leads a month and how many became buyers" />
+                  </figure>
+                  <div class="case-slide-copy">
+                    <p class="case-row-num">08</p>
+                    <div>
+                      <h3>Numbers the office can act on</h3>
+                      <p>Lead, sales and money reports with simple filters, made for a weekly look rather than a data team.</p>
+                    </div>
+                  </div>
+                </li>
+                </ul>
+
+                <button type="button" class="case-arrow case-prev" aria-label="Previous screen"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <button type="button" class="case-arrow case-next" aria-label="Next screen"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              </div>
+
+              <div class="case-progress" aria-hidden="true"><span></span></div>
+            </div>
+
+            <p class="case-note reveal">
+              Every name, phone number, email and amount in these screens is invented.
+              No OneEleven client information appears on this page.
+            </p>
+          </div>
+        </section>
+
+        <!-- ============ FINAL CTA ============ -->
+        <section class="cta-banner">
+          <div class="container">
+            <div class="wave-plate reveal">
+              <canvas class="wave-canvas" aria-hidden="true"></canvas>
+              <div class="wave-scrim" aria-hidden="true"></div>
+
+              <div class="wave-content">
+                <div>
+                  <h2>Need a system built around how your business works?</h2>
+                  <p class="wave-lede">
+                    We build CRMs, internal tools and connected systems for businesses
+                    that have outgrown spreadsheets and inboxes.
+                  </p>
+                  <p class="wave-links">
+                    <a href="/digital-systems">How we build digital systems</a>
+                  </p>
+                </div>
+                <a href="/contact" class="button button-light">
+                  Talk to us about your business
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Closing client band. Same three logos as the home marquee but
+           small and static: at the foot of a page it is a reassurance,
+           not a headline. Keep this list and the marquee in index.html
+           in step. -->
+      <section class="client-band" aria-label="Our clients">
+        <div class="container">
+          <p class="client-band-label">Trusted by</p>
+
+          <ul class="client-band-list">
+              <li class="is-wip" style="--tile: #40252a" title="In development">
+                <img src="assets/clients/athanasiadou-law.png" alt="Athanasiadou Law Firm" loading="lazy" />
+              </li>
+              <li style="--tile: #ffffff">
+                <a href="https://www.mkakoullis.com/" target="_blank" rel="noopener noreferrer">
+                  <img src="assets/clients/m-kakoullis.png" alt="M. Kakoullis Property Developers" loading="lazy" />
+                </a>
+              </li>
+              <li class="is-wip" style="--tile: #f4f6f2" title="In development">
+                <img src="assets/clients/c-anthouli.png" alt="C. Anthouli Tax, Audit &amp; Advisory" loading="lazy" />
+              </li>
+              <li style="--tile: #f1f6f9">
+                <a href="/crm-oneeleven">
+                  <img src="assets/clients/oneeleven.png" alt="OneEleven" loading="lazy" />
+                </a>
+              </li>
+              <li style="--tile: #5a4544">
+                <a href="https://www.apexfitnesscentrecy.com/" target="_blank" rel="noopener noreferrer">
+                  <img src="assets/clients/apex-pilates.png" alt="APEX pilates by APEX Fitness Centre" loading="lazy" />
+                </a>
+              </li>
+              <li style="--tile: #1a5ce0">
+                <a href="https://rafaelinsurance.com/" target="_blank" rel="noopener noreferrer">
+                  <img src="assets/clients/rafael-insurance.png" alt="Rafael Agathokleous Insurance Advisor" loading="lazy" />
+                </a>
+              </li>
+          </ul>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <div class="container footer-wrap">
+          <a href="/" class="brand-footer" aria-label="ErgonSite home">
+            <img src="assets/logo.png" alt="ErgonSite Logo" class="brand-footer-img" />
+          </a>
+
+          <div class="footer-side">
+            <a href="mailto:info@ergonsite.com" class="footer-email">info@ergonsite.com</a>
+            <div class="social-nav social-nav-sm" aria-label="ErgonSite on social media">
+              <a
+                href="https://www.facebook.com/profile.php?id=61593076966436"
+                class="social-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="ErgonSite on Facebook"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>
+              </a>
+              <a
+                href="https://www.instagram.com/ergonsite/"
+                class="social-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="ErgonSite on Instagram"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 1 0 0-12.324zM12 16c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm7.846-10.405a1.441 1.441 0 0 1-2.88 0 1.44 1.44 0 0 1 2.88 0z"/></svg>
+              </a>
+              <a
+                href="https://www.linkedin.com/company/ergonsite/"
+                class="social-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="ErgonSite on LinkedIn"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <p class="footer-copy"><a href="/privacy" class="footer-legal">Privacy Policy</a> &middot; <a href="#" class="footer-legal" data-cookie-settings>Cookie settings</a> &middot; &copy; <span id="year">2026</span> ErgonSite. All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
+
+    <script src="consent.js"></script>
+    <script src="script.js"></script>
+    <script src="wave.js"></script>
+    <script src="network.js"></script>
+    <script src="case-slider.js"></script>
+  </body>
+</html>
