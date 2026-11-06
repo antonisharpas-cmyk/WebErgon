@@ -5040,3 +5040,21 @@ a {
     gap: 6px;
   }
 }
+
+/* A card with more than one destination (e.g. a client's Facebook and
+   Instagram) cannot be one big link, so the links sit in the foot. */
+.project-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.project-links .project-visit {
+  margin-top: 0;
+}
+
+.project-links .project-visit:hover,
+.project-links .project-visit:focus-visible {
+  color: var(--text);
+  gap: 11px;
+}
