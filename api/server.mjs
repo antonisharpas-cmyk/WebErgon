@@ -269,6 +269,44 @@ setInterval(() => {
   }
 }, Math.max(2000, Math.min(60_000, IDLE_CLOSE_MS / 2))).unref();
 
+
+/* ---------- enquiry emails ----------
+   Both go out from info@ergonsite.com (SMTP), replacing EmailJS:
+   a confirmation to the person who wrote, and an alert to the team. */
+function inquiryEmails(q) {
+  const first = q.name.split(/\s+/)[0];
+  const lines = [
+    ['Email', q.email], ['Phone', q.phone], ['Company', q.company], ['Needs', q.needs]
+  ].filter(([, v]) => v);
+
+  mailer.send({
+    to: q.email,
+    replyTo: NOTIFY_EMAIL,
+    subject: 'We received your enquiry | ErgonSite',
+    text: `Dear ${q.name},\n\nThank you for getting in touch with ErgonSite. This is a confirmation that we have received your enquiry, and a copy of your message is included below for your records.\n\nWe will come back to you as soon as possible, within 24 hours.\n\nYour message:\n${q.message}\n\nBest regards,\n\nErgonSite Team\ninfo@ergonsite.com\n+357 96 400 240\n${SITE_URL}`,
+    html: layout(`Thank you, ${first}`,
+      `<p style="margin:0 0 14px">Dear ${esc(q.name)},</p>
+       <p style="margin:0 0 14px">Thank you for getting in touch with ErgonSite. This is a confirmation that we have received your enquiry. A copy of your message is below for your records.</p>
+       <p style="margin:0 0 18px">We will come back to you as soon as possible, within 24 hours.</p>
+       <div style="background:#f5f5f7;border-radius:14px;padding:16px 18px;color:#1d1d1f">${textToHtml(q.message)}</div>
+       <p style="margin:22px 0 0">Best regards,<br><b>ErgonSite Team</b></p>`,
+      `ErgonSite &middot; <a href="mailto:info@ergonsite.com" style="color:#6e6e73">info@ergonsite.com</a> &middot; +357 96 400 240 &middot; <a href="${SITE_URL}" style="color:#6e6e73">ergonsite.com</a>`)
+  }).catch((err) => console.error('Enquiry confirmation failed:', err.message));
+
+  const consoleLink = `${PUBLIC_URL}/admin/#inquiry/${q.id}`;
+  mailer.send({
+    to: NOTIFY_EMAIL,
+    replyTo: q.email,
+    subject: `Enquiry from ${q.name}${q.company ? ' (' + q.company + ')' : ''}`,
+    text: `${q.name} sent an enquiry on ergonsite.com.\n\n${lines.map(([k, v]) => k + ': ' + v).join('\n')}\n\n${q.message}\n\nAnswer in the console: ${consoleLink}\n(or simply reply to this email)`,
+    html: layout(`New enquiry from ${q.name}`,
+      `<table role="presentation" style="font-size:14px;margin:0 0 14px">${lines.map(([k, v]) => `<tr><td style="color:#6e6e73;padding:2px 14px 2px 0">${k}</td><td>${esc(v)}</td></tr>`).join('')}</table>
+       <div style="background:#f5f5f7;border-radius:14px;padding:16px 18px;color:#1d1d1f">${textToHtml(q.message)}</div>
+       <p style="margin:22px 0 0"><a href="${consoleLink}" style="display:inline-block;background:#1b3a9e;color:#fff;text-decoration:none;padding:13px 22px;border-radius:999px;font-weight:600">Log in to the console and reply</a></p>`,
+      'You can also simply reply to this email: it goes straight to the person who wrote.')
+  }).catch((err) => console.error('Enquiry alert failed:', err.message));
+}
+
 /* ---------- views sent to the browser ---------- */
 const publicMsg = (m) => ({ id: m.id, from: m.from, text: m.text, at: m.at, name: m.from === 'visitor' ? undefined : TEAM_NAME });
 
@@ -416,6 +454,7 @@ async function publicApi(req, res, url) {
     if (!q.name || !EMAIL_RE.test(q.email) || !q.message) return send(res, 400, { message: 'Missing name, email or message.' });
     db.inquiries.push(q);
     store.save();
+    inquiryEmails(q);
     return send(res, 201, { ok: true });
   }
 
@@ -721,12 +760,20 @@ function serveSite(req, res, pathname) {
     const type = SITE_TYPES[path.extname(file).toLowerCase()];
     if (!type) return siteNotFound(res);
 
+    /* Pages, scripts and styles are re-checked on every visit, so a deploy
+       shows up straight away; images, video and fonts are kept for an hour. */
+    const fresh = /^(text\/|application\/(json|manifest))/.test(type);
     const headers = {
       'Content-Type': type,
-      'Cache-Control': type.startsWith('text/html') ? 'no-cache' : 'public, max-age=3600',
+      'Cache-Control': fresh ? 'no-cache' : 'public, max-age=3600',
       'Accept-Ranges': 'bytes',
       'Last-Modified': st.mtime.toUTCString()
     };
+    const since = Date.parse(String(req.headers['if-modified-since'] || ''));
+    if (since && Math.floor(st.mtimeMs / 1000) * 1000 <= since && !req.headers.range) {
+      res.writeHead(304, { 'Cache-Control': headers['Cache-Control'], 'Last-Modified': headers['Last-Modified'] });
+      return res.end();
+    }
     /* ergonsite.com is the real address: keep this copy out of Google. */
     if (ON_RENDER_HOST.test(String(req.headers.host || ''))) headers['X-Robots-Tag'] = 'noindex';
 

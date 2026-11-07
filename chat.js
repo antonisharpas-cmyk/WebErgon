@@ -12,9 +12,11 @@
 (function () {
   'use strict';
 
+  /* ergonsite.com is served by the same Render server as the chat, so on
+     the live site every call stays on the same address. */
   const API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
     ? 'http://localhost:4000'
-    : 'https://webergon.onrender.com';
+    : /(^|\.)ergonsite\.com$/.test(location.hostname) ? '' : 'https://ergonsite.com';
   const KEY = 'ergon.chat';
   const TEAM_NAME = 'ErgonSite Team';
 

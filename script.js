@@ -131,64 +131,11 @@ revealItems.forEach((item) => observer.observe(item));
    ===================================================================== */
 const WEB3FORMS_ACCESS_KEY = '7e7508ef-0f1c-4bd0-bdd0-41e032e92a44';
 
-/* =====================================================================
-   AUTO-CONFIRMATION TO THE ENQUIRER
-
-   Sent through EmailJS, because it is the one free way to send from
-   the real info@ergonsite.com mailbox with no backend: Web3Forms can
-   only deliver TO us, and its auto-responder sends from web3forms.com,
-   which is not our address.
-
-   ONE-TIME SETUP at https://www.emailjs.com (sign up with
-   info@ergonsite.com):
-     1. Email Services -> Add New Service -> connect the
-        info@ergonsite.com mailbox. Copy the Service ID.
-     2. Email Templates -> Create New Template. Set "To Email" to
-        {{email}}, "From Name" to ErgonSite, subject and body per the
-        template text in NOTES.md. Copy the Template ID.
-     3. Account -> General -> copy the Public Key.
-   Paste the three values below. All three are safe to publish — the
-   public key only lets pages send using YOUR templates to YOUR
-   configured service, nothing else.
-
-   The confirmation is fired after the enquiry itself has been
-   delivered, and a failure here is logged but never shown: the
-   enquiry got through, and that is the thing that matters.
-   ===================================================================== */
-const EMAILJS_SERVICE_ID = 'service_p6u9u5p';
-const EMAILJS_TEMPLATE_ID = 'template_zuejzg6';
-const EMAILJS_PUBLIC_KEY = 'd7VGpw1g1OJcwk6so';
-
-async function sendConfirmationEmail(payload) {
-  if (EMAILJS_SERVICE_ID.indexOf('PASTE-') === 0) {
-    console.warn('EmailJS not configured yet — no confirmation email sent to the enquirer.');
-    return;
-  }
-
-  try {
-    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        service_id: EMAILJS_SERVICE_ID,
-        template_id: EMAILJS_TEMPLATE_ID,
-        user_id: EMAILJS_PUBLIC_KEY,
-        template_params: {
-          name: payload.name,
-          email: payload.email,
-          company: payload.company,
-          needs: payload.needs,
-          message: payload.message
-        }
-      })
-    });
-    if (!response.ok) {
-      console.error('Confirmation email failed:', await response.text());
-    }
-  } catch (error) {
-    console.error('Confirmation email failed:', error);
-  }
-}
+/* Our own server on Render: enquiries, the confirmation email to the
+   enquirer, the team console and the live chat. */
+/* ergonsite.com is served by that same server, so on the live site the
+   calls stay on the same address (no cross-site request at all). */
+const ERGON_API = /(^|\.)ergonsite\.com$/.test(location.hostname) ? '' : 'https://ergonsite.com';
 
 const IS_LOCAL_BACKEND =
   location.protocol !== 'https:' &&
@@ -378,42 +325,55 @@ if (contactForm) {
             'info@ergonsite.com and we will pick it up.'
           );
         }
-        /* The subject carries the enquirer's name (and company) so each
-           enquiry has a distinct subject line. With a fixed subject the
-           inbox threads every notification into one long conversation,
-           which buries new enquiries under old ones. Two messages from
-           the same person will still thread together — that one is a
-           feature. */
-        await postJson('https://api.web3forms.com/submit', {
-          access_key: WEB3FORMS_ACCESS_KEY,
-          subject: 'Enquiry from ' + payload.name +
-            (payload.company ? ' (' + payload.company + ')' : '') +
-            ' — ergonsite.com',
-          from_name: payload.name,
-          name: payload.name,
-          email: payload.email,
-          company: payload.company,
-          phone: payload.phone,
-          needs: payload.needs,
-          message: payload.message
-        });
+        /* The enquiry goes to our own server (webergon.onrender.com),
+           which files it in the team console, emails it to
+           info@ergonsite.com and sends the enquirer a confirmation from
+           info@ergonsite.com. Web3Forms is kept only as a backup: if our
+           server cannot be reached, the enquiry still reaches the inbox
+           that way (without a confirmation), so it is never lost. */
+        let delivered = false;
+        let refused = null;      // our server answered "no" (bad input, too many): show it
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(function () { controller.abort(); }, 12000);
+          const res = await fetch(ERGON_API + '/api/inquiries', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(Object.assign({ page: location.pathname }, payload)),
+            credentials: 'omit',
+            mode: 'cors',
+            signal: controller.signal
+          });
+          clearTimeout(timer);
+          if (res.ok) {
+            delivered = true;
+          } else if (res.status === 400 || res.status === 429) {
+            let data = {};
+            try { data = await res.json(); } catch (e) { /* empty */ }
+            refused = data.message || 'Please check the form and try again.';
+          }
+        } catch (apiError) {
+          console.warn('ErgonSite API unreachable, using the Web3Forms backup:', apiError);
+        }
+        if (refused) throw new Error(refused);
 
-        // fire-and-forget on purpose: the enquiry is already delivered,
-        // so a hiccup here must not turn the thank-you into an error
-        sendConfirmationEmail(payload);
-
-        /* A copy for the team console (webergon.onrender.com), where enquiries
-           are answered. Also fire-and-forget: Web3Forms has already
-           delivered the enquiry, so the console being down must never
-           turn the visitor's thank-you into an error. */
-        fetch('https://webergon.onrender.com/api/inquiries', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.assign({ page: location.pathname }, payload)),
-          credentials: 'omit',
-          mode: 'cors',
-          keepalive: true
-        }).catch(function () {});
+        if (!delivered) {
+          /* The subject carries the enquirer's name (and company) so each
+             enquiry has a distinct subject line in the inbox. */
+          await postJson('https://api.web3forms.com/submit', {
+            access_key: WEB3FORMS_ACCESS_KEY,
+            subject: 'Enquiry from ' + payload.name +
+              (payload.company ? ' (' + payload.company + ')' : '') +
+              ' (ergonsite.com)',
+            from_name: payload.name,
+            name: payload.name,
+            email: payload.email,
+            company: payload.company,
+            phone: payload.phone,
+            needs: payload.needs,
+            message: payload.message
+          });
+        }
 
         /* Tell Analytics an enquiry happened. generate_lead is GA4's
            standard name for this, so it appears in reports without any
