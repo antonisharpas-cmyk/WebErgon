@@ -5,8 +5,7 @@
     <!-- Unlisted page. Not linked from anywhere on the site, not in
          sitemap.xml, and carries a noindex directive, so it only ever
          reaches people we hand the link (or the QR) to.
-         The only script is our own wave.js — the same animated dot field
-         that runs on ergonsite.com/contact. No analytics, no cookies.
+         No scripts at all, no analytics, no cookies.
 
          Every path below is RELATIVE (../assets/...), not root-relative,
          so the page renders correctly whether it is opened straight off
@@ -16,48 +15,50 @@
     <meta name="robots" content="noindex, nofollow" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ErgonSite | All our links</title>
-    <meta name="description" content="Every way to reach ErgonSite. Web design and development in Larnaca, Cyprus." />
+    <meta name="description" content="Every way to reach ErgonSite. Websites, online shops, booking systems and CRMs for businesses in Cyprus." />
 
+    <link rel="icon" type="image/png" sizes="192x192" href="../assets/favicon-192.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="../assets/favicon-48.png" />
     <link rel="icon" type="image/png" href="../assets/favicon.png" />
     <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" />
-    <meta name="theme-color" content="#07111f" />
+    <meta name="theme-color" content="#ffffff" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="ErgonSite" />
     <meta property="og:title" content="ErgonSite | All our links" />
-    <meta property="og:description" content="Web design &amp; Development Studio. Larnaca, Cyprus." />
+    <meta property="og:description" content="Websites, online shops, booking systems and CRMs for businesses in Cyprus." />
     <meta property="og:url" content="https://ergonsite.com/link" />
     <meta property="og:image" content="https://ergonsite.com/assets/link-share.png" />
     <meta name="twitter:card" content="summary_large_image" />
 
     <style>
-      /* Self-hosted Manrope — the same files the rest of the site uses, so
-         no visitor IP is handed to Google Fonts just to render text. */
+      /* Same look as ergonsite.com: white and Apple grey, Inter Tight
+         headings, Inter text, the ErgonSite blue as the one accent.
+         Fonts are self-hosted, so no visitor IP goes to Google. */
       @font-face {
-        font-family: 'Manrope';
+        font-family: 'Inter';
         font-style: normal;
         font-display: swap;
-        font-weight: 200 800;
-        src: url('../assets/fonts/manrope-latin-wght-normal.woff2') format('woff2-variations');
+        font-weight: 100 900;
+        src: url('../assets/fonts/inter-latin-wght-normal.woff2') format('woff2-variations');
         unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
       }
       @font-face {
-        font-family: 'Manrope';
+        font-family: 'Inter Tight';
         font-style: normal;
         font-display: swap;
-        font-weight: 200 800;
-        src: url('../assets/fonts/manrope-latin-ext-wght-normal.woff2') format('woff2-variations');
-        unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+        font-weight: 100 900;
+        src: url('../assets/fonts/inter-tight-latin-wght-normal.woff2') format('woff2-variations');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
       }
 
       :root {
-        --bg: #07111f;
-        --text: #edf5ff;
-        --muted: #a8bad2;
-        --line: rgba(165, 195, 255, 0.18);
-        --line-hover: rgba(165, 195, 255, 0.42);
-        --primary: #7d8cff;
-        --primary-2: #6ce2d1;
+        --ink: #1d1d1f;
+        --ink-2: #424245;
+        --muted: #6e6e73;
+        --soft: #f5f5f7;
+        --line: #e5e5ea;
+        --blue: #1b3a9e;
       }
 
       * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -65,52 +66,17 @@
 
       body {
         min-height: 100dvh;
-        background: var(--bg);
-        color: var(--text);
-        font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        background: #fff;
+        color: var(--ink);
+        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
         -webkit-font-smoothing: antialiased;
         display: flex;
         justify-content: center;
-        padding: 56px 22px 46px;
-        position: relative;
+        padding: 64px 22px 46px;
         overflow-x: hidden;
       }
 
-      /* ---------- animated dot field ----------
-         Reuses wave.js and the .wave-plate / .wave-canvas hooks from the
-         contact page, so there is one implementation of the wave, not two.
-         The PNG is the fallback and wave.js clears it via .wave-live once
-         the canvas is actually drawing. */
-      .wave-plate {
-        position: fixed;
-        inset: 0;
-        z-index: 0;
-        overflow: hidden;
-        background-color: #071120;
-        background-image: url("../assets/wave-dots.png");
-        background-size: cover;
-        background-position: center;
-      }
-      .wave-plate.wave-live { background-image: none; }
-      .wave-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0.8; }
-
-      /* keeps the ribbons from fighting the text in the middle column */
-      .wave-scrim {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background:
-          radial-gradient(ellipse 58% 48% at 50% 46%,
-            rgba(6, 14, 26, 0.95) 0%, rgba(6, 14, 26, 0.86) 45%,
-            rgba(6, 14, 26, 0.5) 78%, rgba(6, 14, 26, 0.28) 100%),
-          linear-gradient(180deg,
-            rgba(6, 14, 26, 0.78) 0%, rgba(6, 14, 26, 0.22) 26%,
-            rgba(6, 14, 26, 0.22) 72%, rgba(6, 14, 26, 0.82) 100%);
-      }
-
       .shell {
-        position: relative;
-        z-index: 1;
         width: 100%;
         max-width: 420px;
         display: flex;
@@ -119,57 +85,57 @@
       }
 
       /* ---------- head ---------- */
-      .head { margin-bottom: 40px; }
-      .head img { width: 200px; height: auto; display: block; margin: 0 auto; }
+      .head { margin-bottom: 36px; animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+      .head img { width: 210px; height: auto; display: block; margin: 0 auto; }
       .tagline {
-        margin-top: 22px;
-        font-size: 1rem;
-        font-weight: 600;
-        letter-spacing: 0.01em;
+        margin-top: 20px;
+        font-size: 1.02rem;
+        line-height: 1.5;
         color: var(--muted);
       }
 
       /* ---------- buttons ---------- */
+      /* buttons only: an animated parent would trap the fixed pop-up */
+      main > .btn { animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+      main > .btn:nth-child(2) { animation-delay: 0.04s; }
+      main > .btn:nth-child(3) { animation-delay: 0.08s; }
+      main > .btn:nth-child(4) { animation-delay: 0.12s; }
+      main > .btn:nth-child(5) { animation-delay: 0.16s; }
+      main > .btn:nth-child(7) { animation-delay: 0.2s; }
+      @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
       .btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 13px;
+        gap: 12px;
         width: 100%;
         min-height: 58px;
-        padding: 17px 22px;
-        border: 1px solid var(--line);
+        padding: 16px 22px;
+        border: 0;
         border-radius: 999px;
-        background: rgba(8, 17, 30, 0.5);
-        backdrop-filter: blur(3px);
-        -webkit-backdrop-filter: blur(3px);
-        color: var(--text);
+        background: var(--soft);
+        color: var(--ink);
         text-decoration: none;
         font: inherit;
-        font-size: 0.82rem;
-        font-weight: 700;
-        letter-spacing: 0.13em;
-        text-transform: uppercase;
+        font-size: 1rem;
+        font-weight: 600;
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
-        transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
       }
-      .btn + .btn, .btn + label.btn, label.btn + .btn { margin-top: 13px; }
-      .btn:hover, .btn:focus-visible {
-        background: rgba(20, 36, 58, 0.72);
-        border-color: var(--line-hover);
-        transform: translateY(-1px);
-      }
-      .btn svg {
-        flex: 0 0 auto;
-        width: 19px; height: 19px;
-        display: block;
-        color: var(--muted);
-      }
-      .btn:hover svg { color: var(--text); }
+      .btn + .btn, .btn + label.btn, label.btn + .btn { margin-top: 12px; }
+      .btn:hover, .btn:focus-visible { background: #e8e8ed; transform: translateY(-1px); }
+      .btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+      .btn svg { flex: 0 0 auto; width: 20px; height: 20px; display: block; }
 
-      /* identical to the rest — it only gets a little breathing room above */
-      .btn-contact { margin-top: 22px; }
+      /* the website: the main action, in the site's black pill */
+      .btn-main { background: var(--ink); color: #fff; }
+      .btn-main:hover, .btn-main:focus-visible { background: #000; }
+
+      /* contact: the one colour block, ErgonSite blue */
+      .btn-contact { margin-top: 22px; background: var(--blue); color: #fff; }
+      .btn-contact:hover, .btn-contact:focus-visible { background: #15307f; }
 
       /* ---------- pop-up (checkbox toggle, no JavaScript) ---------- */
       .vh {
@@ -191,9 +157,9 @@
       .backdrop {
         position: absolute;
         inset: 0;
-        background: rgba(3, 7, 14, 0.74);
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
+        background: rgba(10, 12, 20, 0.4);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
         cursor: pointer;
         animation: fade 0.22s ease both;
       }
@@ -201,11 +167,10 @@
         position: relative;
         width: 100%;
         max-width: 380px;
-        padding: 28px 22px 20px;
-        border: 1px solid var(--line);
-        border-radius: 24px;
-        background: #0c1729;
-        box-shadow: 0 30px 90px rgba(2, 6, 14, 0.7);
+        padding: 30px 22px 18px;
+        border-radius: 26px;
+        background: #fff;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.25);
         text-align: center;
         animation: pop 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
       }
@@ -215,50 +180,45 @@
         to { opacity: 1; transform: none; }
       }
       .sheet h2 {
-        font-size: 1.12rem;
-        font-weight: 800;
-        letter-spacing: -0.02em;
+        font-family: 'Inter Tight', 'Inter', sans-serif;
+        font-size: 1.35rem;
+        font-weight: 650;
+        letter-spacing: -0.03em;
       }
       .sheet p.lead {
-        margin-top: 9px;
+        margin-top: 8px;
         margin-bottom: 22px;
-        font-size: 0.84rem;
-        font-weight: 500;
+        font-size: 0.9rem;
         line-height: 1.5;
         color: var(--muted);
       }
       /* each channel keeps a hint of its own colour so it is recognisable */
-      .m-call svg { color: var(--primary-2); }
+      .m-call svg { color: var(--blue); }
       .m-wa svg { color: #25d366; }
-      .m-vi svg { color: #8f81f5; }
+      .m-vi svg { color: #7360f2; }
       .close {
         display: block;
-        margin-top: 18px;
+        margin-top: 14px;
         padding: 10px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: rgba(168, 186, 210, 0.7);
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: var(--blue);
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
       }
-      .close:hover { color: var(--text); }
+      .close:hover { text-decoration: underline; text-underline-offset: 3px; }
 
       /* ---------- foot ---------- */
       .foot {
-        margin-top: 42px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.19em;
-        text-transform: uppercase;
-        color: rgba(168, 186, 210, 0.55);
+        margin-top: 40px;
+        font-size: 0.85rem;
+        color: var(--muted);
       }
 
       @media (max-width: 380px) {
-        body { padding: 40px 16px 34px; }
-        .head img { width: 175px; }
-        .btn { min-height: 54px; font-size: 0.76rem; letter-spacing: 0.11em; gap: 11px; }
+        body { padding: 44px 16px 34px; }
+        .head img { width: 180px; }
+        .btn { min-height: 54px; font-size: 0.95rem; gap: 10px; }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -268,19 +228,15 @@
   </head>
 
   <body>
-    <div class="wave-plate">
-      <canvas class="wave-canvas" aria-hidden="true"></canvas>
-      <div class="wave-scrim" aria-hidden="true"></div>
-    </div>
 
     <div class="shell">
       <header class="head">
-        <img src="../assets/logo.png" alt="ErgonSite" />
-        <p class="tagline">Web design &amp; Development Studio</p>
+        <img src="../assets/wordmark-ink.png" alt="ErgonSite" width="840" height="182" />
+        <p class="tagline">Websites, online shops, booking systems<br />and CRMs for businesses in Cyprus.</p>
       </header>
 
       <main>
-        <a class="btn" href="https://ergonsite.com/">
+        <a class="btn btn-main" href="https://ergonsite.com/">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.6V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.6"/></svg>
           Visit the website
         </a>
@@ -344,6 +300,5 @@
       <footer class="foot">Larnaca &middot; Cyprus</footer>
     </div>
 
-    <script src="../wave.js"></script>
   </body>
 </html>

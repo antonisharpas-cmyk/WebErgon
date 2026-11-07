@@ -12,7 +12,7 @@
    which is a far worse bug than a missing offline page.
    ===================================================================== */
 
-const CACHE = 'ergonsite-v2';
+const CACHE = 'ergonsite-v3';
 
 /* Only the shell: enough to show something sensible with no signal. */
 const PRECACHE = [
@@ -21,6 +21,7 @@ const PRECACHE = [
   '/theme.css',
   '/assets/mark-ink.png',
   '/assets/icon-192.png',
+  '/assets/apple-touch-icon.png',
   '/site.webmanifest'
 ];
 
