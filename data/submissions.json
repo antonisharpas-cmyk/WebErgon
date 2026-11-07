@@ -1,0 +1,125 @@
+[
+  {
+    "id": 1786874116143,
+    "name": "test",
+    "email": "test@test.com",
+    "company": "tst",
+    "message": "ttst",
+    "createdAt": "2026-08-16T09:55:16.143Z"
+  },
+  {
+    "id": 1786874162879,
+    "name": "Antonis Harpas",
+    "email": "crapantonis@gmail.com",
+    "company": "sdf",
+    "message": "df",
+    "createdAt": "2026-08-16T09:56:02.879Z"
+  },
+  {
+    "id": 1786874438246,
+    "name": "jkjkn",
+    "email": "a@a.com",
+    "company": "km",
+    "message": "kk",
+    "createdAt": "2026-08-16T10:00:38.246Z"
+  },
+  {
+    "id": 1786874571991,
+    "name": "as",
+    "email": "a@a.com",
+    "company": "dkjo",
+    "message": "ojoj",
+    "createdAt": "2026-08-16T10:02:51.991Z"
+  },
+  {
+    "id": 1786874597052,
+    "name": "Antonis Harpas",
+    "email": "crapantonis@gmail.com",
+    "company": "asas",
+    "message": "ksskn",
+    "createdAt": "2026-08-16T10:03:17.052Z"
+  },
+  {
+    "id": 1786874715743,
+    "name": "Antonis Harpas",
+    "email": "crapantonis@gmail.com",
+    "company": "d",
+    "message": "d",
+    "createdAt": "2026-08-16T10:05:15.743Z"
+  },
+  {
+    "id": 1786876199459,
+    "name": "Antonis Harpas",
+    "email": "crapantonis@gmail.com",
+    "company": "a",
+    "message": "a",
+    "createdAt": "2026-08-16T10:29:59.459Z"
+  },
+  {
+    "id": 1786876389651,
+    "name": "Test User",
+    "email": "test@example.com",
+    "company": "",
+    "message": "Hello world",
+    "createdAt": "2026-08-16T10:33:09.651Z"
+  },
+  {
+    "id": 1786876432946,
+    "name": "Verification Test",
+    "email": "verify@example.com",
+    "company": "WebErgon Test",
+    "message": "Testing backend fix",
+    "createdAt": "2026-08-16T10:33:52.946Z"
+  },
+  {
+    "id": 1786876664796,
+    "name": "kostas",
+    "email": "kostas@kostas",
+    "company": "dmm",
+    "message": "msm",
+    "createdAt": "2026-08-16T10:37:44.796Z"
+  },
+  {
+    "id": 1786878671031,
+    "name": "tyt",
+    "email": "yty@ah.com",
+    "company": "jhajh",
+    "message": "hhj",
+    "createdAt": "2026-08-16T11:11:11.031Z"
+  },
+  {
+    "id": 1786977242065,
+    "name": "Antonis Harpas",
+    "email": "crapantonis@gmail.com",
+    "company": "sad",
+    "message": "sd",
+    "createdAt": "2026-08-17T14:34:02.065Z"
+  },
+  {
+    "id": 1787035199358,
+    "name": "Antonis Harpas",
+    "email": "crapantonis@gmail.com",
+    "company": "sd",
+    "phone": "+357 12222222",
+    "message": "21222222222",
+    "createdAt": "2026-08-18T06:39:59.358Z"
+  },
+  {
+    "id": 1787035367976,
+    "name": "Network Test PC",
+    "email": "test@example.com",
+    "company": "Remote Office",
+    "phone": "",
+    "message": "Testing inquiry from another computer on the network.",
+    "createdAt": "2026-08-18T06:42:47.976Z"
+  },
+  {
+    "id": 1787036432194,
+    "name": "a",
+    "email": "a@a.com",
+    "company": "kdk",
+    "phone": "+357 999999999",
+    "message": "jksjsjksjskjsks",
+    "createdAt": "2026-08-18T07:00:32.194Z"
+  }
+]
