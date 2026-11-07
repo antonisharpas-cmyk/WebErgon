@@ -24,7 +24,12 @@ ADMIN_EMAIL, ADMIN_PASSWORD and ADMIN_NAME. The first owner account is
 created from those on the first start; add the rest of the team from the
 console's Team page.
 
-Point `api.ergonsite.com` at the service (Render > Settings > Custom
-Domains, then a CNAME record at the DNS provider). The website's chat
-bubble (`chat.js`) and the pages' Content-Security-Policy both use that
-address.
+The service is reachable at https://webergon.onrender.com (console:
+/admin/). The website's chat bubble (`chat.js`), the contact form copy
+(`script.js`) and the pages' Content-Security-Policy all use that address.
+If you later give it a custom domain such as api.ergonsite.com, change it
+in those three places and in PUBLIC_URL.
+
+The existing Render service starts `node server.js` from the repository
+root; on Render that file hands over to `api/server.mjs`, so no build or
+start command needs changing.

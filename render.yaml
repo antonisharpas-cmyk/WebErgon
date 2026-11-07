@@ -22,7 +22,7 @@ services:
       - key: DATA_DIR
         value: /var/data
       - key: PUBLIC_URL
-        value: https://api.ergonsite.com
+        value: https://webergon.onrender.com
       - key: NOTIFY_EMAIL
         value: info@ergonsite.com
       - key: ALLOWED_ORIGINS

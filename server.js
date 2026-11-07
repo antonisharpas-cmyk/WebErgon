@@ -1,3 +1,22 @@
+/* ---------------------------------------------------------------------
+   ON RENDER, THIS FILE RUNS THE NEW API INSTEAD.
+
+   The Render service "webergon" was created back when this file was the
+   backend, and it still starts `node server.js` from the repository
+   root. The live chat, enquiries and team console now live in api/
+   (api/server.mjs), so when Render starts this file (RENDER is set
+   there and nowhere else) it hands straight over to that. Running
+   `node server.js` on your own computer is unchanged: it still serves
+   the site locally with the old /api/contact backend.
+   --------------------------------------------------------------------- */
+if (process.env.RENDER) {
+  import('./api/server.mjs').catch((err) => {
+    console.error('Could not start the ErgonSite API:', err);
+    process.exit(1);
+  });
+  return;
+}
+
 const http = require('http');
 const fs = require('fs');
 const path = require('path');

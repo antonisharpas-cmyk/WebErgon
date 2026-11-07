@@ -402,11 +402,11 @@ if (contactForm) {
         // so a hiccup here must not turn the thank-you into an error
         sendConfirmationEmail(payload);
 
-        /* A copy for the team console (api.ergonsite.com), where enquiries
+        /* A copy for the team console (webergon.onrender.com), where enquiries
            are answered. Also fire-and-forget: Web3Forms has already
            delivered the enquiry, so the console being down must never
            turn the visitor's thank-you into an error. */
-        fetch('https://api.ergonsite.com/api/inquiries', {
+        fetch('https://webergon.onrender.com/api/inquiries', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(Object.assign({ page: location.pathname }, payload)),

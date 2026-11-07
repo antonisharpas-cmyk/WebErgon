@@ -45,6 +45,9 @@ const ALLOWED_ORIGINS = new Set(
 const IS_DEV = !env.RENDER && !env.NODE_ENV?.startsWith('prod');
 if (IS_DEV) ['http://localhost:8765', 'http://localhost:3000', 'http://127.0.0.1:8765'].forEach((o) => ALLOWED_ORIGINS.add(o));
 
+if (env.RENDER && !env.DATA_DIR) {
+  console.warn('DATA_DIR is not set: chats and enquiries are kept on a temporary disk and are LOST on every deploy. Add a Render disk at /var/data and set DATA_DIR=/var/data.');
+}
 const store = openStore(DATA_DIR);
 const db = store.data;
 const mailer = makeMailer(env);

@@ -12,7 +12,7 @@
 
   const API = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
     ? 'http://localhost:4000'
-    : 'https://api.ergonsite.com';
+    : 'https://webergon.onrender.com';
   const KEY = 'ergon.chat';
   const TEAM = [
     ['/assets/chat/michail-athanasiades.webp', 'Michail'],
