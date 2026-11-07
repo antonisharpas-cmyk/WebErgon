@@ -831,6 +831,11 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/admin/' || p.startsWith('/admin/')) return serveConsole(req, res, url);
 
+    /* "Work" was renamed "Projects": old links and bookmarks still land right */
+    if (/^\/work(\.html|\/)?$/.test(p)) {
+      res.writeHead(301, { Location: '/projects' + (url.search || ''), 'Cache-Control': 'public, max-age=86400' });
+      return res.end();
+    }
     if (req.method === 'GET' || req.method === 'HEAD') return serveSite(req, res, p);
 
     return send(res, 404, { message: 'Not found' });
