@@ -21,6 +21,25 @@ async function postJson(path, payload) {
     );
   }
 
+  /* A static file server — VS Code Live Server, http-server, `python -m
+     http.server` — will happily serve the HTML but has no /api/contact
+     route, so it rejects the POST with 404/405/501 instead of answering
+     with JSON. That is a setup problem, not something the visitor did,
+     and the generic message below gives whoever is developing the site
+     no clue. Name it in the console. */
+  if (response.status === 404 || response.status === 405 || response.status === 501) {
+    console.error(
+      'POST ' + path + ' returned ' + response.status + '. This page is being ' +
+      'served by a static file server with no API. Start the backend with ' +
+      '"node server.js" and open the site on the port it prints (3000 by ' +
+      'default) — the form posts to whatever origin the page came from.'
+    );
+    throw new Error(
+      'We could not reach the server, so your message was not sent. ' +
+      'Please email us directly at info@ergonsite.com and we will pick it up.'
+    );
+  }
+
   const raw = (await response.text()).trim();
 
   if (!raw) {
@@ -96,7 +115,86 @@ revealItems.forEach((item) => observer.observe(item));
 /* =====================================================================
    Enquiry form: validate here for a fast, friendly response, and again
    on the server, which is the copy that actually matters.
+
+   WHERE THE FORM SENDS, AND WHY THERE ARE TWO PATHS
+   The live site is on GitHub Pages, which serves files and can run
+   nothing — no /api/contact, no Node. In production the form therefore
+   posts to Web3Forms, a form-to-email relay, which delivers each
+   enquiry to the inbox tied to the access key. On localhost or a LAN
+   address the local Node backend exists, so the form keeps posting to
+   /api/contact and the admin page keeps working.
+
+   ONE-TIME SETUP: get a free access key at https://web3forms.com
+   (enter info@ergonsite.com, the key arrives by email) and paste it
+   below. The key only routes messages to your inbox — it is designed
+   to be public, so shipping it in this file is fine.
    ===================================================================== */
+const WEB3FORMS_ACCESS_KEY = '7e7508ef-0f1c-4bd0-bdd0-41e032e92a44';
+
+/* =====================================================================
+   AUTO-CONFIRMATION TO THE ENQUIRER
+
+   Sent through EmailJS, because it is the one free way to send from
+   the real info@ergonsite.com mailbox with no backend: Web3Forms can
+   only deliver TO us, and its auto-responder sends from web3forms.com,
+   which is not our address.
+
+   ONE-TIME SETUP at https://www.emailjs.com (sign up with
+   info@ergonsite.com):
+     1. Email Services -> Add New Service -> connect the
+        info@ergonsite.com mailbox. Copy the Service ID.
+     2. Email Templates -> Create New Template. Set "To Email" to
+        {{email}}, "From Name" to ErgonSite, subject and body per the
+        template text in NOTES.md. Copy the Template ID.
+     3. Account -> General -> copy the Public Key.
+   Paste the three values below. All three are safe to publish — the
+   public key only lets pages send using YOUR templates to YOUR
+   configured service, nothing else.
+
+   The confirmation is fired after the enquiry itself has been
+   delivered, and a failure here is logged but never shown: the
+   enquiry got through, and that is the thing that matters.
+   ===================================================================== */
+const EMAILJS_SERVICE_ID = 'service_p6u9u5p';
+const EMAILJS_TEMPLATE_ID = 'template_zuejzg6';
+const EMAILJS_PUBLIC_KEY = 'd7VGpw1g1OJcwk6so';
+
+async function sendConfirmationEmail(payload) {
+  if (EMAILJS_SERVICE_ID.indexOf('PASTE-') === 0) {
+    console.warn('EmailJS not configured yet — no confirmation email sent to the enquirer.');
+    return;
+  }
+
+  try {
+    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id: EMAILJS_SERVICE_ID,
+        template_id: EMAILJS_TEMPLATE_ID,
+        user_id: EMAILJS_PUBLIC_KEY,
+        template_params: {
+          name: payload.name,
+          email: payload.email,
+          company: payload.company,
+          needs: payload.needs,
+          message: payload.message
+        }
+      })
+    });
+    if (!response.ok) {
+      console.error('Confirmation email failed:', await response.text());
+    }
+  } catch (error) {
+    console.error('Confirmation email failed:', error);
+  }
+}
+
+const IS_LOCAL_BACKEND =
+  location.protocol !== 'https:' &&
+  (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ||
+   /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(location.hostname));
+
 const contactForm = document.getElementById('contactForm');
 const formMessage = document.getElementById('formMessage');
 
@@ -138,7 +236,7 @@ function validateEmail(raw) {
   if (at < 1) return 'An email address needs an @ symbol.';
   if (value.slice(0, at).length > 64) return 'The part before the @ is too long.';
   if (!EMAIL_RE.test(value)) {
-    return 'That does not look like a complete email address — check the part after the @.';
+    return 'That does not look like a complete email address. Check the part after the @.';
   }
 
   const domain = value.slice(at + 1).toLowerCase();
@@ -155,7 +253,7 @@ function validatePhone(raw) {
   const value = raw.trim();
   if (!value) return '';                 // optional
   if (!/^[0-9\s().-]+$/.test(value)) {
-    return 'Digits only please — pick the country code from the list.';
+    return 'Digits only please, and pick the country code from the list.';
   }
   const digits = value.replace(/[^0-9]/g, '');
   if (digits.length < 6 || digits.length > 14) {
@@ -199,7 +297,10 @@ function checkField(input) {
 }
 
 if (contactForm) {
-  const fields = Array.from(contactForm.querySelectorAll('input, textarea'));
+  // the multi-select writes to a hidden input, which has no label to
+  // flag and cannot take focus, so it is checked separately below
+  const fields = Array.from(contactForm.querySelectorAll('input, textarea'))
+    .filter((el) => el.type !== 'hidden');
 
   fields.forEach((input) => {
     // validate on blur, then live once the field is already flagged, so
@@ -219,6 +320,22 @@ if (contactForm) {
       if (checkField(input) && !firstInvalid) firstInvalid = input;
     });
 
+    /* "What do you need?" is a group of checkboxes, so the loop above
+       cannot see it — an unanswered one still has to stop the send. */
+    const needsInput = contactForm.querySelector('input[name="needs"]');
+    if (needsInput && !needsInput.value.trim()) {
+      const needsField = needsInput.closest('.field');
+      if (needsField) {
+        needsField.classList.add('has-error');
+        const needsMsg = needsField.querySelector('.field-msg');
+        if (needsMsg) needsMsg.textContent = 'Please tell us what you need.';
+        if (!firstInvalid) {
+          firstInvalid = needsField.querySelector('.multiselect-trigger') ||
+            needsField.querySelector('input[type="checkbox"]');
+        }
+      }
+    }
+
     if (firstInvalid) {
       formMessage.textContent = 'Please correct the highlighted fields.';
       formMessage.classList.add('error');
@@ -237,6 +354,7 @@ if (contactForm) {
       email: (data.email || '').trim(),
       company: (data.company || '').trim(),
       phone: localNumber ? (dial + ' ' + localNumber).trim() : '',
+      needs: (data.needs || '').trim(),
       message: (data.message || '').trim()
     };
 
@@ -247,54 +365,55 @@ if (contactForm) {
     if (submitButton) submitButton.disabled = true;
 
     try {
-      let savedToAdmin = false;
-      let emailSent = false;
-
-      // 1. Save to Back Office / Admin Page database
-      try {
+      if (IS_LOCAL_BACKEND) {
         await postJson('/api/contact', payload);
-        savedToAdmin = true;
-      } catch (adminErr) {
-        console.warn('Could not save to local admin database:', adminErr);
-      }
-
-      // 2. Send email notification directly to info@ergonsite.com
-      try {
-        const emailGatewayRes = await fetch('https://formsubmit.co/ajax/info@ergonsite.com', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            _subject: `New ErgonSite Inquiry from ${payload.name}`,
-            _template: 'table',
-            _captcha: 'false',
-            name: payload.name,
-            email: payload.email,
-            company: payload.company,
-            phone: payload.phone,
-            message: payload.message
-          })
+      } else {
+        if (WEB3FORMS_ACCESS_KEY.indexOf('PASTE-YOUR') === 0) {
+          console.error(
+            'The enquiry form has no Web3Forms access key yet. Get one free at ' +
+            'https://web3forms.com and paste it into WEB3FORMS_ACCESS_KEY in script.js.'
+          );
+          throw new Error(
+            'The form is not connected yet. Please email us directly at ' +
+            'info@ergonsite.com and we will pick it up.'
+          );
+        }
+        /* The subject carries the enquirer's name (and company) so each
+           enquiry has a distinct subject line. With a fixed subject the
+           inbox threads every notification into one long conversation,
+           which buries new enquiries under old ones. Two messages from
+           the same person will still thread together — that one is a
+           feature. */
+        await postJson('https://api.web3forms.com/submit', {
+          access_key: WEB3FORMS_ACCESS_KEY,
+          subject: 'Enquiry from ' + payload.name +
+            (payload.company ? ' (' + payload.company + ')' : '') +
+            ' — ergonsite.com',
+          from_name: payload.name,
+          name: payload.name,
+          email: payload.email,
+          company: payload.company,
+          phone: payload.phone,
+          needs: payload.needs,
+          message: payload.message
         });
 
-        if (emailGatewayRes.ok) {
-          const resData = await emailGatewayRes.json();
-          if (resData.success === 'true' || resData.success === true) {
-            emailSent = true;
-          }
-        }
-      } catch (gatewayErr) {
-        console.warn('Email gateway notice:', gatewayErr);
-      }
+        // fire-and-forget on purpose: the enquiry is already delivered,
+        // so a hiccup here must not turn the thank-you into an error
+        sendConfirmationEmail(payload);
 
-      if (savedToAdmin || emailSent) {
-        formMessage.textContent = 'Thank you! Your inquiry was sent to info@ergonsite.com and saved to the Back Office.';
-        contactForm.reset();
-        fields.forEach((input) => setError(input, ''));
-      } else {
-        throw new Error('Could not process submission automatically. Please email us directly at info@ergonsite.com.');
+        /* Tell Analytics an enquiry happened. generate_lead is GA4's
+           standard name for this, so it appears in reports without any
+           configuration. window.gtag always exists (consent.js defines
+           it), and if the visitor declined analytics the call goes
+           nowhere, which is exactly right. */
+        if (typeof window.gtag === 'function') {
+          window.gtag('event', 'generate_lead', { form: 'contact' });
+        }
       }
+      formMessage.textContent = 'Thank you, your details were sent. We will be in touch shortly.';
+      contactForm.reset();
+      fields.forEach((input) => setError(input, ''));
     } catch (error) {
       formMessage.textContent = error.message || 'Failed to send your request.';
       formMessage.classList.add('error');
@@ -395,22 +514,117 @@ if (contactForm) {
   });
 })();
 
-/* Clone the client marquee once so the -50% scroll loops seamlessly.
-   Doing it here rather than in the HTML means the logo list only has to
-   be maintained in one place. */
-const marqueeTrack = document.querySelector('.marquee-track');
+/* =====================================================================
+   Clone the client marquee until half the track is wider than the
+   viewport, then let CSS shift it by -50%: the second half lands
+   exactly where the first began, so the loop is seamless.
 
-if (marqueeTrack) {
-  const originals = Array.from(marqueeTrack.children);
+   Cloning ONCE is only enough when the logo list is already wider than
+   the screen. With three clients it is not, and a single duplicate
+   leaves a visible empty gap sweeping past. Deriving the copy count
+   from the measured width means the logo list can be any length.
+   ===================================================================== */
+(function () {
+  const track = document.querySelector('.marquee-track');
+  if (!track) return;
 
-  originals.forEach((item) => {
-    const clone = item.cloneNode(true);
-    clone.setAttribute('aria-hidden', 'true');
-    // Keep the duplicated logos out of the tab order, otherwise keyboard
-    // users hit every client link twice.
-    clone.querySelectorAll('a').forEach((link) => {
-      link.setAttribute('tabindex', '-1');
+  const originals = Array.from(track.children);
+  if (!originals.length) return;
+
+  function fill() {
+    // start from a clean single set so a resize does not keep appending
+    track.querySelectorAll('[data-marquee-clone]').forEach((n) => n.remove());
+
+    const setWidth = originals.reduce(
+      (total, item) => total + item.getBoundingClientRect().width +
+        parseFloat(getComputedStyle(item).marginRight || 0),
+      0
+    );
+    if (!setWidth) return;
+
+    const viewport = track.parentElement.getBoundingClientRect().width;
+    // half the track has to cover the viewport, and the track needs an
+    // even number of sets for -50% to land on a set boundary
+    const copies = Math.max(2, Math.ceil(viewport / setWidth) * 2);
+
+    const batch = document.createDocumentFragment();
+    for (let copy = 1; copy < copies; copy += 1) {
+      originals.forEach((item) => {
+        const clone = item.cloneNode(true);
+        clone.setAttribute('data-marquee-clone', '');
+        clone.setAttribute('aria-hidden', 'true');
+        // keep duplicated logos out of the tab order, otherwise keyboard
+        // users hit every client link several times over
+        clone.querySelectorAll('a').forEach((link) => {
+          link.setAttribute('tabindex', '-1');
+        });
+        batch.appendChild(clone);
+      });
+    }
+    track.appendChild(batch);
+  }
+
+  fill();
+
+  // the chips are a fixed width, so only a viewport change matters
+  let resizeTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(fill, 200);
+  });
+})();
+
+/* =====================================================================
+   SERVICE WORKER
+
+   Registered from here rather than an inline <script> because the CSP
+   whitelists one specific inline hash; a new inline block would be
+   blocked. Failure is non-fatal — the site works fine without it, we
+   just lose the install prompt and offline fallback.
+   ===================================================================== */
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/sw.js').catch(function (error) {
+      console.warn('Service worker registration failed:', error);
     });
-    marqueeTrack.appendChild(clone);
   });
 }
+
+/* =====================================================================
+   Phone and tablet menu: the bars button opens the page links as a
+   full-height sheet under the header.
+   ===================================================================== */
+(function () {
+  const bar = document.querySelector('.topbar');
+  const toggle = bar && bar.querySelector('.nav-toggle');
+  const nav = bar && bar.querySelector('.main-nav');
+  if (!toggle || !nav) return;
+
+  const wide = window.matchMedia('(min-width: 941px)');
+
+  function set(open) {
+    bar.classList.toggle('nav-open', open);
+    document.documentElement.classList.toggle('nav-lock', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  }
+
+  toggle.addEventListener('click', function () {
+    set(toggle.getAttribute('aria-expanded') !== 'true');
+  });
+
+  nav.addEventListener('click', function (e) {
+    if (e.target.closest('a')) set(false);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && bar.classList.contains('nav-open')) {
+      set(false);
+      toggle.focus();
+    }
+  });
+
+  (wide.addEventListener ? wide.addEventListener.bind(wide, 'change') : wide.addListener.bind(wide))(function (e) {
+    if (e.matches) set(false);
+  });
+})();

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Unlisted page. Not linked from anywhere on the site, not in
+         sitemap.xml, and carries a noindex directive, so it only ever
+         reaches people we hand the link (or the QR) to.
+         The only script is our own wave.js — the same animated dot field
+         that runs on ergonsite.com/contact. No analytics, no cookies.
+
+         Every path below is RELATIVE (../assets/...), not root-relative,
+         so the page renders correctly whether it is opened straight off
+         the disk during development or served from ergonsite.com/link/. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'none'; script-src 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ErgonSite — all our links</title>
+    <meta name="description" content="Every way to reach ErgonSite — web design and development in Larnaca, Cyprus." />
+
+    <link rel="icon" type="image/png" href="../assets/favicon.png" />
+    <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" />
+    <meta name="theme-color" content="#07111f" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ErgonSite" />
+    <meta property="og:title" content="ErgonSite — all our links" />
+    <meta property="og:description" content="Web design &amp; Development Studio. Larnaca, Cyprus." />
+    <meta property="og:url" content="https://ergonsite.com/link" />
+    <meta property="og:image" content="https://ergonsite.com/assets/link-share.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <style>
+      /* Self-hosted Manrope — the same files the rest of the site uses, so
+         no visitor IP is handed to Google Fonts just to render text. */
+      @font-face {
+        font-family: 'Manrope';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 200 800;
+        src: url('../assets/fonts/manrope-latin-wght-normal.woff2') format('woff2-variations');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      @font-face {
+        font-family: 'Manrope';
+        font-style: normal;
+        font-display: swap;
+        font-weight: 200 800;
+        src: url('../assets/fonts/manrope-latin-ext-wght-normal.woff2') format('woff2-variations');
+        unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+      }
+
+      :root {
+        --bg: #07111f;
+        --text: #edf5ff;
+        --muted: #a8bad2;
+        --line: rgba(165, 195, 255, 0.18);
+        --line-hover: rgba(165, 195, 255, 0.42);
+        --primary: #7d8cff;
+        --primary-2: #6ce2d1;
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { -webkit-text-size-adjust: 100%; }
+
+      body {
+        min-height: 100dvh;
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        justify-content: center;
+        padding: 56px 22px 46px;
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      /* ---------- animated dot field ----------
+         Reuses wave.js and the .wave-plate / .wave-canvas hooks from the
+         contact page, so there is one implementation of the wave, not two.
+         The PNG is the fallback and wave.js clears it via .wave-live once
+         the canvas is actually drawing. */
+      .wave-plate {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        background-color: #071120;
+        background-image: url("../assets/wave-dots.png");
+        background-size: cover;
+        background-position: center;
+      }
+      .wave-plate.wave-live { background-image: none; }
+      .wave-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0.8; }
+
+      /* keeps the ribbons from fighting the text in the middle column */
+      .wave-scrim {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(ellipse 58% 48% at 50% 46%,
+            rgba(6, 14, 26, 0.95) 0%, rgba(6, 14, 26, 0.86) 45%,
+            rgba(6, 14, 26, 0.5) 78%, rgba(6, 14, 26, 0.28) 100%),
+          linear-gradient(180deg,
+            rgba(6, 14, 26, 0.78) 0%, rgba(6, 14, 26, 0.22) 26%,
+            rgba(6, 14, 26, 0.22) 72%, rgba(6, 14, 26, 0.82) 100%);
+      }
+
+      .shell {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 420px;
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+      }
+
+      /* ---------- head ---------- */
+      .head { margin-bottom: 40px; }
+      .head img { width: 200px; height: auto; display: block; margin: 0 auto; }
+      .tagline {
+        margin-top: 22px;
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        color: var(--muted);
+      }
+
+      /* ---------- buttons ---------- */
+      .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 13px;
+        width: 100%;
+        min-height: 58px;
+        padding: 17px 22px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(8, 17, 30, 0.5);
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
+        color: var(--text);
+        text-decoration: none;
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+      }
+      .btn + .btn, .btn + label.btn, label.btn + .btn { margin-top: 13px; }
+      .btn:hover, .btn:focus-visible {
+        background: rgba(20, 36, 58, 0.72);
+        border-color: var(--line-hover);
+        transform: translateY(-1px);
+      }
+      .btn svg {
+        flex: 0 0 auto;
+        width: 19px; height: 19px;
+        display: block;
+        color: var(--muted);
+      }
+      .btn:hover svg { color: var(--text); }
+
+      /* identical to the rest — it only gets a little breathing room above */
+      .btn-contact { margin-top: 22px; }
+
+      /* ---------- pop-up (checkbox toggle, no JavaScript) ---------- */
+      .vh {
+        position: absolute;
+        width: 1px; height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      #contact-toggle:checked ~ .modal { display: flex; }
+      .backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(3, 7, 14, 0.74);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        cursor: pointer;
+        animation: fade 0.22s ease both;
+      }
+      .sheet {
+        position: relative;
+        width: 100%;
+        max-width: 380px;
+        padding: 28px 22px 20px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: #0c1729;
+        box-shadow: 0 30px 90px rgba(2, 6, 14, 0.7);
+        text-align: center;
+        animation: pop 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes pop {
+        from { opacity: 0; transform: translateY(16px) scale(0.97); }
+        to { opacity: 1; transform: none; }
+      }
+      .sheet h2 {
+        font-size: 1.12rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      .sheet p.lead {
+        margin-top: 9px;
+        margin-bottom: 22px;
+        font-size: 0.84rem;
+        font-weight: 500;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+      /* each channel keeps a hint of its own colour so it is recognisable */
+      .m-call svg { color: var(--primary-2); }
+      .m-wa svg { color: #25d366; }
+      .m-vi svg { color: #8f81f5; }
+      .close {
+        display: block;
+        margin-top: 18px;
+        padding: 10px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(168, 186, 210, 0.7);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .close:hover { color: var(--text); }
+
+      /* ---------- foot ---------- */
+      .foot {
+        margin-top: 42px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.19em;
+        text-transform: uppercase;
+        color: rgba(168, 186, 210, 0.55);
+      }
+
+      @media (max-width: 380px) {
+        body { padding: 40px 16px 34px; }
+        .head img { width: 175px; }
+        .btn { min-height: 54px; font-size: 0.76rem; letter-spacing: 0.11em; gap: 11px; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * { animation: none !important; transition: none !important; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wave-plate">
+      <canvas class="wave-canvas" aria-hidden="true"></canvas>
+      <div class="wave-scrim" aria-hidden="true"></div>
+    </div>
+
+    <div class="shell">
+      <header class="head">
+        <img src="../assets/logo.png" alt="ErgonSite" />
+        <p class="tagline">Web design &amp; Development Studio</p>
+      </header>
+
+      <main>
+        <a class="btn" href="https://ergonsite.com/">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.6V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.6"/></svg>
+          Visit the website
+        </a>
+
+        <a class="btn" href="https://www.facebook.com/profile.php?id=61593076966436" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg>
+          Facebook
+        </a>
+
+        <a class="btn" href="https://www.instagram.com/ergonsite/" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 1 0 0-12.324zM12 16c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm7.846-10.405a1.441 1.441 0 0 1-2.88 0 1.44 1.44 0 0 1 2.88 0z"/></svg>
+          Instagram
+        </a>
+
+        <a class="btn" href="https://www.linkedin.com/company/ergonsite/" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          LinkedIn
+        </a>
+
+        <a class="btn" href="mailto:info@ergonsite.com">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>
+          Email us
+        </a>
+
+        <!-- The pop-up is driven by this checkbox, so the page still needs
+             no JavaScript at all and the strict CSP above stays intact. -->
+        <input type="checkbox" id="contact-toggle" class="vh" />
+
+        <label class="btn btn-contact" for="contact-toggle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2a9 9 0 0 1 9 9"/><path d="M13 6a5 5 0 0 1 5 5"/><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></svg>
+          Contact us
+        </label>
+
+        <div class="modal" role="dialog" aria-modal="true" aria-label="Contact ErgonSite">
+          <label class="backdrop" for="contact-toggle" aria-label="Close"></label>
+
+          <div class="sheet">
+            <h2>How would you like to reach us?</h2>
+            <p class="lead">+357 96 400 240 &middot; info@ergonsite.com</p>
+
+            <a class="btn m-call" href="tel:+35796400240">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></svg>
+              Call
+            </a>
+
+            <a class="btn m-wa" href="https://wa.me/35796400240" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+              WhatsApp
+            </a>
+
+            <a class="btn m-vi" href="viber://chat?number=%2B35796400240">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.4 0C9.473.028 5.333.344 3.02 2.467 1.302 4.187.696 6.7.633 9.817.57 12.933.488 18.776 6.12 20.36h.003l-.004 2.416s-.037.977.61 1.177c.777.242 1.234-.5 1.98-1.302.407-.44.972-1.084 1.397-1.58 3.85.326 6.812-.416 7.15-.525.776-.252 5.176-.816 5.892-6.657.74-6.02-.36-9.83-2.34-11.546-.596-.55-3.006-2.3-8.375-2.323 0 0-.395-.025-1.037-.017zm.058 1.693c.545-.004.88.017.88.017 4.542.02 6.717 1.388 7.222 1.846 1.675 1.435 2.53 4.868 1.906 9.897v.002c-.604 4.878-4.174 5.184-4.832 5.395-.28.09-2.882.737-6.153.524 0 0-2.436 2.94-3.197 3.704-.12.12-.26.167-.352.144-.13-.033-.166-.188-.165-.414l.02-4.018c-4.762-1.32-4.485-6.292-4.43-8.895.054-2.604.543-4.738 1.996-6.173 1.96-1.773 5.474-2.018 7.11-2.03zm.38 2.602c-.167 0-.303.135-.304.302 0 .167.133.303.3.305 1.624.01 2.946.537 4.028 1.592 1.073 1.046 1.62 2.468 1.633 4.334.002.167.14.3.307.3.166-.002.3-.138.3-.304-.014-1.984-.618-3.596-1.816-4.764-1.19-1.16-2.692-1.753-4.447-1.765zm-3.96.695c-.19-.032-.4.005-.616.117l-.01.002c-.43.247-.816.562-1.146.932-.002.004-.006.004-.008.008-.267.323-.42.638-.46.948-.008.046-.01.093-.007.14 0 .136.022.27.065.4l.013.01c.135.48.473 1.276 1.205 2.604.42.768.903 1.5 1.446 2.186.27.344.56.673.87.984l.132.132c.31.308.64.6.984.87.686.543 1.418 1.027 2.186 1.447 1.328.733 2.126 1.07 2.604 1.206l.01.014c.13.042.265.064.402.063.046.002.092 0 .138-.008.31-.036.627-.19.948-.46.004 0 .003-.002.008-.005.37-.33.683-.72.93-1.148l.003-.01c.225-.432.15-.842-.18-1.12-.004 0-.698-.58-1.037-.83-.36-.255-.73-.492-1.113-.71-.51-.285-1.032-.106-1.248.174l-.447.564c-.23.283-.657.246-.657.246-3.12-.796-3.955-3.955-3.955-3.955s-.037-.426.248-.656l.563-.448c.277-.215.456-.737.17-1.248-.217-.383-.454-.756-.71-1.115-.25-.34-.826-1.033-.83-1.035-.137-.165-.31-.265-.502-.297zm4.49.88c-.158.002-.29.124-.3.282-.01.167.115.312.282.324 1.16.085 2.017.466 2.645 1.15.63.688.93 1.524.906 2.57-.002.168.13.306.3.31.166.003.305-.13.31-.297.025-1.175-.334-2.193-1.067-2.994-.74-.81-1.777-1.253-3.05-1.346h-.024zm.463 1.63c-.16.002-.29.127-.3.287-.008.167.12.31.288.32.523.028.875.175 1.113.422.24.245.388.62.416 1.164.01.167.15.295.318.287.167-.008.295-.15.287-.317-.03-.644-.215-1.178-.58-1.557-.367-.378-.893-.574-1.52-.607h-.018z"/></svg>
+              Viber
+            </a>
+
+            <label class="close" for="contact-toggle">Close</label>
+          </div>
+        </div>
+      </main>
+
+      <footer class="foot">Larnaca &middot; Cyprus</footer>
+    </div>
+
+    <script src="../wave.js"></script>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+# GitHub Pages (Jekyll) build config.
+# These files stay in the repository for local development but are NOT
+# published to the live site, so the back office and server source are
+# never reachable at ergonsite.com — a common penetration-test finding.
+exclude:
+  - server.js
+  - admin.html
+  - admin.js
+  - start.bat
+  - data/
+  - NOTES.md
+  - cursor-demos.html
+  - package.json
+  - render.yaml
+  - vercel.json
+  - README.md
