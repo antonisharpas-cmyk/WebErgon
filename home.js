@@ -1,7 +1,11 @@
 /* =====================================================================
-   Homepage: project carousel arrows, and the hero tour video.
+   Homepage: project carousel arrows, the landing video, and the
+   scrolling Google reviews.
    ===================================================================== */
 (function () {
+  const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- project carousel ---------- */
   const track = document.querySelector('.hm-track');
   const arrows = document.querySelectorAll('.hm-arrow');
 
@@ -32,11 +36,54 @@
     update();
   }
 
-  /* People who ask for less motion get the poster frame, not a
-     looping screen recording. */
-  const video = document.querySelector('.hm-video');
-  if (video && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    video.removeAttribute('autoplay');
-    video.pause();
+  /* ---------- landing video ----------
+     People who ask for less motion get the still poster frame. */
+  const landing = document.querySelector('.hm-landing-video');
+  if (landing && REDUCED) {
+    landing.removeAttribute('autoplay');
+    landing.pause();
+  }
+
+  /* ---------- reviews marquee ----------
+     The cards in the HTML are the real list. Here they are repeated
+     until one lap is wider than the screen, then the lap is doubled so
+     the CSS animation can slide exactly half the track and loop with
+     no visible jump. Copies are hidden from screen readers. */
+  const rvTrack = document.querySelector('.rv-track');
+  if (rvTrack && !REDUCED) {
+    const originals = Array.from(rvTrack.children);
+
+    function build() {
+      rvTrack.querySelectorAll('[data-rv-clone]').forEach(function (n) { n.remove(); });
+      rvTrack.classList.remove('is-running');
+
+      const lap = rvTrack.scrollWidth;
+      if (!lap) return;
+      const laps = Math.max(1, Math.ceil(window.innerWidth / lap));
+
+      function addSet() {
+        originals.forEach(function (card) {
+          const c = card.cloneNode(true);
+          c.setAttribute('data-rv-clone', '');
+          c.setAttribute('aria-hidden', 'true');
+          rvTrack.appendChild(c);
+        });
+      }
+
+      for (let i = 1; i < laps; i++) addSet();      // first half
+      for (let i = 0; i < laps; i++) addSet();      // second half
+
+      const half = rvTrack.scrollWidth / 2;
+      rvTrack.style.setProperty('--rv-duration', Math.round(half / 40) + 's');
+      rvTrack.classList.add('is-running');
+    }
+
+    let width = window.innerWidth;
+    build();
+    window.addEventListener('resize', function () {
+      if (Math.abs(window.innerWidth - width) < 40) return;
+      width = window.innerWidth;
+      build();
+    });
   }
 })();

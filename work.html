@@ -9,7 +9,7 @@
          HSTS) are set in server.js for local runs; on GitHub Pages, which
          cannot send custom headers, framing is blocked by the guard in
          consent.js instead. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self' https://api.web3forms.com https://api.emailjs.com; img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-iDpB8zSCsS0khCVO2BXDZVjfh20wK5mmCQ3e3s6txlM=' https://www.googletagmanager.com; connect-src 'self' https://api.web3forms.com https://api.emailjs.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self' https://api.web3forms.com https://api.emailjs.com; img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-iDpB8zSCsS0khCVO2BXDZVjfh20wK5mmCQ3e3s6txlM=' https://www.googletagmanager.com; frame-src https://www.apexfitnesscentrecy.com https://apexfitnesscentrecy.com https://www.mkakoullis.com https://mkakoullis.com https://rafaelinsurance.com https://www.rafaelinsurance.com; media-src 'self'; connect-src 'self' https://api.web3forms.com https://api.emailjs.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
@@ -34,6 +34,7 @@
           </a>
 
           <nav class="main-nav" aria-label="Main navigation">
+            <a href="/">Home</a>
             <a href="/work" class="is-current" aria-current="page">Work</a>
             <a href="/services">Services</a>
             <a href="/team">Team</a>
@@ -68,6 +69,7 @@
 
             <div class="work-grid work-grid-cases">
               <article class="project-card reveal">
+                <button type="button" class="ov-btn" data-ov-video="/assets/case/oneeleven-tour.mp4" data-ov-label="OneEleven CRM &middot; demo data" data-ov-link="/crm-oneeleven" data-ov-title="OneEleven" aria-label="Overview of OneEleven"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg><span>Overview</span></button>
                 <a href="/crm-oneeleven">
                   <span class="project-preview is-stacked" style="--tile: #f1f6f9">
                     <img src="assets/clients/oneeleven.png" alt="OneEleven" loading="lazy" />
@@ -102,6 +104,7 @@
               </article>
 
               <article class="project-card reveal">
+                <button type="button" class="ov-btn" data-ov-url="https://www.apexfitnesscentrecy.com/" data-ov-title="APEX pilates" aria-label="Overview of APEX pilates"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg><span>Overview</span></button>
                 <a href="https://www.apexfitnesscentrecy.com/" target="_blank" rel="noopener noreferrer">
                   <span class="project-preview" style="--tile: #5a4544">
                     <img src="assets/clients/apex-pilates.png" alt="APEX pilates by APEX Fitness Centre" loading="lazy" />
@@ -136,6 +139,7 @@
               </article>
 
               <article class="project-card reveal">
+                <button type="button" class="ov-btn" data-ov-url="https://www.mkakoullis.com/" data-ov-title="M. Kakoullis" aria-label="Overview of M. Kakoullis"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg><span>Overview</span></button>
                 <a href="https://www.mkakoullis.com/" target="_blank" rel="noopener noreferrer">
                   <span class="project-preview" style="--tile: #ffffff">
                     <img src="assets/clients/m-kakoullis.png" alt="M. Kakoullis Property Developers" loading="lazy" />
@@ -170,6 +174,7 @@
               </article>
 
               <article class="project-card reveal">
+                <button type="button" class="ov-btn" data-ov-url="https://rafaelinsurance.com/" data-ov-title="Rafael Agathokleous" aria-label="Overview of Rafael Agathokleous"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg><span>Overview</span></button>
                 <a href="https://rafaelinsurance.com/" target="_blank" rel="noopener noreferrer">
                   <span class="project-preview" style="--tile: #1a5ce0">
                     <img src="assets/clients/rafael-insurance.png" alt="Rafael Agathokleous Insurance Advisor" loading="lazy" />
@@ -446,5 +451,6 @@
 
     <script src="consent.js"></script>
     <script src="script.js"></script>
+    <script src="overview.js"></script>
   </body>
 </html>
