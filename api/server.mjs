@@ -42,6 +42,8 @@ const ALLOWED_ORIGINS = new Set(
   (env.ALLOWED_ORIGINS || 'https://ergonsite.com,https://www.ergonsite.com')
     .split(',').map((s) => s.trim()).filter(Boolean)
 );
+try { ALLOWED_ORIGINS.add(new URL(PUBLIC_URL).origin); } catch (e) { /* bad PUBLIC_URL: ignore */ }
+if (env.RENDER_EXTERNAL_URL) ALLOWED_ORIGINS.add(env.RENDER_EXTERNAL_URL.replace(/\/$/, ''));
 const IS_DEV = !env.RENDER && !env.NODE_ENV?.startsWith('prod');
 if (IS_DEV) ['http://localhost:8765', 'http://localhost:3000', 'http://127.0.0.1:8765'].forEach((o) => ALLOWED_ORIGINS.add(o));
 
@@ -556,6 +558,79 @@ function serveConsole(req, res, url) {
   fs.createReadStream(file).pipe(res);
 }
 
+
+/* ---------- the website itself ----------
+   The same files GitHub Pages publishes at ergonsite.com, so this
+   address shows the real site rather than an error. Only public file
+   types are served, and everything GitHub Pages does not publish
+   (_config.yml's exclude list: the server code, the old back office,
+   notes, data) is refused here too. */
+const SITE_DIR = path.resolve(HERE, '..');
+const SITE_TYPES = {
+  '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8', '.webmanifest': 'application/manifest+json', '.xml': 'application/xml; charset=utf-8',
+  '.txt': 'text/plain; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp',
+  '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.gif': 'image/gif', '.woff2': 'font/woff2', '.woff': 'font/woff',
+  '.mp4': 'video/mp4', '.webm': 'video/webm', '.pdf': 'application/pdf'
+};
+const SITE_DENY = /^\/(api|data|node_modules|admin|claude outputs)(\/|$)|^\/(server\.js|admin\.html|admin\.js|start\.bat|notes\.md|readme\.md|cursor-demos\.html|package(-lock)?\.json|render\.yaml|vercel\.json|_config\.yml)$|\/\./i;
+const ON_RENDER_HOST = /\.onrender\.com$/i;
+
+function serveSite(req, res, pathname) {
+  let rel;
+  try { rel = decodeURIComponent(pathname); } catch { return send(res, 400, { message: 'Bad request' }); }
+  if (SITE_DENY.test(rel)) return siteNotFound(res);
+
+  const candidates = rel.endsWith('/')
+    ? [rel + 'index.html']
+    : path.extname(rel) ? [rel] : [rel + '.html', rel + '/index.html'];
+
+  for (const c of candidates) {
+    const file = path.normalize(path.join(SITE_DIR, c));
+    if (!file.startsWith(SITE_DIR + path.sep)) return siteNotFound(res);
+    let st;
+    try { st = fs.statSync(file); } catch { continue; }
+    if (!st.isFile()) continue;
+    const type = SITE_TYPES[path.extname(file).toLowerCase()];
+    if (!type) return siteNotFound(res);
+
+    const headers = {
+      'Content-Type': type,
+      'Cache-Control': type.startsWith('text/html') ? 'no-cache' : 'public, max-age=3600',
+      'Accept-Ranges': 'bytes',
+      'Last-Modified': st.mtime.toUTCString()
+    };
+    /* ergonsite.com is the real address: keep this copy out of Google. */
+    if (ON_RENDER_HOST.test(String(req.headers.host || ''))) headers['X-Robots-Tag'] = 'noindex';
+
+    /* Video needs byte ranges, or Safari will not play it. */
+    const range = /^bytes=(\d*)-(\d*)$/.exec(String(req.headers.range || ''));
+    if (range && (range[1] || range[2])) {
+      let start = range[1] ? Number(range[1]) : st.size - Number(range[2]);
+      let end = range[1] && range[2] ? Number(range[2]) : st.size - 1;
+      if (start < 0) start = 0;
+      if (start >= st.size || end < start) {
+        res.writeHead(416, { 'Content-Range': `bytes */${st.size}` });
+        return res.end();
+      }
+      end = Math.min(end, st.size - 1);
+      res.writeHead(206, { ...headers, 'Content-Range': `bytes ${start}-${end}/${st.size}`, 'Content-Length': end - start + 1 });
+      if (req.method === 'HEAD') return res.end();
+      return fs.createReadStream(file, { start, end }).pipe(res);
+    }
+
+    res.writeHead(200, { ...headers, 'Content-Length': st.size });
+    if (req.method === 'HEAD') return res.end();
+    return fs.createReadStream(file).pipe(res);
+  }
+  return siteNotFound(res);
+}
+
+function siteNotFound(res) {
+  res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' });
+  res.end('<!doctype html><meta charset="utf-8"><title>Not found | ErgonSite</title><body style="font-family:system-ui,sans-serif;text-align:center;padding:80px 20px;color:#1d1d1f"><h1 style="letter-spacing:-.03em">Page not found</h1><p><a href="/" style="color:#1b3a9e">Back to the homepage</a></p>');
+}
+
 /* ---------- server ---------- */
 const server = http.createServer(async (req, res) => {
   setBaseHeaders(res);
@@ -582,10 +657,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (p === '/admin/' || p.startsWith('/admin/')) return serveConsole(req, res, url);
 
-    if (p === '/' || p === '/robots.txt') {
-      res.writeHead(p === '/' ? 302 : 200, p === '/' ? { Location: '/admin/' } : { 'Content-Type': 'text/plain' });
-      return res.end(p === '/' ? '' : 'User-agent: *\nDisallow: /\n');
-    }
+    if (req.method === 'GET' || req.method === 'HEAD') return serveSite(req, res, p);
 
     return send(res, 404, { message: 'Not found' });
   } catch (err) {
