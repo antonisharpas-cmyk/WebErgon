@@ -589,3 +589,42 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
     });
   });
 }
+
+/* =====================================================================
+   Phone and tablet menu: the bars button opens the page links as a
+   full-height sheet under the header.
+   ===================================================================== */
+(function () {
+  const bar = document.querySelector('.topbar');
+  const toggle = bar && bar.querySelector('.nav-toggle');
+  const nav = bar && bar.querySelector('.main-nav');
+  if (!toggle || !nav) return;
+
+  const wide = window.matchMedia('(min-width: 941px)');
+
+  function set(open) {
+    bar.classList.toggle('nav-open', open);
+    document.documentElement.classList.toggle('nav-lock', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  }
+
+  toggle.addEventListener('click', function () {
+    set(toggle.getAttribute('aria-expanded') !== 'true');
+  });
+
+  nav.addEventListener('click', function (e) {
+    if (e.target.closest('a')) set(false);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && bar.classList.contains('nav-open')) {
+      set(false);
+      toggle.focus();
+    }
+  });
+
+  (wide.addEventListener ? wide.addEventListener.bind(wide, 'change') : wide.addListener.bind(wide))(function (e) {
+    if (e.matches) set(false);
+  });
+})();
