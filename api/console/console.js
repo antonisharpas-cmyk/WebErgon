@@ -163,7 +163,7 @@
         h('span', { class: 'avatar', style: 'background:' + colorFor(x.visitor.email) }, initials(x.visitor.name), x.visitorOnline ? h('i', { class: 'dot-online', title: 'On the website now' }) : null),
         h('span', { class: 'who', text: x.visitor.name }),
         h('span', { class: 'when', text: x.last ? when(x.last.at) : '' }),
-        h('span', { class: 'prev', text: x.last ? (x.last.from === 'staff' ? 'You: ' : '') + x.last.text : '' })
+        h('span', { class: 'prev', text: x.last ? ({ staff: 'Team: ', auto: 'Auto: ', system: 'Closed: ' }[x.last.from] || '') + x.last.text : '' })
       ))
     ));
     $('#chatEmpty').hidden = chats.length > 0;
@@ -226,6 +226,7 @@
         h('h3', { text: c.visitor.name }),
         h('div', { class: 'meta' },
           h('a', { href: 'mailto:' + c.visitor.email, text: c.visitor.email }), ' · ',
+          c.visitor.phone ? [h('a', { href: 'tel:' + c.visitor.phone.replace(/[^0-9+]/g, ''), text: c.visitor.phone }), ' · '] : null,
           h('span', { id: 'chatOnline', text: c.visitorOnline ? 'On the website now' : 'Not on the website' }),
           c.page ? ' · started on ' + c.page : '')
       ),
@@ -286,9 +287,12 @@
         thread.append(h('div', { class: 'day', text: new Date(m.at).toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' }) }));
         lastDay = day;
       }
-      thread.append(h('div', { class: 'msg ' + m.from },
+      const label = m.from === 'staff' ? (m.staffName || 'Team') + ' (visitors see ErgonSite Team) · '
+        : m.from === 'auto' ? 'Automatic reply · '
+        : m.from === 'system' ? 'Closed automatically · ' : '';
+      thread.append(h('div', { class: 'msg ' + (m.from === 'visitor' ? 'visitor' : 'staff') + (m.from === 'auto' || m.from === 'system' ? ' is-auto' : '') },
         m.text,
-        h('small', { text: (m.from === 'staff' ? (m.staffName || 'ErgonSite') + ' · ' : '') + new Date(m.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })
+        h('small', { text: label + new Date(m.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })
       ));
     }
     state.lastDay = lastDay;
@@ -402,6 +406,28 @@
       await api('/password', { method: 'POST', body: { current: f.current.value, next: f.next.value } });
       toast('Password changed'); f.reset();
     } catch (err) { $('#pwError').textContent = err.message; }
+  });
+
+  /* ---------------- show / hide password ---------------- */
+  const EYE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
+  const EYE_OFF = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 4.4-1M9.9 9.9a3 3 0 0 0 4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  $$('input[type=password]').forEach((input) => {
+    const wrap = h('span', { class: 'pw-wrap' });
+    input.parentNode.insertBefore(wrap, input);
+    wrap.append(input);
+    const btn = h('button', { type: 'button', class: 'pw-eye', 'aria-label': 'Show password', 'aria-pressed': 'false' });
+    btn.innerHTML = EYE;
+    btn.addEventListener('click', () => {
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.innerHTML = show ? EYE_OFF : EYE;
+      btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      btn.setAttribute('aria-pressed', String(show));
+      input.focus();
+    });
+    wrap.append(btn);
+    /* a form reset puts the password back to hidden */
+    if (input.form) input.form.addEventListener('reset', () => { input.type = 'password'; btn.innerHTML = EYE; btn.setAttribute('aria-pressed', 'false'); });
   });
 
   boot();

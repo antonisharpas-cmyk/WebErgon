@@ -15,6 +15,7 @@ export function makeMailer(env) {
       enabled: false,
       async send(msg) {
         console.log('[mail:not-sent]', JSON.stringify({ to: msg.to, subject: msg.subject }));
+        if (env.MAIL_LOG_BODY === '1') console.log(msg.text);   // local testing only
         return { logged: true };
       }
     };

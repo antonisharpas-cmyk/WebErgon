@@ -137,3 +137,12 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--b
   .facts { grid-template-columns: 1fr; gap: 2px; }
   .facts dd { margin-bottom: 8px; }
 }
+
+/* password show / hide */
+.pw-wrap { position: relative; display: block; }
+.pw-wrap input { padding-right: 46px; }
+.pw-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border: 0; border-radius: 8px; background: none; color: var(--muted); display: grid; place-items: center; padding: 0; }
+.pw-eye svg { width: 20px; height: 20px; }
+.pw-eye:hover { color: var(--ink); background: var(--soft); }
+.pw-eye:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.msg.staff.is-auto { background: #e8ecf8; color: var(--ink); }

@@ -161,33 +161,116 @@ function teamOnline() {
   return false;
 }
 
-/* ---------- chat notification emails (bursts become one email) ---------- */
+/* ---------- chat wording and timings ---------- */
+const TEAM_NAME = 'ErgonSite Team';          // the name visitors see on every reply
+const SITE_URL = (env.SITE_URL || 'https://ergonsite.com').replace(/\/$/, '');
+const IDLE_CLOSE_MS = Number(env.CHAT_IDLE_MINUTES || 10) * 60_000;
+const PHONE_RE = /^[+0-9()\s.-]{6,25}$/;
+
+function autoReplyText(online, name) {
+  const first = String(name).split(/\s+/)[0];
+  return online
+    ? `Hi ${first}, thanks for your message! Someone from our team will reply here in a moment.`
+    : `Hi ${first}, thanks for your message! Our team will reply here as soon as possible. If you close this page, the reply will come to your email.`;
+}
+const CLOSING_TEXT = 'We haven’t heard back for a while, so we’re closing this chat for now. Send a message here any time to reopen it, or use the link we’ve emailed you.';
+
+/* A one-time link that brings a chat back in any browser. Only its hash
+   is stored; the link lives in the visitor's own inbox. */
+function resumeLink(conv) {
+  const key = id(24);
+  conv.resume = { hash: sha(key), expires: now() + 30 * 24 * 3600_000 };
+  store.save();
+  return `${SITE_URL}/#chat=${conv.id}.${key}`;
+}
+
+function transcriptHtml(conv, limit = 12) {
+  return conv.messages.slice(-limit).map((m) => {
+    const mine = m.from === 'visitor';
+    return `<div style="margin:0 0 8px;${mine ? 'text-align:right' : ''}"><span style="display:inline-block;max-width:85%;text-align:left;padding:9px 13px;border-radius:14px;background:${mine ? '#1b3a9e' : '#f5f5f7'};color:${mine ? '#fff' : '#1d1d1f'}">${mine ? '' : `<b style="display:block;font-size:12px;color:#1b3a9e">${TEAM_NAME}</b>`}${textToHtml(m.text)}</span></div>`;
+  }).join('');
+}
+
+function emailVisitor(conv, { subject, title, intro, button }) {
+  if (!conv.visitor.email) return;
+  const link = resumeLink(conv);
+  mailer.send({
+    to: conv.visitor.email,
+    replyTo: NOTIFY_EMAIL,
+    subject,
+    text: `Hi ${conv.visitor.name},\n\n${intro}\n\n${conv.messages.slice(-6).map((m) => (m.from === 'visitor' ? 'You' : TEAM_NAME) + ': ' + m.text).join('\n\n')}\n\n${button}: ${link}\n\nOr simply reply to this email.\n\nErgonSite Team\ninfo@ergonsite.com\n${SITE_URL}`,
+    html: layout(title,
+      `<p style="margin:0 0 14px">Hi ${esc(conv.visitor.name)},</p><p style="margin:0 0 16px">${esc(intro)}</p>${transcriptHtml(conv)}
+       <p style="margin:22px 0 0"><a href="${link}" style="display:inline-block;background:#1d1d1f;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:600">${esc(button)}</a></p>
+       <p style="margin:14px 0 0;color:#6e6e73;font-size:13px">Or simply reply to this email.</p>`,
+      'ErgonSite Team &middot; info@ergonsite.com &middot; ergonsite.com')
+  }).catch((err) => console.error('Visitor email failed:', err.message));
+}
+
+/* ---------- emails to the team ----------
+   The first message of a new (or reopened) chat goes out at once.
+   Follow-ups within 30 seconds of each other are sent as one email. */
 const pendingNotify = new Map();      // conversationId -> timer
-function scheduleChatNotify(conv) {
-  if (pendingNotify.has(conv.id)) return;
-  pendingNotify.set(conv.id, setTimeout(() => {
+function notifyTeam(conv, immediate) {
+  const run = () => {
     pendingNotify.delete(conv.id);
     const since = conv.notifiedAt || 0;
     const fresh = conv.messages.filter((m) => m.from === 'visitor' && m.at > since);
     if (!fresh.length) return;
+    const isNew = !since;
+    const reopened = isNew && conv.reopenedAt && conv.reopenedAt > conv.createdAt;
     conv.notifiedAt = now();
     store.save();
-    const lines = fresh.map((m) => `<p style="margin:0 0 10px">${textToHtml(m.text)}</p>`).join('');
+    const v = conv.visitor;
+    const consoleLink = `${PUBLIC_URL}/admin/#chat/${conv.id}`;
+    const lines = fresh.map((m) => `<p style="margin:0 0 10px;padding:10px 14px;background:#f5f5f7;border-radius:12px">${textToHtml(m.text)}</p>`).join('');
     mailer.send({
       to: NOTIFY_EMAIL,
-      replyTo: conv.visitor.email || undefined,
-      subject: `Chat: ${conv.visitor.name}${fresh.length > 1 ? ` (${fresh.length} messages)` : ''}`,
-      text: `${conv.visitor.name} <${conv.visitor.email}> on the website chat:\n\n${fresh.map((m) => m.text).join('\n\n')}\n\nAnswer in the console: ${PUBLIC_URL}/admin#chat/${conv.id}`,
-      html: layout(`New chat message from ${conv.visitor.name}`,
-        `<p style="margin:0 0 14px;color:#6e6e73">${esc(conv.visitor.email)}${conv.page ? ` &middot; on ${esc(conv.page)}` : ''}</p>${lines}
-         <p style="margin:22px 0 0"><a href="${PUBLIC_URL}/admin#chat/${conv.id}" style="display:inline-block;background:#1d1d1f;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:600">Answer in the console</a></p>`,
-        'Replies typed in the console appear in the visitor’s chat window, and are emailed to them if they have left.')
+      replyTo: v.email || undefined,
+      subject: reopened ? `Live chat reopened by ${v.name}` : isNew ? `New live chat from ${v.name}` : `Live chat: ${v.name} sent ${fresh.length > 1 ? fresh.length + ' messages' : 'a message'}`,
+      text: `${v.name} <${v.email}>${v.phone ? ' ' + v.phone : ''} on the website chat:\n\n${fresh.map((m) => m.text).join('\n\n')}\n\nLog in to the console and reply: ${consoleLink}`,
+      html: layout(isNew ? `New live chat from ${v.name}` : `${v.name} sent a message`,
+        `<p style="margin:0 0 14px;color:#6e6e73">${esc(v.email)}${v.phone ? ` &middot; ${esc(v.phone)}` : ''}${conv.page ? ` &middot; on ${esc(conv.page)}` : ''}</p>${lines}
+         <p style="margin:22px 0 0"><a href="${consoleLink}" style="display:inline-block;background:#1b3a9e;color:#fff;text-decoration:none;padding:13px 22px;border-radius:999px;font-weight:600">Log in to the console and reply</a></p>`,
+        'Your reply appears in their chat window straight away, and is emailed to them if they have left the website.')
     }).catch((err) => console.error('Chat notification failed:', err.message));
-  }, 45_000));
+  };
+  if (pendingNotify.has(conv.id)) {
+    if (!immediate) return;
+    clearTimeout(pendingNotify.get(conv.id));
+  }
+  if (immediate) run();
+  else pendingNotify.set(conv.id, setTimeout(run, 30_000));
 }
 
+/* ---------- close chats that have gone quiet ----------
+   After the team has replied, if the visitor says nothing for
+   IDLE_CLOSE_MS the chat is closed with a short message, and the visitor
+   gets an email with a link to reopen it. The automatic first reply does
+   not count: a chat the team has not answered yet is never closed. */
+setInterval(() => {
+  const t = now();
+  for (const conv of db.conversations) {
+    if (conv.status !== 'open') continue;
+    const real = conv.messages.filter((m) => m.from === 'visitor' || m.from === 'staff');
+    const last = real[real.length - 1];
+    if (!last || last.from !== 'staff' || t - last.at < IDLE_CLOSE_MS) continue;
+    conv.messages.push({ id: id(8), from: 'system', text: CLOSING_TEXT, at: t });
+    conv.status = 'closed';
+    conv.closedAt = t;
+    conv.updatedAt = t;
+    store.save();
+    emailVisitor(conv, {
+      subject: 'Your chat with ErgonSite',
+      title: 'We’ve closed your chat for now',
+      intro: 'We haven’t heard back for a while, so we closed the chat. Here is the conversation. You can pick it up again at any time.',
+      button: 'Reopen the chat'
+    });
+  }
+}, Math.max(2000, Math.min(60_000, IDLE_CLOSE_MS / 2))).unref();
+
 /* ---------- views sent to the browser ---------- */
-const publicMsg = (m) => ({ id: m.id, from: m.from, text: m.text, at: m.at, name: m.from === 'staff' ? m.staffName : undefined });
+const publicMsg = (m) => ({ id: m.id, from: m.from, text: m.text, at: m.at, name: m.from === 'visitor' ? undefined : TEAM_NAME });
 
 function convSummary(c) {
   const last = c.messages[c.messages.length - 1];
@@ -222,22 +305,67 @@ async function publicApi(req, res, url) {
     if (b.website) return send(res, 200, { ok: true });            // honeypot: a bot filled the hidden field
     const name = clean(b.name, 80);
     const email = clean(b.email, 160).toLowerCase();
+    const phone = clean(b.phone, 30);
     const text = clean(b.message, 2000);
     if (!name) return send(res, 400, { message: 'Please tell us your name.' });
     if (!EMAIL_RE.test(email)) return send(res, 400, { message: 'Please check your email address, so we can reply if you leave.' });
+    if (phone && !PHONE_RE.test(phone)) return send(res, 400, { message: 'Please check the phone number, or leave it empty.' });
     if (!text) return send(res, 400, { message: 'Please type a message.' });
     const token = id(24);
     const t = now();
+    const online = teamOnline();
     const conv = {
       id: id(9), tokenHash: sha(token), status: 'open', createdAt: t, updatedAt: t,
-      visitor: { name, email }, page: clean(b.page, 200), ipHash: sha(ip).slice(0, 16),
+      visitor: { name, email, phone }, page: clean(b.page, 200), ipHash: sha(ip).slice(0, 16),
       visitorSeenAt: t, staffReadAt: 0, notifiedAt: 0,
-      messages: [{ id: id(8), from: 'visitor', text, at: t }]
+      messages: [
+        { id: id(8), from: 'visitor', text, at: t },
+        { id: id(8), from: 'auto', text: autoReplyText(online, name), at: t + 1 }
+      ]
     };
     db.conversations.push(conv);
     store.save();
-    scheduleChatNotify(conv);
-    return send(res, 201, { id: conv.id, token, messages: conv.messages.map(publicMsg), online: teamOnline() });
+    notifyTeam(conv, true);
+    return send(res, 201, { id: conv.id, token, status: conv.status, messages: conv.messages.map(publicMsg), online });
+  }
+
+  /* The link from an email: swap the one-time key for a fresh chat token. */
+  if (p === '/api/chat/resume' && req.method === 'POST') {
+    if (limited('resume:' + ip, 20, 3600_000)) return send(res, 429, { message: 'Too many attempts. Please try again later.' });
+    const b = await readJson(req, 1024);
+    const conv = db.conversations.find((c) => c.id === clean(b.id, 20));
+    const key = String(b.key || '');
+    if (!conv || !conv.resume || conv.resume.expires < now() || sha(key) !== conv.resume.hash) {
+      return send(res, 404, { message: 'This link has expired. Start a new chat, or ask for a new link with your email.' });
+    }
+    const token = id(24);
+    conv.tokenHash = sha(token);
+    conv.resume = null;
+    conv.visitorSeenAt = now();
+    store.save();
+    return send(res, 200, { id: conv.id, token, name: conv.visitor.name, status: conv.status, messages: conv.messages.map(publicMsg), online: teamOnline() });
+  }
+
+  /* "Continue a previous chat": email a link to the latest chat for that
+     address. The answer is the same whether or not one exists, so this
+     cannot be used to find out who has chatted with us. */
+  if (p === '/api/chat/recover' && req.method === 'POST') {
+    const b = await readJson(req, 1024);
+    const email = clean(b.email, 160).toLowerCase();
+    if (!EMAIL_RE.test(email)) return send(res, 400, { message: 'Please check your email address.' });
+    if (limited('recover:' + ip, 5, 3600_000) || limited('recover:' + email, 3, 3600_000)) {
+      return send(res, 429, { message: 'Please check your inbox for the link we already sent.' });
+    }
+    const conv = [...db.conversations].filter((c) => c.visitor.email === email).sort((a, z) => z.updatedAt - a.updatedAt)[0];
+    if (conv) {
+      emailVisitor(conv, {
+        subject: 'Continue your chat with ErgonSite',
+        title: 'Continue your chat',
+        intro: 'Here is your conversation with us. Use the button to carry on where you left off.',
+        button: 'Continue the chat'
+      });
+    }
+    return send(res, 200, { ok: true });
   }
 
   const m = p.match(/^\/api\/chat\/([A-Za-z0-9_-]{6,20})(\/messages)?$/);
@@ -262,15 +390,16 @@ async function publicApi(req, res, url) {
       const text = clean(b.text, 2000);
       if (!text) return send(res, 400, { message: 'Please type a message.' });
       const t = now();
+      const reopened = conv.status === 'closed';
       const msg = { id: id(8), from: 'visitor', text, at: t };
       conv.messages.push(msg);
       if (conv.messages.length > 500) conv.messages.splice(0, conv.messages.length - 500);
       conv.updatedAt = t;
       conv.visitorSeenAt = t;
-      if (conv.status === 'closed') conv.status = 'open';
+      if (reopened) { conv.status = 'open'; conv.notifiedAt = 0; conv.reopenedAt = t; }
       store.save();
-      scheduleChatNotify(conv);
-      return send(res, 201, { message: publicMsg(msg) });
+      notifyTeam(conv, reopened);
+      return send(res, 201, { message: publicMsg(msg), status: conv.status });
     }
   }
 
@@ -415,19 +544,17 @@ async function consoleApi(req, res, url) {
       conv.staffReadAt = t;
       conv.status = 'open';
       store.save();
-      /* The visitor has closed the page: send the reply to their inbox. */
+      /* The visitor has closed the page: send the reply to their inbox,
+         with a link that brings the chat back. */
       let emailed = false;
       if (t - (conv.visitorSeenAt || 0) > 90_000 && conv.visitor.email) {
         emailed = true;
-        mailer.send({
-          to: conv.visitor.email,
-          replyTo: NOTIFY_EMAIL,
-          subject: 'ErgonSite replied to your chat',
-          text: `Hi ${conv.visitor.name},\n\n${user.name} from ErgonSite replied to your chat:\n\n${text}\n\nYou can simply reply to this email.\n\nErgonSite\ninfo@ergonsite.com\nhttps://ergonsite.com`,
-          html: layout(`${user.name} replied to your chat`,
-            `<p style="margin:0 0 14px">Hi ${esc(conv.visitor.name)},</p><div style="background:#f5f5f7;border-radius:14px;padding:16px 18px">${textToHtml(text)}</div><p style="margin:16px 0 0">You can simply reply to this email, or come back to <a href="https://ergonsite.com" style="color:#1b3a9e">ergonsite.com</a> and carry on in the chat.</p>`,
-            'ErgonSite &middot; info@ergonsite.com &middot; ergonsite.com')
-        }).catch((err) => console.error('Reply email failed:', err.message));
+        emailVisitor(conv, {
+          subject: 'ErgonSite Team replied to your chat',
+          title: 'We replied to your chat',
+          intro: 'You had left the website when we answered, so here is our reply.',
+          button: 'Continue the chat'
+        });
       }
       return send(res, 201, { message: msg, emailed });
     }

@@ -33,3 +33,15 @@ in those three places and in PUBLIC_URL.
 The existing Render service starts `node server.js` from the repository
 root; on Render that file hands over to `api/server.mjs`, so no build or
 start command needs changing.
+
+## Chat behaviour
+
+- Every visitor gets an automatic first reply, and every answer is signed "ErgonSite Team".
+- The first message of a new or reopened chat is emailed to NOTIFY_EMAIL at once;
+  follow-ups within 30 seconds are sent as one email.
+- After the team replies, a chat with no answer from the visitor for
+  CHAT_IDLE_MINUTES (default 10) is closed with a short message, and the visitor
+  is emailed the conversation with a link that reopens it (#chat=ID.KEY on the
+  website). "Chatted with us before?" in the bubble emails the same kind of link.
+- MAIL_LOG_BODY=1 prints whole emails in the terminal when SMTP is not set
+  (local testing only).

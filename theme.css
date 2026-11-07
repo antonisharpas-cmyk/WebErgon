@@ -1158,7 +1158,9 @@ html.ov-lock { overflow: hidden; }
   transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .ec-teaser.is-on { opacity: 1; transform: none; }
-.ec-teaser p { margin: 0; font-size: 14px; line-height: 1.35; grid-column: 1 / -1; }
+.ec-teaser p { margin: 0; font-size: 14px; line-height: 1.35; }
+.ec-teaser-ico { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: radial-gradient(circle at 30% 25%, #4a6fe6 0%, var(--blue) 60%, #13286f 100%); }
+.ec-teaser-ico svg, .ec-head-ico svg { width: 22px; height: 22px; }
 .ec-teaser b { display: block; font-size: 15px; }
 .ec-teaser span { color: var(--muted); }
 .ec-teaser-x { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border: 0; border-radius: 50%; background: var(--soft); color: var(--muted); cursor: pointer; display: grid; place-items: center; padding: 0; }
@@ -1195,7 +1197,8 @@ html.ov-lock { overflow: hidden; }
   color: #fff;
   background: radial-gradient(120% 140% at 0% 0%, #3d63dc 0%, var(--blue) 55%, #142b78 100%);
 }
-.ec-head .ec-faces img { border-color: var(--blue); }
+.ec-head-ico { width: 42px; height: 42px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center; color: #fff; background: rgba(255, 255, 255, 0.16); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22); }
+.ec-head-ico svg circle { fill: #2a4bb8; }
 .ec-head-text { flex: 1; min-width: 0; }
 .ec-head h2 { margin: 0; color: #fff; font-family: var(--display); font-size: 18px; font-weight: 650; letter-spacing: -0.02em; }
 .ec-status { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: rgba(255, 255, 255, 0.82); margin-top: 2px; }
@@ -1258,6 +1261,11 @@ html.ov-lock { overflow: hidden; }
 .ec-send { flex: 0 0 auto; width: 42px; height: 42px; border: 0; border-radius: 50%; background: var(--blue); color: #fff; cursor: pointer; display: grid; place-items: center; padding: 0; }
 .ec-send svg { width: 18px; height: 18px; }
 .ec-send:disabled { opacity: 0.5; }
+.ec-start label em { font-style: normal; font-weight: 500; color: var(--muted); }
+.ec-link { justify-self: center; border: 0; background: none; padding: 2px 4px; color: var(--blue); font: 500 13px/1.4 var(--text-font); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.ec-link:hover { color: var(--ink); }
+.ec-closed { margin: 0; padding: 8px 14px; font-size: 12.5px; text-align: center; color: var(--muted); background: #fff; border-top: 1px solid #e8e8ed; }
+.ec-msg.is-team.is-auto { background: #eef1fb; box-shadow: none; }
 .ec-end { border: 0; background: #fff; color: var(--muted); font: 500 12px/1 var(--text-font); padding: 0 0 10px; cursor: pointer; }
 .ec-end:hover { color: var(--ink); text-decoration: underline; }
 
