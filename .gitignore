@@ -11,3 +11,6 @@ build/
 # Real contact submissions — personal data. Never in the repo: the repo
 # is public (GitHub Pages), so anything committed here is public too.
 data/submissions.json
+
+# Claude working files (screenshots, drafts). Never publish.
+Claude outputs/

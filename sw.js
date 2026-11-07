@@ -12,13 +12,14 @@
    which is a far worse bug than a missing offline page.
    ===================================================================== */
 
-const CACHE = 'ergonsite-v1';
+const CACHE = 'ergonsite-v2';
 
 /* Only the shell: enough to show something sensible with no signal. */
 const PRECACHE = [
   '/',
   '/styles.css',
-  '/assets/logo.png',
+  '/theme.css',
+  '/assets/mark-ink.png',
   '/assets/icon-192.png',
   '/site.webmanifest'
 ];
