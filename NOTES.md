@@ -1,5 +1,10 @@
 # Project Notes — ErgonSite
 
+> **Update 2026-11:** ergonsite.com now runs on Render (`api/server.mjs`), which
+> serves the site, the contact form, the live chat and the team console at
+> /admin. No third-party form services: Web3Forms and EmailJS are no longer used
+> anywhere, and the EmailJS / Web3Forms notes further down are history only.
+
 Context for anyone (human or AI) picking this project up.
 
 ## Outstanding issues — THE SITE IS NOW PUBLIC (GitHub Pages), so these are live incidents, not future risks

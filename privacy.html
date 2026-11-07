@@ -9,7 +9,7 @@
          HSTS) are set in server.js for local runs; on GitHub Pages, which
          cannot send custom headers, framing is blocked by the guard in
          consent.js instead. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self' https://api.web3forms.com https://api.emailjs.com; img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-iDpB8zSCsS0khCVO2BXDZVjfh20wK5mmCQ3e3s6txlM=' https://www.googletagmanager.com; connect-src 'self' https://webergon.onrender.com https://api.web3forms.com https://api.emailjs.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-iDpB8zSCsS0khCVO2BXDZVjfh20wK5mmCQ3e3s6txlM=' https://www.googletagmanager.com; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
@@ -93,11 +93,10 @@
               <h2>Who processes it on our behalf</h2>
               <p>When you press Send, your enquiry goes to our own server, which passes it
               to our team and sends you a confirmation from our info@ergonsite.com mailbox.
-              Only if that server cannot be reached is the enquiry delivered to our inbox by
-              <a href="https://web3forms.com" target="_blank" rel="noopener noreferrer">Web3Forms</a>
-              instead, which acts only as a delivery service. The website itself is hosted on
-              GitHub Pages, which, like any web host, records standard server logs
-              (such as IP addresses) to serve and protect the site.</p>
+              No outside form service is involved. The website and that server are hosted with
+              <a href="https://render.com" target="_blank" rel="noopener noreferrer">Render</a>,
+              which, like any web host, records standard server logs (such as IP addresses)
+              to serve and protect the site.</p>
               <p>Chats, and a copy of each enquiry so our team can answer it in one place,
               are stored on a server we run with
               <a href="https://render.com" target="_blank" rel="noopener noreferrer">Render</a>.

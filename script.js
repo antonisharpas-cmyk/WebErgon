@@ -29,10 +29,9 @@ async function postJson(path, payload) {
      no clue. Name it in the console. */
   if (response.status === 404 || response.status === 405 || response.status === 501) {
     console.error(
-      'POST ' + path + ' returned ' + response.status + '. This page is being ' +
-      'served by a static file server with no API. Start the backend with ' +
-      '"node server.js" and open the site on the port it prints (3000 by ' +
-      'default) — the form posts to whatever origin the page came from.'
+      'POST ' + path + ' returned ' + response.status + '. The enquiry API is ' +
+      'not running here. Locally, start it with "cd api && node server.mjs" ' +
+      '(port 4000).'
     );
     throw new Error(
       'We could not reach the server, so your message was not sent. ' +
@@ -116,31 +115,18 @@ revealItems.forEach((item) => observer.observe(item));
    Enquiry form: validate here for a fast, friendly response, and again
    on the server, which is the copy that actually matters.
 
-   WHERE THE FORM SENDS, AND WHY THERE ARE TWO PATHS
-   The live site is on GitHub Pages, which serves files and can run
-   nothing — no /api/contact, no Node. In production the form therefore
-   posts to Web3Forms, a form-to-email relay, which delivers each
-   enquiry to the inbox tied to the access key. On localhost or a LAN
-   address the local Node backend exists, so the form keeps posting to
-   /api/contact and the admin page keeps working.
-
-   ONE-TIME SETUP: get a free access key at https://web3forms.com
-   (enter info@ergonsite.com, the key arrives by email) and paste it
-   below. The key only routes messages to your inbox — it is designed
-   to be public, so shipping it in this file is fine.
+   WHERE THE FORM SENDS
+   To our own server on Render (api/server.mjs), the same server that
+   serves ergonsite.com. It files the enquiry in the team console,
+   emails it to info@ergonsite.com and sends the enquirer a
+   confirmation from info@ergonsite.com. No third-party form services.
+   On localhost the form talks to the API running locally on port 4000
+   (cd api && node server.mjs).
    ===================================================================== */
-const WEB3FORMS_ACCESS_KEY = '7e7508ef-0f1c-4bd0-bdd0-41e032e92a44';
-
-/* Our own server on Render: enquiries, the confirmation email to the
-   enquirer, the team console and the live chat. */
-/* ergonsite.com is served by that same server, so on the live site the
-   calls stay on the same address (no cross-site request at all). */
-const ERGON_API = /(^|\.)ergonsite\.com$/.test(location.hostname) ? '' : 'https://ergonsite.com';
-
-const IS_LOCAL_BACKEND =
-  location.protocol !== 'https:' &&
-  (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ||
-   /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(location.hostname));
+const ERGON_API =
+  /(^|\.)ergonsite\.com$/.test(location.hostname) ? ''
+  : /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:4000'
+  : 'https://ergonsite.com';
 
 const contactForm = document.getElementById('contactForm');
 const formMessage = document.getElementById('formMessage');
@@ -312,77 +298,14 @@ if (contactForm) {
     if (submitButton) submitButton.disabled = true;
 
     try {
-      if (IS_LOCAL_BACKEND) {
-        await postJson('/api/contact', payload);
-      } else {
-        if (WEB3FORMS_ACCESS_KEY.indexOf('PASTE-YOUR') === 0) {
-          console.error(
-            'The enquiry form has no Web3Forms access key yet. Get one free at ' +
-            'https://web3forms.com and paste it into WEB3FORMS_ACCESS_KEY in script.js.'
-          );
-          throw new Error(
-            'The form is not connected yet. Please email us directly at ' +
-            'info@ergonsite.com and we will pick it up.'
-          );
-        }
-        /* The enquiry goes to our own server (webergon.onrender.com),
-           which files it in the team console, emails it to
-           info@ergonsite.com and sends the enquirer a confirmation from
-           info@ergonsite.com. Web3Forms is kept only as a backup: if our
-           server cannot be reached, the enquiry still reaches the inbox
-           that way (without a confirmation), so it is never lost. */
-        let delivered = false;
-        let refused = null;      // our server answered "no" (bad input, too many): show it
-        try {
-          const controller = new AbortController();
-          const timer = setTimeout(function () { controller.abort(); }, 12000);
-          const res = await fetch(ERGON_API + '/api/inquiries', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(Object.assign({ page: location.pathname }, payload)),
-            credentials: 'omit',
-            mode: 'cors',
-            signal: controller.signal
-          });
-          clearTimeout(timer);
-          if (res.ok) {
-            delivered = true;
-          } else if (res.status === 400 || res.status === 429) {
-            let data = {};
-            try { data = await res.json(); } catch (e) { /* empty */ }
-            refused = data.message || 'Please check the form and try again.';
-          }
-        } catch (apiError) {
-          console.warn('ErgonSite API unreachable, using the Web3Forms backup:', apiError);
-        }
-        if (refused) throw new Error(refused);
-
-        if (!delivered) {
-          /* The subject carries the enquirer's name (and company) so each
-             enquiry has a distinct subject line in the inbox. */
-          await postJson('https://api.web3forms.com/submit', {
-            access_key: WEB3FORMS_ACCESS_KEY,
-            subject: 'Enquiry from ' + payload.name +
-              (payload.company ? ' (' + payload.company + ')' : '') +
-              ' (ergonsite.com)',
-            from_name: payload.name,
-            name: payload.name,
-            email: payload.email,
-            company: payload.company,
-            phone: payload.phone,
-            needs: payload.needs,
-            message: payload.message
-          });
-        }
-
-        /* Tell Analytics an enquiry happened. generate_lead is GA4's
-           standard name for this, so it appears in reports without any
-           configuration. window.gtag always exists (consent.js defines
-           it), and if the visitor declined analytics the call goes
-           nowhere, which is exactly right. */
-        if (typeof window.gtag === 'function') {
-          window.gtag('event', 'generate_lead', { form: 'contact' });
-        }
+      await postJson(ERGON_API + '/api/inquiries', Object.assign({ page: location.pathname }, payload));
+      /* Tell Analytics an enquiry happened. generate_lead is GA4's
+         standard name for this, so it appears in reports without any
+         configuration. window.gtag always exists (consent.js defines
+         it), and if the visitor declined analytics the call goes
+         nowhere, which is exactly right. */
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'generate_lead', { form: 'contact' });
       }
       formMessage.textContent = 'Thank you, your details were sent. We will be in touch shortly.';
       contactForm.reset();

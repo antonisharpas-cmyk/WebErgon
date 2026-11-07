@@ -80,11 +80,11 @@ function setCorsHeaders(res) {
 function setSecurityHeaders(res) {
   res.setHeader('Content-Security-Policy',
     "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; " +
-    "form-action 'self' https://api.web3forms.com https://api.emailjs.com; " +
+    "form-action 'self'; " +
     "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; " +
     "font-src 'self'; style-src 'self' 'unsafe-inline'; " +
     "script-src 'self' 'sha256-iDpB8zSCsS0khCVO2BXDZVjfh20wK5mmCQ3e3s6txlM=' https://www.googletagmanager.com; " +
-    "connect-src 'self' https://api.web3forms.com https://api.emailjs.com " +
+    "connect-src 'self' " +
     "https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com");
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');

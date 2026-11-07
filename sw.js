@@ -48,8 +48,8 @@ self.addEventListener('activate', function (event) {
 self.addEventListener('fetch', function (event) {
   var req = event.request;
 
-  /* Never touch anything but same-origin GETs. Form posts to Web3Forms,
-     analytics beacons and EmailJS calls go straight to the network. */
+  /* Never touch anything but same-origin GETs. Form posts, chat calls
+     and analytics beacons go straight to the network. */
   if (req.method !== 'GET') return;
   if (new URL(req.url).origin !== self.location.origin) return;
 

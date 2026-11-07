@@ -8,9 +8,9 @@
         Every visitor message is emailed to NOTIFY_EMAIL (a burst of
         messages becomes one email). If the visitor has left by the time
         the team replies, the reply is emailed to them too.
-     2. Enquiries. The contact form keeps sending through Web3Forms as
-        before, and also files a copy here, so every enquiry is in one
-        place and can be answered from the console.
+     2. Enquiries. The contact form posts here. Each enquiry is filed in
+        the console, emailed to the team and confirmed to the enquirer,
+        all from info@ergonsite.com.
      3. The console, at /admin. Team logins, the chat inbox, the
         enquiries inbox, replies, and team management.
 
@@ -271,7 +271,7 @@ setInterval(() => {
 
 
 /* ---------- enquiry emails ----------
-   Both go out from info@ergonsite.com (SMTP), replacing EmailJS:
+   Both go out from info@ergonsite.com (SMTP):
    a confirmation to the person who wrote, and an alert to the team. */
 function inquiryEmails(q) {
   const first = q.name.split(/\s+/)[0];
@@ -444,7 +444,7 @@ async function publicApi(req, res, url) {
   if (p === '/api/inquiries' && req.method === 'POST') {
     if (limited('inq:' + ip, 8, 3600_000)) return send(res, 429, { message: 'Too many enquiries from this connection.' });
     const b = await readJson(req);
-    if (b.website) return send(res, 200, { ok: true });
+    if (b.website) return send(res, 200, { ok: true, success: true });
     const q = {
       id: id(9), status: 'new', createdAt: now(), updatedAt: now(), readAt: 0,
       name: clean(b.name, 120), email: clean(b.email, 160).toLowerCase(), company: clean(b.company, 160),
@@ -455,7 +455,7 @@ async function publicApi(req, res, url) {
     db.inquiries.push(q);
     store.save();
     inquiryEmails(q);
-    return send(res, 201, { ok: true });
+    return send(res, 201, { ok: true, success: true });
   }
 
   return send(res, 404, { message: 'Not found' });
