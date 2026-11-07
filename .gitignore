@@ -14,3 +14,6 @@ data/submissions.json
 
 # Claude working files (screenshots, drafts). Never publish.
 Claude outputs/
+
+# The chat/enquiry data file when the API runs locally. Personal data: never commit.
+api/data/

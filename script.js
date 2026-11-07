@@ -402,6 +402,19 @@ if (contactForm) {
         // so a hiccup here must not turn the thank-you into an error
         sendConfirmationEmail(payload);
 
+        /* A copy for the team console (api.ergonsite.com), where enquiries
+           are answered. Also fire-and-forget: Web3Forms has already
+           delivered the enquiry, so the console being down must never
+           turn the visitor's thank-you into an error. */
+        fetch('https://api.ergonsite.com/api/inquiries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(Object.assign({ page: location.pathname }, payload)),
+          credentials: 'omit',
+          mode: 'cors',
+          keepalive: true
+        }).catch(function () {});
+
         /* Tell Analytics an enquiry happened. generate_lead is GA4's
            standard name for this, so it appears in reports without any
            configuration. window.gtag always exists (consent.js defines

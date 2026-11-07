@@ -1,7 +1,45 @@
+# Render blueprint for the ErgonSite API (live chat, enquiries, team console).
+# The website itself stays on GitHub Pages; only api/ runs here.
+# Secrets marked sync: false are typed into the Render dashboard, never committed.
 services:
   - type: web
-    name: ergonsite
-    env: node
-    plan: free
-    buildCommand: npm install
-    startCommand: node server.js
+    name: ergonsite-api
+    runtime: node
+    plan: starter
+    region: frankfurt
+    rootDir: api
+    buildCommand: npm ci --omit=dev
+    startCommand: node server.mjs
+    healthCheckPath: /healthz
+    autoDeploy: true
+    disk:
+      name: ergonsite-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATA_DIR
+        value: /var/data
+      - key: PUBLIC_URL
+        value: https://api.ergonsite.com
+      - key: NOTIFY_EMAIL
+        value: info@ergonsite.com
+      - key: ALLOWED_ORIGINS
+        value: https://ergonsite.com,https://www.ergonsite.com
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "465"
+      - key: SMTP_USER
+        value: info@ergonsite.com
+      - key: MAIL_FROM
+        value: ErgonSite <info@ergonsite.com>
+      - key: SMTP_PASS
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_NAME
+        sync: false

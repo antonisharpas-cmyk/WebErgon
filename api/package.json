@@ -1,0 +1,19 @@
+{
+  "name": "ergonsite-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Live chat, enquiries and the team console for ergonsite.com",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.16"
+  }
+}
