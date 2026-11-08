@@ -274,7 +274,8 @@ h1, h2, h3, h4 {
   letter-spacing: 0;
   text-transform: none;
 }
-.client-band-list { gap: 12px; }
+/* rows leave room for the "In development" caption hanging under a chip */
+.client-band-list { gap: 30px 12px; }
 .client-band-list li {
   width: 116px;
   height: 56px;
@@ -732,7 +733,7 @@ h1, .section-heading h2 { font-weight: 650; letter-spacing: -0.04em; }
 .hm-team h2 { font-size: clamp(2.25rem, 4.6vw, 3.5rem); line-height: 1.03; }
 .hm-team p { font-size: 19px; line-height: 1.55; color: var(--muted); margin: 20px 0 0; }
 .hm-team .hm-team-link { margin-top: 26px; }
-.hm-faces { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.hm-faces { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; max-width: 480px; }
 .hm-faces img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 18px; background: var(--soft); }
 .hm-faces span { display: block; font-size: 14px; margin-top: 8px; font-weight: 600; }
 
@@ -792,6 +793,30 @@ h1, .section-heading h2 { font-weight: 650; letter-spacing: -0.04em; }
 .rv-stars { display: block; margin-top: 2px; color: #fbbc04; font-size: 16px; letter-spacing: 2px; }
 .rv-card blockquote { margin: 18px 0 0; }
 .rv-card blockquote p { margin: 0; font-size: 16.5px; line-height: 1.6; color: var(--ink-2); }
+.rv-card blockquote p + p { margin-top: 12px; }
+.rv-avatar.is-img { background: #fff; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08); overflow: hidden; }
+.rv-avatar.is-img img { width: 100%; height: 100%; display: block; }
+/* long reviews open with a "Read more" (home.js marks them) */
+.rv-card.is-long blockquote {
+  max-height: 186px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(#000 62%, transparent);
+  mask-image: linear-gradient(#000 62%, transparent);
+}
+.rv-card.is-long.is-open blockquote { max-height: none; -webkit-mask-image: none; mask-image: none; }
+.rv-more {
+  margin-top: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--blue);
+  cursor: pointer;
+}
+.rv-more:hover { text-decoration: underline; }
+.rv-more:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; border-radius: 4px; }
 
 
 /* final cta */

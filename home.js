@@ -50,6 +50,32 @@
      the CSS animation can slide exactly half the track and loop with
      no visible jump. Copies are hidden from screen readers. */
   const rvTrack = document.querySelector('.rv-track');
+
+  /* Long reviews show their first lines and a "Read more" button, so one
+     card never towers over the rest. Runs before the cards are copied, so
+     the copies carry the button too; one listener serves them all. */
+  if (rvTrack) {
+    rvTrack.querySelectorAll('.rv-card').forEach(function (card) {
+      const quote = card.querySelector('blockquote');
+      if (!quote || quote.scrollHeight < 240) return;
+      card.classList.add('is-long');
+      const more = document.createElement('button');
+      more.type = 'button';
+      more.className = 'rv-more';
+      more.textContent = 'Read more';
+      more.setAttribute('aria-expanded', 'false');
+      card.appendChild(more);
+    });
+    rvTrack.addEventListener('click', function (e) {
+      const more = e.target.closest('.rv-more');
+      if (!more) return;
+      const card = more.closest('.rv-card');
+      const open = card.classList.toggle('is-open');
+      more.textContent = open ? 'Show less' : 'Read more';
+      more.setAttribute('aria-expanded', String(open));
+    });
+  }
+
   if (rvTrack && !REDUCED) {
     const originals = Array.from(rvTrack.children);
 
@@ -66,6 +92,7 @@
           const c = card.cloneNode(true);
           c.setAttribute('data-rv-clone', '');
           c.setAttribute('aria-hidden', 'true');
+          c.querySelectorAll('button').forEach(function (btn) { btn.tabIndex = -1; });
           rvTrack.appendChild(c);
         });
       }
