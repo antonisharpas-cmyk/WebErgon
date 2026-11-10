@@ -7,7 +7,7 @@
 
   /* ---------- project carousel ---------- */
   const track = document.querySelector('.hm-track');
-  const arrows = document.querySelectorAll('.hm-arrow');
+  const arrows = document.querySelectorAll('.hm-carousel .hm-arrow');
 
   if (track && arrows.length) {
     function step() {
@@ -44,11 +44,8 @@
     landing.pause();
   }
 
-  /* ---------- reviews marquee ----------
-     The cards in the HTML are the real list. Here they are repeated
-     until one lap is wider than the screen, then the lap is doubled so
-     the CSS animation can slide exactly half the track and loop with
-     no visible jump. Copies are hidden from screen readers. */
+  /* ---------- reviews ----------
+     The real list is the cards in the HTML. */
   const rvTrack = document.querySelector('.rv-track');
 
   /* Long reviews show their first lines and a "Read more" button, so one
@@ -76,16 +73,32 @@
     });
   }
 
-  if (rvTrack && !REDUCED) {
+  /* The row drifts slowly to the left on its own. The arrows move it one
+     review at a time, and a finger, trackpad or wheel can scroll it too.
+     The drift waits while someone is scrolling, using the keyboard in the
+     row, or reading an opened review; hovering does not stop it.
+     To loop with no visible jump, the cards are repeated until one lap is
+     wider than the screen and that lap is doubled; past the halfway point
+     the row steps back by exactly one lap. Copies are hidden from screen
+     readers. People who ask for less motion get no drift and no copies. */
+  const rvRow = document.querySelector('.rv-marquee');
+  if (rvTrack && rvRow) {
+    const SPEED = 40;                         // px per second
     const originals = Array.from(rvTrack.children);
+    const box = document.querySelector('.hm-reviews .container');
+    let half = 0;                             // one lap, 0 when not looping
+    let pos = 0;
+    let move = null;                          // arrow move in progress
+    let holdUntil = 0;
+    let last = 0;
 
     function build() {
       rvTrack.querySelectorAll('[data-rv-clone]').forEach(function (n) { n.remove(); });
-      rvTrack.classList.remove('is-running');
-
+      half = 0;
+      if (REDUCED) return;
       const lap = rvTrack.scrollWidth;
       if (!lap) return;
-      const laps = Math.max(1, Math.ceil(window.innerWidth / lap));
+      const laps = Math.max(1, Math.ceil(rvRow.clientWidth / lap));
 
       function addSet() {
         originals.forEach(function (card) {
@@ -99,18 +112,99 @@
 
       for (let i = 1; i < laps; i++) addSet();      // first half
       for (let i = 0; i < laps; i++) addSet();      // second half
-
-      const half = rvTrack.scrollWidth / 2;
-      rvTrack.style.setProperty('--rv-duration', Math.round(half / 40) + 's');
-      rvTrack.classList.add('is-running');
+      half = rvTrack.scrollWidth / 2;
+      pos = pos % half;
     }
+
+    function cardStep() {
+      const card = rvTrack.querySelector('.rv-card');
+      return card.getBoundingClientRect().width + (parseFloat(getComputedStyle(card).marginRight) || 0);
+    }
+
+    // where the page's content column starts inside the row, so an arrow
+    // stop lines a card up with the heading above it
+    function inset() {
+      if (!box) return 0;
+      return box.getBoundingClientRect().left + (parseFloat(getComputedStyle(box).paddingLeft) || 0)
+        - rvRow.getBoundingClientRect().left;
+    }
+
+    function shift(by) {
+      pos += by;
+      if (move) { move.from += by; move.to += by; }
+    }
+
+    function keepInRange() {
+      if (half) {
+        while (pos >= half) shift(-half);
+        while (pos < 0) shift(half);
+      } else {
+        pos = Math.max(0, Math.min(pos, rvRow.scrollWidth - rvRow.clientWidth));
+      }
+    }
+
+    function show() { rvRow.scrollLeft = pos; }
+
+    function waiting(now) {
+      return now < holdUntil || document.hidden ||
+        rvTrack.querySelector('.rv-card.is-open') || rvRow.querySelector(':focus-visible');
+    }
+
+    function frame(now) {
+      const dt = last ? Math.min(now - last, 100) : 0;
+      last = now;
+      if (move) {
+        const t = move.ms ? Math.min(1, (now - move.start) / move.ms) : 1;
+        const e = 1 - Math.pow(1 - t, 3);
+        pos = move.from + (move.to - move.from) * e;
+        if (t === 1) move = null;
+        keepInRange();
+        show();
+      } else if (half && !waiting(now)) {
+        pos += SPEED * dt / 1000;
+        keepInRange();
+        show();
+      }
+      requestAnimationFrame(frame);
+    }
+
+    document.querySelectorAll('[data-rv]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const dir = Number(btn.dataset.rv);
+        const step = cardStep();
+        const off = inset();
+        const from = move ? move.to : pos;            // quick clicks add up
+        const k = dir > 0 ? Math.floor((from + off) / step + 0.02) + 1
+                          : Math.ceil((from + off) / step - 0.02) - 1;
+        move = { from: pos, to: k * step - off, start: performance.now(), ms: REDUCED ? 0 : 550 };
+        holdUntil = performance.now() + 4000;
+      });
+    });
+
+    // the visitor scrolled the row themselves (touch, trackpad, wheel)
+    rvRow.addEventListener('scroll', function () {
+      if (Math.abs(rvRow.scrollLeft - pos) <= 2) return;   // our own move
+      pos = rvRow.scrollLeft;
+      move = null;
+      holdUntil = performance.now() + 2500;
+      if (half && (pos <= 0 || pos >= half)) {
+        pos = pos <= 0 ? half : pos - half;                // same picture, one lap over
+        show();
+      }
+    }, { passive: true });
+    ['pointerdown', 'touchstart', 'wheel'].forEach(function (type) {
+      rvRow.addEventListener(type, function () { holdUntil = performance.now() + 2500; }, { passive: true });
+    });
 
     let width = window.innerWidth;
     build();
+    show();
+    requestAnimationFrame(frame);
     window.addEventListener('resize', function () {
       if (Math.abs(window.innerWidth - width) < 40) return;
       width = window.innerWidth;
       build();
+      show();
     });
   }
 })();

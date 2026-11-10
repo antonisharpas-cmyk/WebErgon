@@ -762,9 +762,15 @@ h1, .section-heading h2 { font-weight: 650; letter-spacing: -0.04em; }
   width: max-content;
   padding: 10px 0 20px;
 }
-.rv-track.is-running { animation: rv-slide var(--rv-duration, 60s) linear infinite; }
-.rv-marquee:hover .rv-track, .rv-track:focus-within { animation-play-state: paused; }
-@keyframes rv-slide { to { transform: translateX(-50%); } }
+.rv-marquee {
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-behavior: auto;               /* home.js moves it frame by frame */
+  scrollbar-width: none;
+}
+.rv-marquee::-webkit-scrollbar { display: none; }
+.rv-controls { display: flex; justify-content: center; margin-top: 14px; }
 .rv-card {
   flex: 0 0 auto;
   width: 400px;
@@ -1095,9 +1101,6 @@ html.ov-lock { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .main-nav, .main-nav a, .nav-toggle span { transition: none !important; }
   .hm-landing-copy > *, .hm-scroll, .hm-scroll i::after { animation: none; }
-  .rv-marquee { -webkit-mask-image: none; mask-image: none; }
-  .rv-track { width: auto; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 10px 24px 20px; }
-  .rv-card { margin: 0; }
   .ov-window, .ov-backdrop, .rv-card { transition: none; }
   .hm-tile-img img, .hm-card, .pill-btn { transition: none; }
 }
