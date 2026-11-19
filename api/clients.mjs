@@ -22,6 +22,8 @@
    Nothing is ever emailed to a client from here. The dashboard lists
    what is unpaid and what renews soon; next to each one, "Write email"
    opens your own mail program with a suggested text you can change.
+   The only automatic email goes to the team: when a domain ErgonSite
+   pays for is close to expiring, info@ergonsite.com is told to renew it.
 
    Logins are encrypted with AES-256-GCM. The key comes from VAULT_KEY in
    Render's environment and never touches the data file, so the file on
@@ -75,7 +77,7 @@ function unseal(key, sealed) {
 }
 
 /* ===================================================================== */
-export function setupClients({ db, store, send, readJson, clean, id, now, vaultSecret }) {
+export function setupClients({ db, store, send, readJson, clean, id, now, vaultSecret, mailer, layout, esc, notifyEmail, publicUrl }) {
   const KEY = vaultKey(vaultSecret);
   const ensure = () => {
     const x = db.clients || (db.clients = {});
@@ -338,6 +340,39 @@ export function setupClients({ db, store, send, readJson, clean, id, now, vaultS
     store.save();
     return added;
   }
+
+  /* ---------- the team is told to renew domains we pay for ---------- */
+  async function remindUs() {
+    if (!mailer) return;
+    const x = ensure();
+    const today = todayStr();
+    for (const c of x.charges) {
+      if (c.type !== 'domain' || c.payer !== 'ergonsite' || c.renewedTo || !c.end || c.remindedFor === c.end) continue;
+      const days = daysBetween(today, c.end);
+      if (days > (c.remindDays ?? x.settings.remindDays)) continue;
+      const cl = x.list.find((k) => k.id === c.clientId) || { name: 'a client' };
+      const dom = c.domainName || cl.domain || 'a domain';
+      const cost = c.ourCost ? ` (about ${euro(c.ourCost, c.ourCostCurrency || 'USD')})` : '';
+      const when = days < 0 ? `expired on ${nice(c.end)}` : `expires on ${nice(c.end)} (${days === 0 ? 'today' : days === 1 ? 'tomorrow' : 'in ' + days + ' days'})`;
+      try {
+        await mailer.send({
+          to: notifyEmail,
+          subject: `Renew ${dom} for ${cl.name}`,
+          text: `${dom} (${cl.name}) ${when}. ErgonSite pays this one: renew it at ${c.registrar || 'the registrar'}${cost}, then press "Mark renewed" on the client in the console.
+
+${publicUrl}/admin/#clients/c/${c.clientId}`,
+          html: layout(`Renew ${dom}`, `<p><b>${esc(dom)}</b> (${esc(cl.name)}) ${esc(when)}.</p><p>ErgonSite pays this one: renew it at ${esc(c.registrar || 'the registrar')}${esc(cost)}, then press <b>Mark renewed</b> on the client in the console.</p>`
+            + `<p><a href="${esc(publicUrl)}/admin/#clients/c/${esc(c.clientId)}" style="color:#1b3a9e;font-weight:600">Open ${esc(cl.name)}</a></p>`)
+        });
+        c.remindedFor = c.end;
+        store.save();
+      } catch (err) {
+        console.error('Domain reminder not sent:', err.message);
+      }
+    }
+  }
+  setTimeout(remindUs, 9_000);
+  setInterval(remindUs, 3600_000).unref();
 
   /* ---------- routes: /admin/api/clients/... ---------- */
   async function handle(req, res, p, user) {

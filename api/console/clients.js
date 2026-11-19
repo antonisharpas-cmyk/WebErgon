@@ -104,22 +104,44 @@
       c.domain ? [h('dt', { text: 'Domain' }), h('dd', { text: c.domain })] : null,
       c.notes ? [h('dt', { text: 'Notes' }), h('dd', { class: 'message-text', text: c.notes })] : null);
 
-    const rows = d.charges.map((ch) => {
-      const period = ch.type === 'maintenance' || ch.type === 'domain' ? day(ch.start) + ' to ' + day(ch.end) : ch.start ? 'due ' + day(ch.start) : 'no due date';
-      const domainLine = ch.type === 'domain'
-        ? [ch.domainName, ch.payer === 'ergonsite' ? 'we pay ' + (ch.registrar || 'the registrar') + (ch.ourCost ? ' ' + fmt(ch.ourCost, ch.ourCostCurrency) : '') : (ch.registrar ? 'client pays ' + ch.registrar : 'client pays'), ch.payer !== 'ergonsite' ? ch.domainCost : ''].filter(Boolean).join(' · ')
-        : ch.description;
+    const rows = d.charges.filter((ch) => ch.type !== 'domain').map((ch) => {
+      const period = ch.type === 'maintenance' ? day(ch.start) + ' to ' + day(ch.end) : ch.start ? 'due ' + day(ch.start) : 'no due date';
       return h('tr', { class: ch.renewedTo ? 'is-done' : '' },
-        h('td', null, h('b', { text: ch.typeLabel }), h('div', { class: 'muted', text: domainLine })),
+        h('td', null, h('b', { text: ch.typeLabel }), h('div', { class: 'muted', text: ch.description })),
         h('td', { class: 'x-date', text: period }),
-        h('td', { class: 'num', text: ch.amount > 0 ? fmt(ch.amount, ch.currency) : ch.type === 'domain' ? (ch.payer === 'ergonsite' ? 'included' : '—') : fmt(0) }),
-        h('td', { class: 'num', text: ch.amount > 0 ? fmt(ch.paid, ch.currency) : '' }),
-        h('td', null, pill(ch.status, ch.statusLabel), ch.payStatus ? h('div', null, pill(ch.payStatus.key, ch.payStatus.label)) : null),
+        h('td', { class: 'num', text: fmt(ch.amount, ch.currency) }),
+        h('td', { class: 'num', text: fmt(ch.paid, ch.currency) }),
+        h('td', null, pill(ch.status, ch.statusLabel)),
         h('td', { class: 'num' }, h('div', { class: 'x-row-actions' },
           ch.mail && c.email ? h('a', { class: 'link', href: mailto(ch.mail), text: 'Write email' }) : null,
           ch.open > 0 ? h('button', { type: 'button', class: 'link', text: 'Payment', onclick: () => paymentDialog(ch) }) : null,
-          (ch.type === 'maintenance' || ch.type === 'domain') && !ch.renewedTo ? h('button', { type: 'button', class: 'link', text: ch.type === 'domain' ? 'Mark renewed' : 'Renew', onclick: () => renewDialog(ch) }) : null,
+          ch.type === 'maintenance' && !ch.renewedTo ? h('button', { type: 'button', class: 'link', text: 'Renew', onclick: () => renewDialog(ch) }) : null,
           h('button', { type: 'button', class: 'link', text: 'Edit', onclick: () => chargeDialog(c, ch) }))));
+    });
+
+    /* the domain: its own card, so its expiry and who pays are easy to find */
+    const doms = d.charges.filter((ch) => ch.type === 'domain');
+    const current = doms.filter((ch) => !ch.renewedTo);
+    const earlier = doms.filter((ch) => ch.renewedTo);
+    const domainItems = current.map((ch) => {
+      const days = ch.end ? Math.round((new Date(ch.end + 'T00:00:00') - new Date(today() + 'T00:00:00')) / 86400000) : null;
+      const we = ch.payer === 'ergonsite';
+      return h('li', { class: 'x-domain' + (ch.status === 'overdue' ? ' is-late' : ch.status === 'soon' ? ' is-due' : '') },
+        h('div', { class: 'x-grow' },
+          h('div', { class: 'x-domain-name' }, h('b', { text: ch.domainName || c.domain || 'Domain' }), pill(ch.status, ch.statusLabel)),
+          h('div', { class: 'x-domain-facts' },
+            h('span', null, h('small', { class: 'muted', text: 'Expires' }), h('b', { text: ch.end ? day(ch.end) : 'not known' }), ch.end ? h('small', { class: 'muted', text: days < 0 ? Math.abs(days) + ' days ago' : 'in ' + days + ' days' }) : null),
+            h('span', null, h('small', { class: 'muted', text: 'Who pays' }), h('b', { text: we ? 'ErgonSite' : 'The client' }),
+              h('small', { class: 'muted', text: we ? (ch.registrar || 'registrar') + (ch.ourCost ? ', costs us ' + fmt(ch.ourCost, ch.ourCostCurrency) : '') : (ch.registrar ? 'own ' + ch.registrar + ' account' : 'own account') + (ch.domainCost ? ', ' + ch.domainCost : '') })),
+            we ? h('span', null, h('small', { class: 'muted', text: 'Client pays us' }), h('b', { text: ch.amount > 0 ? fmt(ch.amount, ch.currency) : 'included' }),
+              ch.payStatus ? pill(ch.payStatus.key, ch.payStatus.label) : null) : null,
+            h('span', null, h('small', { class: 'muted', text: 'Reminder' }), h('b', { text: (ch.remindDays ?? S.data.settings.remindDays) + ' days before' }),
+              h('small', { class: 'muted', text: we ? 'dashboard + email to us' : 'dashboard; you email the client' })))),
+        h('div', { class: 'x-row-actions' },
+          ch.mail && c.email && ch.end ? h('a', { class: 'link', href: mailto(ch.mail), text: we ? 'Write email' : 'Remind client' }) : null,
+          ch.open > 0 ? h('button', { type: 'button', class: 'link', text: 'Payment', onclick: () => paymentDialog(ch) }) : null,
+          ch.end ? h('button', { type: 'button', class: 'link', text: 'Mark renewed', onclick: () => renewDialog(ch) }) : null,
+          h('button', { type: 'button', class: 'link', text: 'Edit', onclick: () => chargeDialog(c, ch, 'domain') })));
     });
 
     const logins = d.logins.map((l) => {
@@ -149,6 +171,10 @@
           h('div', { class: 'x-actions' }, h('button', { type: 'button', class: 'btn btn-light', text: 'Edit client', onclick: () => clientDialog(c) }))),
         facts,
         h('div', { class: 'x-client-row' }, c.open ? pill(c.overdue ? 'overdue' : 'pending', fmt(c.open) + ' open') : pill('paid', 'all paid'), h('span', { class: 'muted', text: 'Paid so far ' + fmt(c.paidTotal) }))),
+      h('section', { class: 'card x-card' },
+        h('div', { class: 'x-card-head' }, h('h3', { text: 'Domain' }), h('button', { type: 'button', class: 'btn btn-light', text: '+ Domain', onclick: () => chargeDialog(c, null, 'domain') })),
+        domainItems.length ? h('ul', { class: 'x-list' }, domainItems) : h('p', { class: 'muted', text: 'Add the client\u2019s domain: its expiry date, and whether they pay the registrar themselves or ErgonSite pays it for them.' }),
+        earlier.length ? h('p', { class: 'muted x-note', text: 'Earlier: ' + earlier.map((ch) => (ch.domainName || 'domain') + ' ' + day(ch.start) + ' to ' + day(ch.end)).join(' · ') }) : null),
       h('section', { class: 'card x-card' },
         h('div', { class: 'x-card-head' }, h('h3', { text: 'Charges' }), h('button', { type: 'button', class: 'btn btn-light', text: '+ Charge', onclick: () => chargeDialog(c) })),
         rows.length ? h('div', { class: 'x-table-wrap' }, h('table', { class: 'x-table' },
@@ -228,8 +254,11 @@
       } }) : null]);
   }
 
-  function chargeDialog(cl, ch) {
-    const type = h('select', null, Object.entries(S.data.types).map(([k, v]) => h('option', { value: k, selected: ch && ch.type === k ? true : null, text: v })));
+  // mode 'domain' edits a domain; otherwise a money charge (website, CRM, maintenance, other)
+  function chargeDialog(cl, ch, mode) {
+    const isDomain = mode === 'domain' || (ch && ch.type === 'domain');
+    const types = Object.entries(S.data.types).filter(([k]) => (isDomain ? k === 'domain' : k !== 'domain'));
+    const type = h('select', null, types.map(([k, v]) => h('option', { value: k, selected: ch && ch.type === k ? true : null, text: v })));
     const payer = h('select', null,
       h('option', { value: 'client', selected: !ch || ch.payer !== 'ergonsite' ? true : null, text: 'The client, from their own account' }),
       h('option', { value: 'ergonsite', selected: ch && ch.payer === 'ergonsite' ? true : null, text: 'ErgonSite pays it for them' }));
@@ -268,9 +297,9 @@
       parts.domainCost.hidden = !dom || we;
       parts.ourCost.hidden = parts.ourCostCurrency.hidden = !we;
       parts.paidNow.hidden = parts.method.hidden = !!ch || (dom && !we);
-      lbl.start.textContent = yearly ? (dom ? 'Registered / renewed on' : 'Start') : 'Due date';
+      lbl.start.textContent = yearly ? (dom ? (we ? 'Last paid / renewed on' : 'Last renewed on (optional)') : 'Start') : 'Due date';
       lbl.end.textContent = dom ? 'Expires on' : 'End';
-      if (yearly && !f.end.value && f.start.value) {
+      if (yearly && !dom && !f.end.value && f.start.value) {
         const d = new Date(f.start.value + 'T00:00:00'); d.setFullYear(d.getFullYear() + 1);
         f.end.value = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
       }
@@ -284,8 +313,11 @@
       if (!ch) { v.paidNow = paidNow.value; v.method = method.value; v.paidOn = f.start.value || today(); }
       return v;
     };
-    const content = [h('div', { class: 'grid2' }, field('What for', type), Object.values(parts)),
-      h('p', { class: 'muted x-note', text: 'When ErgonSite pays a domain for a client, what we pay shows in Expenses and Reports under that client.' })];
+    const order = isDomain
+      ? ['domainName', 'end', 'payer', 'registrar', 'domainCost', 'ourCost', 'ourCostCurrency', 'amount', 'start', 'remindDays', 'paidNow', 'method']
+      : ['description', 'amount', 'start', 'end', 'remindDays', 'paidNow', 'method'];
+    const content = [h('div', { class: 'grid2' }, isDomain ? null : field('What for', type), order.map((k) => parts[k])),
+      isDomain ? h('p', { class: 'muted x-note', text: 'The client pays: the dashboard shows the renewal and "Remind client" writes them an email. ErgonSite pays: the dashboard shows it, we get an email to renew it, and what we pay goes into Expenses and Reports under this client.' }) : null];
     if (ch && ch.payments && ch.payments.length) {
       content.push(h('div', { class: 'x-box' }, h('h4', { text: 'Payments' }), h('ul', { class: 'x-list' }, ch.payments.map((p) => h('li', null,
         h('span', { class: 'x-grow', text: day(p.date) + ' · ' + p.method + (p.note ? ' · ' + p.note : '') }), h('b', { text: fmt(p.amount) }),
@@ -294,10 +326,10 @@
           try { await api('/clients/charges/' + ch.id + '/payments/' + p.id, { method: 'DELETE' }); toast('Payment removed'); document.querySelector('dialog.x-dialog').close(); reload(); } catch (e) { toast(e.message); }
         } }))))));
     }
-    dialog(ch ? 'Edit charge' : 'New charge for ' + cl.name, content, (err, dlg) => [
+    dialog(isDomain ? (ch ? 'Edit domain' : 'Domain for ' + cl.name) : ch ? 'Edit charge' : 'New charge for ' + cl.name, content, (err, dlg) => [
       save('Save', () => run(err, dlg, () => api(ch ? '/clients/charges/' + ch.id : '/clients/c/' + cl.id + '/charges', { method: ch ? 'PUT' : 'POST', body: val() }), 'Saved')),
       ch ? h('button', { type: 'button', class: 'btn btn-light x-danger', text: 'Delete', onclick: () => {
-        if (confirm('Delete this charge and its payments?')) run(err, dlg, () => api('/clients/charges/' + ch.id, { method: 'DELETE' }), 'Deleted');
+        if (confirm(isDomain ? 'Delete this domain?' : 'Delete this charge and its payments?')) run(err, dlg, () => api('/clients/charges/' + ch.id, { method: 'DELETE' }), 'Deleted');
       } }) : null]);
     sync();
   }

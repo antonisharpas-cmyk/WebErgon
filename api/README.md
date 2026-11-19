@@ -61,13 +61,14 @@ The data lives in the same data file as the chats (`expenses` key), on the Rende
 
 ## Dashboard (owners only)
 
-The first screen for owners. It lists what is **unpaid** (late ones highlighted), **client renewals** coming up (maintenance years and domains, highlighted 30 days before), **our own renewals** from Expenses, and **things to check** (a domain with no expiry date, a client with no email, a charge with no due date), with the month's and the year's money at the top. The orange number on the menu counts late payments and renewals due soon. Next to each item, **Write email** opens your own mail program with a suggested text to change and send yourself: the console never emails a client.
+The first screen for owners. It lists what is **unpaid** (late ones highlighted), **domains expiring** (marked *Client pays* or *We pay*) and **maintenance renewals** coming up (highlighted 30 days before), **our own renewals** from Expenses, and **things to check** (a domain with no expiry date, a client with no email, a charge with no due date), with the month's and the year's money at the top. The orange number on the menu counts late payments and renewals due soon. Next to each item, **Write email** / **Remind client** opens your own mail program with a suggested text to change and send yourself: the console never emails a client. The only automatic email is to us, for domains ErgonSite pays.
 
 ## Clients (owners only)
 
 Every client as a card, with a search box. A client's page has the contact details, charges, payments and logins.
 
-- **Charges**: Website, CRM or Other (one-off, can be paid in parts), **Maintenance** (a yearly fee with start and end; **Renew** opens the next year) and **Domain** (expiry date; **Mark renewed** sets the next one). A domain is either paid by the client from their own registrar account, or **paid by ErgonSite for them**: then what we pay shows in Expenses and Reports under that client, and anything we charge the client back is tracked like other charges.
+- **Domain** (its own card on the client's page): the domain, when it expires, who pays the registrar, and the reminder. **The client pays** from their own registrar account: the dashboard lists it under *Domains expiring* and **Remind client** writes them an email in your mail program. **ErgonSite pays**: enter what it costs us (it goes into Expenses and Reports under that client, in the month we paid) and, if we charge the client back, how much; the dashboard lists it as *We pay* and info@ergonsite.com gets an email to renew it. After a renewal, **Mark renewed** sets the new expiry date.
+- **Charges**: Website, CRM or Other (one-off, can be paid in parts) and **Maintenance** (a yearly fee with start and end; **Renew** opens the next year).
 - **Settings**: how many days before a renewal the dashboard highlights it, and the wording used in the suggested emails.
 - **Logins**: link, username and password for each client's admin page. Passwords are encrypted with `VAULT_KEY` (set once in Render's Environment as a long random text; never change it). Only owners can show or copy them; the console notes who opened one last.
 

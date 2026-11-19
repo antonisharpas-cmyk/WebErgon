@@ -32,13 +32,23 @@
       pill(c.late ? 'overdue' : c.paid ? 'part' : 'pending', c.late ? (c.paid ? 'part paid, late' : 'late') : c.paid ? 'part paid' : 'not due yet'),
       mailBtn(c.mail)));
 
-    const renewals = d.renewals.map((c) => h('li', { class: c.days < 0 ? 'is-late' : c.days <= (c.remindDays ?? d.remindDays) ? 'is-due' : '' },
+    const cls = (c) => (c.days < 0 ? 'is-late' : c.days <= (c.remindDays ?? d.remindDays) ? 'is-due' : '');
+    const maint = d.renewals.filter((c) => c.type === 'maintenance').map((c) => h('li', { class: cls(c) },
       h('span', { class: 'x-when' }, h('b', { text: day(c.end) }), h('small', { text: rel(c.days) })),
-      h('span', { class: 'x-grow' }, h('a', { href: '#clients/c/' + c.clientId, text: c.client }),
-        h('small', { class: 'muted', text: ' · ' + c.typeLabel + (c.domainName ? ' ' + c.domainName : '') + (c.type === 'domain' ? (c.payer === 'ergonsite' ? ' · we pay' : ' · client pays') : '') })),
-      c.type === 'maintenance' || c.amount ? h('b', { text: fmt(c.amount, c.currency) }) : h('span'),
+      h('span', { class: 'x-grow' }, h('a', { href: '#clients/c/' + c.clientId, text: c.client }), h('small', { class: 'muted', text: ' · maintenance year ends' })),
+      h('b', { text: fmt(c.amount, c.currency) }),
       pill(c.status, c.statusLabel),
       mailBtn(c.mail)));
+    // domains: who has to act, the client (we remind them) or us (we pay)
+    const domains = d.renewals.filter((c) => c.type === 'domain').map((c) => {
+      const we = c.payer === 'ergonsite';
+      return h('li', { class: cls(c) },
+        h('span', { class: 'x-when' }, h('b', { text: day(c.end) }), h('small', { text: rel(c.days) })),
+        h('span', { class: 'x-grow' }, h('b', { text: c.domainName || 'Domain' }), ' ', h('a', { href: '#clients/c/' + c.clientId, text: c.client })),
+        we ? h('span', { class: 'x-chip st-pending', text: 'We pay' + (c.ourCost ? ' ' + fmt(c.ourCost, c.ourCostCurrency) : '') }) : h('span', { class: 'x-chip', text: 'Client pays' }),
+        pill(c.status, c.statusLabel),
+        we ? h('a', { class: 'btn btn-light x-mini', href: '#clients/c/' + c.clientId, text: 'Renew, then mark' }) : (c.mail && c.mail.to ? h('a', { class: 'btn btn-light x-mini', href: C.mailto(c.mail), text: 'Remind client' }) : null));
+    });
 
     const ours = d.ours.map((o) => h('li', { class: o.due ? 'is-due' : '' },
       h('span', { class: 'x-when' }, h('b', { text: day(o.date) }), h('small', { text: rel(o.days) })),
@@ -67,11 +77,12 @@
         stat('In, ' + d.year, fmt(s.inYear), 'costs ' + fmt(s.costsYear)),
         stat('Profit, ' + d.year, fmt(s.profitYear), 'money in minus costs', false, s.profitYear < 0)),
       card('Unpaid', unpaid, 'Every client is paid up.'),
-      card('Client renewals', renewals, 'No maintenance or domain renews in the next ' + Math.max(60, d.remindDays) + ' days.',
+      card('Domains expiring', domains, 'No domain expires in the next ' + Math.max(60, d.remindDays) + ' days.',
         h('small', { class: 'muted', text: 'highlighted ' + d.remindDays + ' days before' })),
       h('div', { class: 'x-two' },
-        card('Our renewals', ours, 'Nothing of ours renews soon.', h('a', { href: '#expenses', class: 'link', text: 'Expenses' })),
-        card('To check', checks, 'Nothing to check.')),
+        card('Maintenance renewals', maint, 'No maintenance year ends in the next ' + Math.max(60, d.remindDays) + ' days.'),
+        card('Our renewals', ours, 'Nothing of ours renews soon.', h('a', { href: '#expenses', class: 'link', text: 'Expenses' }))),
+      card('To check', checks, 'Nothing to check.'),
       h('p', { class: 'muted x-note', text: 'No email goes to a client by itself. "Write email" opens your own mail program with a suggested text you can change. Record payments and renewals on the client’s page.' })
     ].filter(Boolean));
   }

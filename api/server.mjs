@@ -71,7 +71,7 @@ const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]+\.[A-Za-z]{2,}$/;
 /* company expenses (console, owners only): see expenses.mjs */
 const expenses = setupExpenses({ db, store, send, readJson, clean, id, now, mailer, layout, esc, notifyEmail: NOTIFY_EMAIL, publicUrl: PUBLIC_URL });
 /* clients, billing, renewal emails and client logins (owners only): see clients.mjs */
-const clients = setupClients({ db, store, send, readJson, clean, id, now, vaultSecret: env.VAULT_KEY });
+const clients = setupClients({ db, store, send, readJson, clean, id, now, vaultSecret: env.VAULT_KEY, mailer, layout, esc, notifyEmail: NOTIFY_EMAIL, publicUrl: PUBLIC_URL });
 expenses.setExtraCosts((month) => clients.ourDomainCosts(month));      // domains we pay for clients are costs too
 /* the dashboard, and money in against costs for any period (owners only): see reports.mjs */
 const reports = setupReports({ send, expenses, clients, inbox: () => ({
