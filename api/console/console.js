@@ -21,7 +21,7 @@
       else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
       else el.setAttribute(k, v === true ? '' : v);
     }
-    for (const kid of kids.flat()) if (kid !== null && kid !== undefined && kid !== false) el.append(kid);
+    for (const kid of kids.flat(Infinity)) if (kid !== null && kid !== undefined && kid !== false) el.append(kid);
     return el;
   }
 
@@ -107,17 +107,21 @@
     $('#meAvatar').textContent = initials(data.user.name);
     $('#mailWarn').hidden = data.mail;
     $('#addUser').hidden = data.user.role !== 'owner';
+    $('#navExpenses').hidden = data.user.role !== 'owner';
+    $('#navClients').hidden = data.user.role !== 'owner';
+    $('#navReports').hidden = data.user.role !== 'owner';
     route();
     await refresh();
     clearInterval(state.listTimer);
     state.listTimer = setInterval(refresh, 5000);
   }
 
-  /* ---------------- routing (#chats, #chat/ID, #inquiries, #inquiry/ID, #team) ---------------- */
+  /* ---------------- routing (#chats, #chat/ID, #inquiries, #inquiry/ID, #team, #expenses/YYYY-MM) ---------------- */
   function route() {
     const hash = location.hash.replace(/^#/, '') || 'chats';
     const [name, id] = hash.split('/');
-    const view = name === 'chat' ? 'chats' : name === 'inquiry' ? 'inquiries' : (['chats', 'inquiries', 'team'].includes(name) ? name : 'chats');
+    let view = name === 'chat' ? 'chats' : name === 'inquiry' ? 'inquiries' : (['chats', 'inquiries', 'team', 'expenses', 'clients', 'reports'].includes(name) ? name : 'chats');
+    if (['expenses', 'clients', 'reports'].includes(view) && (!state.me || state.me.role !== 'owner')) view = 'chats';
     state.view = view;
     $$('.view').forEach((v) => (v.hidden = v.id !== 'view-' + view));
     $$('.side-nav a').forEach((a) => a.classList.toggle('is-on', a.dataset.view === view));
@@ -126,6 +130,9 @@
     if (name === 'inquiry' && id) openInquiry(id);
     else if (view === 'inquiries') closeDetail('inquiries');
     if (view === 'team') loadTeam();
+    if (view === 'expenses' && window.ExpensesView) window.ExpensesView.open(id);
+    if (view === 'clients' && window.ClientsView) window.ClientsView.open(hash.split('/').slice(1).join('/'));
+    if (view === 'reports' && window.ReportsView) window.ReportsView.open();
   }
   window.addEventListener('hashchange', route);
 
@@ -144,6 +151,8 @@
     const c = state.overview.counts;
     const bc = $('#badgeChats'); bc.hidden = !c.chatsUnread; bc.textContent = c.chatsUnread;
     const bi = $('#badgeInq'); bi.hidden = !c.inquiriesNew; bi.textContent = c.inquiriesNew;
+    const be = $('#badgeExp'); be.hidden = !c.renewalsDue; be.textContent = c.renewalsDue;
+    const bk = $('#badgeClients'); bk.hidden = !c.clientDrafts; bk.textContent = c.clientDrafts;
     const total = c.chatsUnread + c.inquiriesNew;
     document.title = (total ? '(' + total + ') ' : '') + 'ErgonSite console';
     renderLists();
@@ -429,6 +438,9 @@
     /* a form reset puts the password back to hidden */
     if (input.form) input.form.addEventListener('reset', () => { input.type = 'password'; btn.innerHTML = EYE; btn.setAttribute('aria-pressed', 'false'); });
   });
+
+  /* helpers for the other console screens (expenses.js) */
+  window.ErgonConsole = { $, $$, h, api, toast };
 
   boot();
 })();

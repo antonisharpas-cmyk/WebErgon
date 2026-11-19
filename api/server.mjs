@@ -12,7 +12,8 @@
         the console, emailed to the team and confirmed to the enquirer,
         all from info@ergonsite.com.
      3. The console, at /admin. Team logins, the chat inbox, the
-        enquiries inbox, replies, and team management.
+        enquiries inbox, replies, team management, and (owners only)
+        the company's expenses with renewal reminders.
 
    Environment (set these in the Render dashboard, never in the repo):
      DATA_DIR         where the data file lives (the Render disk)
@@ -23,6 +24,9 @@
      SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / MAIL_FROM
      ALLOWED_ORIGINS  comma-separated, default https://ergonsite.com,https://www.ergonsite.com
      PUBLIC_URL       where this server is reachable, for links in emails
+     VAULT_KEY        a long random secret that encrypts client logins in
+                      the console. Set it once and never change it: logins
+                      saved with one key cannot be opened with another.
    ===================================================================== */
 import http from 'node:http';
 import fs from 'node:fs';
@@ -31,6 +35,9 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { openStore } from './store.mjs';
 import { makeMailer, layout, esc, textToHtml } from './mail.mjs';
+import { setupExpenses } from './expenses.mjs';
+import { setupClients } from './clients.mjs';
+import { setupReports } from './reports.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const env = process.env;
@@ -60,6 +67,13 @@ const id = (n = 12) => crypto.randomBytes(n).toString('base64url');
 const sha = (s) => crypto.createHash('sha256').update(String(s)).digest('hex');
 const clean = (s, max) => String(s ?? '').replace(/\u0000/g, '').trim().slice(0, max);
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]+\.[A-Za-z]{2,}$/;
+
+/* company expenses (console, owners only): see expenses.mjs */
+const expenses = setupExpenses({ db, store, send, readJson, clean, id, now, mailer, layout, esc, notifyEmail: NOTIFY_EMAIL, publicUrl: PUBLIC_URL });
+/* clients, billing, renewal emails and client logins (owners only): see clients.mjs */
+const clients = setupClients({ db, store, send, readJson, clean, id, now, mailer, layout, esc, notifyEmail: NOTIFY_EMAIL, publicUrl: PUBLIC_URL, vaultSecret: env.VAULT_KEY, expenses });
+/* money in against costs, any period, by client and category (owners only): see reports.mjs */
+const reports = setupReports({ send, expenses, clients });
 
 function hashPassword(pw) {
   const salt = crypto.randomBytes(16);
@@ -543,10 +557,16 @@ async function consoleApi(req, res, url) {
       inquiries: inqs,
       counts: {
         chatsUnread: convs.reduce((n, c) => n + (c.unread ? 1 : 0), 0),
-        inquiriesNew: inqs.filter((q) => q.status === 'new').length
+        inquiriesNew: inqs.filter((q) => q.status === 'new').length,
+        renewalsDue: user.role === 'owner' ? expenses.dueCount() : 0,
+        clientDrafts: user.role === 'owner' ? clients.draftCount() : 0
       }
     });
   }
+
+  if (p === '/expenses' || p.startsWith('/expenses/')) return await expenses.handle(req, res, p, user, url);
+  if (p === '/clients' || p.startsWith('/clients/')) return await clients.handle(req, res, p, user, url);
+  if (p === '/reports' || p.startsWith('/reports/')) return await reports.handle(req, res, p, user, url);
 
   /* --- chats --- */
   let m = p.match(/^\/conversations\/([A-Za-z0-9_-]+)(\/reply|\/status)?$/);
