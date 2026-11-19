@@ -30,11 +30,19 @@
     custom: { label: 'Custom', range: null }
   };
 
-  let F = { preset: 'year', from: PRESETS.year.range()[0], to: thisMonth, client: '', category: '' };
-  try { const saved = JSON.parse(sessionStorage.getItem('es-report') || 'null'); if (saved) F = Object.assign(F, saved); } catch (e) { /* no storage */ }
+  let F = { preset: 'year', from: PRESETS.year.range()[0], to: thisMonth, clients: [], categories: [] };
+  try {
+    const saved = JSON.parse(sessionStorage.getItem('es-report') || 'null');
+    if (saved) F = Object.assign(F, saved, { clients: saved.clients || (saved.client ? [saved.client] : []), categories: saved.categories || (saved.category ? [saved.category] : []) });
+    delete F.client; delete F.category;
+  } catch (e) { /* no storage */ }
   if (F.preset !== 'custom' && PRESETS[F.preset]) [F.from, F.to] = PRESETS[F.preset].range();
 
-  const query = () => '?from=' + F.from + '&to=' + F.to + '&client=' + encodeURIComponent(F.client) + '&category=' + encodeURIComponent(F.category);
+  const query = () => '?from=' + F.from + '&to=' + F.to
+    + F.clients.map((c) => '&client=' + encodeURIComponent(c)).join('')
+    + F.categories.map((c) => '&category=' + encodeURIComponent(c)).join('');
+  const COMPANY = 'ErgonSite itself & unassigned';
+  const clientName = (c) => (c === '__company' ? COMPANY : c);
 
   async function open() {
     try { sessionStorage.setItem('es-report', JSON.stringify(F)); } catch (e) { /* no storage */ }
@@ -47,14 +55,14 @@
   /* ---------------- page ---------------- */
   function render(r) {
     const t = r.totals;
-    const clientLabel = F.client === '__company' ? 'ErgonSite itself & unassigned' : F.client || 'all clients';
-    const scope = (F.from === F.to ? mName(F.from) : mName(F.from) + ' to ' + mName(F.to)) + ' · ' + clientLabel + (F.category ? ' · ' + F.category : '');
+    const clientLabel = !F.clients.length ? 'all clients' : F.clients.map(clientName).join(', ');
+    const scope = (F.from === F.to ? mName(F.from) : mName(F.from) + ' to ' + mName(F.to)) + ' · ' + clientLabel + (F.categories.length ? ' · ' + F.categories.join(', ') : '');
     $('#reportsRoot').replaceChildren(...[
       h('header', { class: 'x-head' }, h('div', null, h('h2', { text: 'Reports' }), h('p', { class: 'muted', text: 'Money in against costs, for any period, client or category.' }))),
       filterBar(r),
       h('p', { class: 'x-scope', text: scope }),
       h('section', { class: 'x-stats x-stats-5' },
-        stat('Profit', fmt(t.profit), F.category ? 'costs only: a category is picked' : 'money in minus costs', true, t.profit < 0),
+        stat('Profit', fmt(t.profit), F.categories.length ? 'costs only: a category is picked' : 'money in minus costs', true, t.profit < 0),
         stat('Money in', fmt(t.received), 'payments received'),
         stat('Costs', fmt(t.costs), t.missingRate ? 'some costs have no exchange rate' : 'all costs, in euro'),
         stat('Billed', fmt(t.billed), 'charges due in the period'),
@@ -75,25 +83,27 @@
     const onRange = () => { if (from.value && to.value) set({ preset: 'custom', from: from.value, to: to.value }); };
     from.addEventListener('change', onRange);
     to.addEventListener('change', onRange);
-    const client = h('select', { 'aria-label': 'Client' },
-      h('option', { value: '', text: 'All clients' }),
-      r.options.clients.map((c) => h('option', { value: c, selected: F.client === c ? true : null, text: c })),
-      h('option', { value: '__company', selected: F.client === '__company' ? true : null, text: 'ErgonSite itself & unassigned' }));
-    client.addEventListener('change', () => set({ client: client.value }));
-    const cats = Array.from(new Set([...r.options.categories, F.category].filter(Boolean)));
-    const category = h('select', { 'aria-label': 'Cost category' },
-      h('option', { value: '', text: 'All categories' }),
-      cats.map((c) => h('option', { value: c, selected: F.category === c ? true : null, text: c })));
-    category.addEventListener('change', () => set({ category: category.value }));
+    // pick one or several, with a search box
+    const client = C.multiSelect({
+      items: [...r.options.clients.map((c) => ({ value: c, label: c })), { value: '__company', label: COMPANY }],
+      selected: F.clients, allLabel: 'All clients', noun: 'clients', label: 'Clients',
+      onChange: (v) => set({ clients: v })
+    });
+    const cats = Array.from(new Set([...r.options.categories, ...F.categories]));
+    const category = C.multiSelect({
+      items: cats.map((c) => ({ value: c, label: c })),
+      selected: F.categories, allLabel: 'All categories', noun: 'categories', label: 'Cost categories',
+      onChange: (v) => set({ categories: v })
+    });
     return h('section', { class: 'card x-card x-filters' },
       h('div', { class: 'seg x-presets' }, Object.entries(PRESETS).map(([k, p]) => h('button', {
         type: 'button', class: F.preset === k ? 'is-on' : '', text: p.label,
         onclick: () => (p.range ? set({ preset: k, from: p.range()[0], to: p.range()[1] }) : set({ preset: 'custom' }))
       }))),
       h('div', { class: 'x-filter-row' },
-        h('label', null, 'From', from), h('label', null, 'To', to), h('label', null, 'Client', client), h('label', null, 'Cost category', category),
+        h('label', null, 'From', from), h('label', null, 'To', to), h('div', { class: 'x-field' }, h('span', { text: 'Clients' }), client), h('div', { class: 'x-field' }, h('span', { text: 'Cost categories' }), category),
         h('div', { class: 'x-filter-actions' },
-          (F.client || F.category) ? h('button', { type: 'button', class: 'link', text: 'Clear filters', onclick: () => set({ client: '', category: '' }) }) : null,
+          (F.clients.length || F.categories.length) ? h('button', { type: 'button', class: 'link', text: 'Clear filters', onclick: () => set({ clients: [], categories: [] }) }) : null,
           h('a', { class: 'btn btn-light', href: '/admin/api/reports/export.csv' + query(), text: 'Download CSV' }))));
   }
 
@@ -128,7 +138,7 @@
       r.byClient.length ? h('div', { class: 'x-table-wrap' }, h('table', { class: 'x-table' },
         h('thead', null, h('tr', null, h('th', { text: 'Client' }), h('th', { class: 'num', text: 'In' }), h('th', { class: 'num', text: 'Costs' }), h('th', { class: 'num', text: 'Profit' }), h('th', { class: 'num', text: 'Open' }))),
         h('tbody', null, r.byClient.map((c) => h('tr', null,
-          h('td', null, h('button', { type: 'button', class: 'link x-cell-link', text: c.name, title: 'Show only this', onclick: () => set({ client: c.key === '__company' ? '__company' : c.name }) })),
+          h('td', null, h('button', { type: 'button', class: 'link x-cell-link', text: c.name, title: 'Show only this', onclick: () => set({ clients: [c.key === '__company' ? '__company' : c.name] }) })),
           h('td', { class: 'num', text: fmt(c.received) }), h('td', { class: 'num', text: fmt(c.costs) }),
           h('td', { class: 'num' }, h('b', { class: c.profit < 0 ? 'x-neg' : '', text: fmt(c.profit) })),
           h('td', { class: 'num', text: c.open ? fmt(c.open) : '' })))))) : h('p', { class: 'muted', text: 'Nothing in this period.' }),
@@ -139,10 +149,10 @@
     const max = Math.max(0, ...r.byCategory.map((c) => c.eur));
     return h('section', { class: 'card x-card' }, h('h3', { text: 'Costs by category' }),
       r.byCategory.length ? h('ul', { class: 'x-bars' }, r.byCategory.map((c) => h('li', null,
-        h('button', { type: 'button', class: 'link x-bar-label', text: c.category, title: 'Show only this', onclick: () => set({ category: c.category }) }),
+        h('button', { type: 'button', class: 'link x-bar-label', text: c.category, title: 'Show only this', onclick: () => set({ categories: [c.category] }) }),
         h('span', { class: 'x-bar' }, h('i', { style: 'width:' + (max ? Math.max(2, c.eur / max * 100) : 0) + '%' })),
         h('b', { text: fmt(c.eur) })))) : h('p', { class: 'muted', text: 'No costs in this period.' }),
-      F.category ? h('p', { class: 'muted x-note', text: 'With a category picked, money in is hidden, so profit is not compared against part of the costs.' }) : null);
+      F.categories.length ? h('p', { class: 'muted x-note', text: 'With a category picked, money in is hidden, so profit is not compared against part of the costs.' }) : null);
   }
 
   function detailsCard(r) {

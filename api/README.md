@@ -54,7 +54,7 @@ The console's **Expenses** section keeps what ErgonSite pays for, month by month
 - **Reminders**: "Remind me N days before" shows the renewal under *Coming up*, puts an orange count on the Expenses menu item and emails the team once, N days before each renewal (to the address under Settings, or `NOTIFY_EMAIL`).
 - **One-off expenses**: anything paid once. **+ Instagram ad** adds an ad campaign with the post it promoted, when it ran and what it cost; edit it any time the cost changes.
 - **Render hosting**: in Render, *Billing*, download the usage CSV for each month and use *Import Render CSV*. The current month's "unbilled charges" file is an estimate: import it again to update it, and import the final file once the month is billed. Each Render service is linked to a client, so hosting cost per client shows up.
-- **Currencies**: amounts stay in their own currency (EUR, USD, ...). Rates come from the European Central Bank every day, or can be typed in by hand under Settings. Each month keeps the rates it was converted with.
+- **Currencies**: amounts stay in their own currency (EUR, USD, ...) and totals are in euro. The current month follows the European Central Bank's daily rate; when a month ends, its last rate is locked for good. Months that ended before the console kept a rate get the ECB rate of their last working day. Rates can also be typed in by hand under Settings.
 - **More**: download a month or a year as CSV (for the accountant), download a backup, or restore one.
 
 The data lives in the same data file as the chats (`expenses` key), on the Render disk.

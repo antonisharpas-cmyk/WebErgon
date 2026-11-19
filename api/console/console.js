@@ -119,6 +119,7 @@
 
   /* ---------------- routing (#chats, #chat/ID, #inquiries, #inquiry/ID, #team, #expenses/YYYY-MM) ---------------- */
   function route() {
+    document.querySelectorAll('dialog[open]').forEach((d) => d.close());   // a new page closes any open form
     const hash = location.hash.replace(/^#/, '') || (state.me && state.me.role === 'owner' ? 'dashboard' : 'chats');
     const [name, id] = hash.split('/');
     let view = name === 'chat' ? 'chats' : name === 'inquiry' ? 'inquiries' : (['chats', 'inquiries', 'team', 'expenses', 'clients', 'reports', 'dashboard'].includes(name) ? name : 'chats');
@@ -163,7 +164,10 @@
     const o = state.overview;
     if (!o) return;
 
-    const chats = o.conversations.filter((x) => state.chatFilter === 'all' || x.status === state.chatFilter);
+    const match = (q, ...vals) => !q || vals.some((v) => String(v || '').toLowerCase().includes(q));
+    const cq = $('#chatSearch').value.trim().toLowerCase();
+    const chats = o.conversations.filter((x) => (state.chatFilter === 'all' || x.status === state.chatFilter)
+      && match(cq, x.visitor.name, x.visitor.email, x.visitor.phone, x.last && x.last.text));
     $('#chatList').replaceChildren(...chats.map((x) =>
       h('li', null, h('button', {
         type: 'button',
@@ -178,7 +182,9 @@
     ));
     $('#chatEmpty').hidden = chats.length > 0;
 
-    const inqs = o.inquiries.filter((x) => state.inqFilter === 'all' || (state.inqFilter === 'done' ? x.status === 'done' : x.status !== 'done'));
+    const iq = $('#inqSearch').value.trim().toLowerCase();
+    const inqs = o.inquiries.filter((x) => (state.inqFilter === 'all' || (state.inqFilter === 'done' ? x.status === 'done' : x.status !== 'done'))
+      && match(iq, x.name, x.email, x.company, x.preview));
     $('#inqList').replaceChildren(...inqs.map((x) =>
       h('li', null, h('button', {
         type: 'button',
@@ -194,6 +200,8 @@
     $('#inqEmpty').hidden = inqs.length > 0;
   }
 
+  $('#chatSearch').addEventListener('input', renderLists);
+  $('#inqSearch').addEventListener('input', renderLists);
   $$('[data-chatfilter]').forEach((b) => b.addEventListener('click', () => {
     state.chatFilter = b.dataset.chatfilter;
     $$('[data-chatfilter]').forEach((x) => x.classList.toggle('is-on', x === b));

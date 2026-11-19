@@ -35,7 +35,9 @@ export function setupReports({ send, expenses, clients, inbox }) {
     if (!MONTH_RE.test(to)) to = thisMonth;
     if (from > to) [from, to] = [to, from];
     if (monthIndex(to) - monthIndex(from) > 59) from = monthFromIndex(monthIndex(to) - 59);      // five years at most
-    return { from, to, client: (url.searchParams.get('client') || '').trim(), category: (url.searchParams.get('category') || '').trim() };
+    // several clients and categories can be picked: ?client=A&client=B
+    const many = (k) => [...new Set(url.searchParams.getAll(k).map((v) => v.trim()).filter(Boolean))].slice(0, 100);
+    return { from, to, clients: many('client'), categories: many('category') };
   }
 
   function build(f) {
@@ -43,16 +45,14 @@ export function setupReports({ send, expenses, clients, inbox }) {
     const money = clients.ledger(`${f.from}-01`, lastDay(f.to));
     const clientNames = clients.names();
 
-    const matchClient = (name) => {
-      if (!f.client) return true;
-      if (f.client === '__company') return !clientNames.some((n) => key(n) === key(name));
-      return key(name) === key(f.client);
-    };
-    const costs = allCosts.filter((r) => matchClient(r.client || 'Unassigned') && (!f.category || r.category === f.category));
+    const isCompany = (name) => !clientNames.some((n) => key(n) === key(name));
+    const matchClient = (name) => !f.clients.length || f.clients.some((c) => (c === '__company' ? isCompany(name) : key(c) === key(name)));
+    const cats = new Set(f.categories);
+    const costs = allCosts.filter((r) => matchClient(r.client || 'Unassigned') && (!cats.size || cats.has(r.category)));
     // a cost-category filter is about costs only: money in is left out so profit is not misleading
-    const payments = f.category ? [] : money.payments.filter((p) => matchClient(p.client));
-    const billed = f.category ? [] : money.billed.filter((b) => matchClient(b.client));
-    const open = f.category ? [] : money.open.filter((o) => matchClient(o.client));
+    const payments = cats.size ? [] : money.payments.filter((p) => matchClient(p.client));
+    const billed = cats.size ? [] : money.billed.filter((b) => matchClient(b.client));
+    const open = cats.size ? [] : money.open.filter((o) => matchClient(o.client));
 
     const months = [];
     for (let i = monthIndex(f.from); i <= monthIndex(f.to); i++) {
@@ -118,8 +118,8 @@ export function setupReports({ send, expenses, clients, inbox }) {
   function dashboard() {
     const d = new Date();
     const month = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
-    const m = build({ from: month, to: month, client: '', category: '' });
-    const y = build({ from: `${d.getFullYear()}-01`, to: month, client: '', category: '' });
+    const m = build({ from: month, to: month, clients: [], categories: [] });
+    const y = build({ from: `${d.getFullYear()}-01`, to: month, clients: [], categories: [] });
     const a = clients.attention();
     return {
       month, year: d.getFullYear(),
@@ -141,7 +141,8 @@ export function setupReports({ send, expenses, clients, inbox }) {
     const f = filters(url);
     if (p === '/reports') return send(res, 200, build(f));
     if (p === '/reports/export.csv') {
-      const name = `ergonsite-report-${f.from}-to-${f.to}${f.client ? '-' + f.client.replace(/[^A-Za-z0-9]+/g, '-').toLowerCase() : ''}.csv`;
+      const who = f.clients.length === 1 ? '-' + f.clients[0].replace(/[^A-Za-z0-9]+/g, '-').toLowerCase() : f.clients.length ? `-${f.clients.length}-clients` : '';
+      const name = `ergonsite-report-${f.from}-to-${f.to}${who}.csv`;
       res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="${name}"`, 'Cache-Control': 'no-store' });
       return res.end('﻿' + csv(build(f)));
     }

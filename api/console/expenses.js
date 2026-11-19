@@ -15,7 +15,7 @@
   const { $, h, api, toast } = C;
 
   const EVERY = { 1: 'Every month', 3: 'Every 3 months', 6: 'Every 6 months', 12: 'Every year', 24: 'Every 2 years' };
-  const S = { month: null, data: null };
+  const S = { month: null, data: null, tab: 'month' };
 
   const fmt = (n, cur) => {
     try { return new Intl.NumberFormat('en-IE', { style: 'currency', currency: cur || 'EUR' }).format(n); }
@@ -29,159 +29,144 @@
   const dayName = (d) => new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   const inDays = (n) => (n === 0 ? 'today' : n === 1 ? 'tomorrow' : 'in ' + n + ' days');
 
-  /* ---------------- load ---------------- */
-  async function open(month) {
-    S.month = /^\d{4}-\d{2}$/.test(month || '') ? month : (S.month || thisMonth());
+  /* ---------------- load ----------------
+     #expenses            this month          #expenses/2026-10   another month
+     #expenses/recurring  subscriptions       #expenses/hosting   Render files and clients
+     #expenses/settings   rates, reminders, downloads */
+  const TABS = ['recurring', 'hosting', 'settings'];
+  async function open(arg) {
+    S.tab = TABS.includes(arg) ? arg : 'month';
+    if (/^\d{4}-\d{2}$/.test(arg || '')) S.month = arg;
+    S.month ||= thisMonth();
     try { S.data = await api('/expenses?month=' + S.month); } catch (e) { toast(e.message); return; }
     render();
   }
-  const reload = () => open(S.month);
+  const reload = () => open(S.tab === 'month' ? S.month : S.tab);
 
   /* ---------------- page ---------------- */
   function render() {
     const d = S.data;
-    const root = $('#expensesRoot');
-    root.replaceChildren(...[
-      head(d),
-      stats(d),
-      d.comingUp.length ? comingUp(d) : null,
-      monthTable(d),
-      h('div', { class: 'x-two' }, byClient(d), history(d)),
-      recurring(d),
-      renderCard(d),
-      settings(d)
-    ].filter(Boolean));
+    const body = S.tab === 'recurring' ? [recurring(d)] : S.tab === 'hosting' ? [hosting(d)] : S.tab === 'settings' ? [settings(d)] : [stats(d), monthTable(d)];
+    $('#expensesRoot').replaceChildren(head(d), ...body.flat().filter(Boolean));
   }
 
   function head(d) {
-    const file = h('input', { type: 'file', accept: '.csv,text/csv', multiple: true, hidden: true });
-    file.addEventListener('change', () => importRender(Array.from(file.files)).finally(() => { file.value = ''; }));
-    const restore = h('input', { type: 'file', accept: '.json,application/json', hidden: true });
-    restore.addEventListener('change', () => importBackup(restore.files[0]).finally(() => { restore.value = ''; }));
-    const year = d.month.slice(0, 4);
-    const more = h('details', { class: 'x-menu' },
-      h('summary', { class: 'btn btn-light', text: 'More' }),
+    const t = (key, label, hash) => h('a', { href: '#' + hash, class: S.tab === key ? 'is-on' : '' }, label);
+    const add = h('details', { class: 'x-menu' },
+      h('summary', { class: 'btn btn-dark', text: '+ Add' }),
       h('div', { class: 'x-menu-list' },
-        h('a', { href: '/admin/api/expenses/export.csv?from=' + d.month + '&to=' + d.month, text: 'Download ' + d.label + ' (CSV)' }),
-        h('a', { href: '/admin/api/expenses/export.csv?from=' + year + '-01&to=' + year + '-12', text: 'Download all of ' + year + ' (CSV)' }),
-        h('a', { href: '/admin/api/expenses/backup', text: 'Download a backup (JSON)' }),
-        h('button', { type: 'button', text: 'Restore from a backup…', onclick: () => restore.click() })));
-    return h('header', { class: 'x-head' },
-      h('div', null, h('h2', { text: 'Expenses' }), h('p', { class: 'muted', text: 'What ErgonSite pays for, month by month. Totals in euro.' })),
+        h('button', { type: 'button', text: 'One-off expense', onclick: (e) => { e.target.closest('details').open = false; entryDialog(); } }),
+        h('button', { type: 'button', text: 'Instagram ad', onclick: (e) => { e.target.closest('details').open = false; entryDialog(null, AD); } }),
+        h('button', { type: 'button', text: 'Recurring cost (subscription, domain…)', onclick: (e) => { e.target.closest('details').open = false; planDialog(); } })));
+    return h('div', { class: 'x-root-head' },
+      h('header', { class: 'x-head' },
+        h('div', null, h('h2', { text: 'Expenses' }), h('p', { class: 'muted', text: 'What ErgonSite pays for. Totals in euro.' })),
+        h('div', { class: 'x-actions' }, add)),
+      h('nav', { class: 'x-tabs' },
+        t('month', 'By month', 'expenses/' + S.month), t('recurring', 'Recurring', 'expenses/recurring'),
+        t('hosting', 'Render hosting', 'expenses/hosting'), t('settings', 'Settings', 'expenses/settings')));
+  }
+
+  /* ---------------- by month ---------------- */
+  const GROUPS = [
+    ['plan', 'Subscriptions'], ['render', 'Hosting (Render)'], ['ads', 'Instagram ads'], ['client', 'Domains we pay for clients'], ['entry', 'Other one-off']
+  ];
+  const groupOf = (r) => (r.kind === 'entry' && r.category === AD ? 'ads' : r.kind);
+  const sumEur = (rows) => rows.reduce((n, r) => n + (r.skipped ? 0 : r.eur || 0), 0);
+
+  function stats(d) {
+    const rows = d.rows.filter((r) => !(r.kind === 'render' && !r.amount));
+    const by = (g) => rows.filter((r) => groupOf(r) === g);
+    const hostEst = d.render[d.month] && !d.render[d.month].final;
+    return h('div', { class: 'x-month-head' },
       h('div', { class: 'x-month' },
         h('button', { type: 'button', class: 'x-arrow', 'aria-label': 'Previous month', onclick: () => { location.hash = 'expenses/' + shift(d.month, -1); } }, '‹'),
         h('b', { text: d.label }),
         h('button', { type: 'button', class: 'x-arrow', 'aria-label': 'Next month', onclick: () => { location.hash = 'expenses/' + shift(d.month, 1); } }, '›'),
         d.month !== thisMonth() ? h('button', { type: 'button', class: 'link', text: 'This month', onclick: () => { location.hash = 'expenses/' + thisMonth(); } }) : null),
-      h('div', { class: 'x-actions' },
-        h('button', { type: 'button', class: 'btn btn-dark', text: '+ Expense', onclick: () => entryDialog() }),
-        h('button', { type: 'button', class: 'btn btn-light', text: '+ Instagram ad', onclick: () => entryDialog(null, AD) }),
-        h('button', { type: 'button', class: 'btn btn-light', text: '+ Recurring', onclick: () => planDialog() }),
-        h('button', { type: 'button', class: 'btn btn-light', text: 'Import Render CSV', onclick: () => file.click() }),
-        more, file, restore));
-  }
-
-  function stats(d) {
-    const t = d.totals;
-    const cat = (k) => t.byCategory[k] || 0;
-    const rows = d.rows.filter((r) => !r.skipped);
-    const sum = (f) => rows.filter(f).reduce((n, r) => n + (r.eur || 0), 0);
-    const usd = d.fx.monthRates.USD;
-    return h('section', { class: 'x-stats' },
-      stat('Total ' + monthName(d.month, true), eur(t.eur), t.estimate ? 'includes estimates and upcoming charges' : 'all charged', true),
-      stat('Recurring', eur(sum((r) => r.kind === 'plan')), ((n) => n + (n === 1 ? ' subscription' : ' subscriptions'))(rows.filter((r) => r.kind === 'plan').length)),
-      stat('Hosting (Render)', eur(sum((r) => r.kind === 'render')), d.render[d.month] ? (d.render[d.month].final ? 'final bill' : 'estimate, re-import to update') : 'no file for this month'),
-      stat('One-off', eur(sum((r) => r.kind === 'entry')), cat('Equipment') ? 'incl. equipment' : ' '),
-      h('p', { class: 'x-fx muted' }, usd ? 'Converted at 1 EUR = ' + usd + ' USD' + (d.fx.source === 'ECB' ? ' (European Central Bank' + (d.fx.date ? ', ' + dayName(d.fx.date) : '') + ')' : d.fx.source === 'manual' ? ' (set by hand)' : ' (default, set it below)') : '',
-        t.missingRate ? h('b', { class: 'x-warn', text: ' Some costs have no exchange rate yet: add it under Settings.' }) : null));
+      h('section', { class: 'x-stats' },
+        stat('Total', eur(d.totals.eur), d.totals.estimate ? 'includes estimates' : 'all charged', true),
+        stat('Subscriptions', eur(sumEur(by('plan'))), by('plan').length + ' this month'),
+        stat('Hosting', eur(sumEur(by('render'))), d.render[d.month] ? (hostEst ? 'estimate' : 'final bill') : 'no Render file yet'),
+        stat('Ads & other', eur(sumEur(by('ads')) + sumEur(by('entry')) + sumEur(by('client'))), by('ads').length + ' ad' + (by('ads').length === 1 ? '' : 's'))));
   }
   function stat(label, value, note, big) {
     return h('div', { class: 'x-stat' + (big ? ' is-big' : '') }, h('span', { class: 'muted', text: label }), h('b', { text: value }), h('small', { class: 'muted', text: note }));
   }
 
-  function comingUp(d) {
-    return h('section', { class: 'card x-card' },
-      h('h3', { text: 'Coming up' }),
-      h('ul', { class: 'x-list' }, d.comingUp.map((c) => h('li', { class: c.due ? 'is-due' : '' },
-        h('span', { class: 'x-when' }, h('b', { text: dayName(c.date) }), h('small', { text: inDays(c.days) })),
-        h('span', { class: 'x-grow' }, c.name, h('small', { class: 'muted', text: ' · ' + EVERY[c.every] })),
-        h('b', { text: fmt(c.amount, c.currency) }),
-        c.due ? h('span', { class: 'x-chip is-warn', text: 'Renew soon' }) : null))));
-  }
-
-  /* ---------------- the month ---------------- */
   function monthTable(d) {
-    if (!d.rows.length) {
-      return h('section', { class: 'card x-card' }, h('h3', { text: d.label }), h('p', { class: 'muted', text: 'Nothing for this month yet. Add an expense, a recurring cost, or import Render’s CSV.' }));
+    const rows = d.rows.filter((r) => !(r.kind === 'render' && !r.amount));
+    const usd = d.fx.monthRates.USD;
+    const note = h('p', { class: 'muted x-note' },
+      usd ? 'Dollars converted at 1 EUR = ' + usd + ' USD' + (d.fx.lockedAt ? ', the month-end rate (' + dayName(d.fx.lockedAt) + '), locked' : d.month === thisMonth() ? (d.fx.source === 'ECB' ? ', today\u2019s European Central Bank rate: it follows the daily rate until the month ends, then it is locked' : d.fx.source === 'manual' ? ' (set by hand)' : ' (default rate, set it in Settings)') : '') + '. ' : '',
+      'Totals per client and month by month are in ', h('a', { href: '#reports', text: 'Reports' }), '.',
+      d.totals.missingRate ? h('b', { class: 'x-warn', text: ' Some costs have no exchange rate: add it in Settings.' }) : null);
+    if (!rows.length) {
+      return h('section', { class: 'card x-card' }, h('p', { class: 'muted', text: 'Nothing for ' + d.label + ' yet. Use + Add, or import Render’s file under Render hosting.' }), note);
     }
+    // search and filters: kept while you move between months
+    const search = h('input', { type: 'search', class: 'x-search', placeholder: 'Search this month…', 'aria-label': 'Search', value: S.q || '' });
+    const kinds = C.multiSelect({
+      items: GROUPS.filter(([g]) => rows.some((r) => groupOf(r) === g)).map(([g, t]) => ({ value: g, label: t })),
+      selected: S.kinds || [], allLabel: 'All types', noun: 'types', label: 'Types',
+      onChange: (v) => { S.kinds = v; draw(); }
+    });
+    const clientsPick = C.multiSelect({
+      items: [...new Set(rows.map((r) => r.client || 'No client'))].sort((a, b) => a.localeCompare(b)).map((c) => ({ value: c, label: c })),
+      selected: S.clientsF || [], allLabel: 'All clients', noun: 'clients', label: 'Clients',
+      onChange: (v) => { S.clientsF = v; draw(); }
+    });
+    const tbody = h('tbody');
+    const tfoot = h('tfoot');
+    search.addEventListener('input', () => { S.q = search.value; draw(); });
+    draw();
+    return h('section', { class: 'card x-card' },
+      h('div', { class: 'x-toolbar' }, search, h('div', { class: 'x-filter-pick' }, kinds), h('div', { class: 'x-filter-pick' }, clientsPick)),
+      h('div', { class: 'x-table-wrap' }, h('table', { class: 'x-table x-exp' },
+        h('thead', null, h('tr', null, h('th', { text: 'Date' }), h('th', { text: 'What' }), h('th', { text: 'For client' }), h('th', { class: 'num', text: 'Paid in' }), h('th', { class: 'num', text: 'EUR' }), h('th'))),
+        tbody, tfoot)),
+      note);
+
+    function draw() {
+    const q = (S.q || '').trim().toLowerCase();
+    const shown = rows.filter((r) => (!q || [r.name, r.vendor, r.client, r.post, r.category].some((v) => String(v || '').toLowerCase().includes(q)))
+      && (!(S.kinds || []).length || S.kinds.includes(groupOf(r)))
+      && (!(S.clientsF || []).length || S.clientsF.includes(r.client || 'No client')));
+    const filtered = shown.length !== rows.length;
     const body = [];
-    const free = d.rows.filter((r) => r.kind === 'render' && !r.amount);
-    for (const r of d.rows) {
-      if (r.kind === 'render' && !r.amount) continue;          // free services: listed under Render below
-      const chips = [
-        r.kind === 'render' ? h('span', { class: 'x-chip', text: 'Render usage' }) : null,
-        r.kind === 'client' ? h('span', { class: 'x-chip', text: 'domain we pay for a client' }) : null,
-        r.estimate ? h('span', { class: 'x-chip is-warn', text: 'estimate' }) : null,
-        r.upcoming && !r.skipped ? h('span', { class: 'x-chip', text: 'upcoming' }) : null,
-        r.changed ? h('span', { class: 'x-chip', text: 'changed this month' }) : null,
-        r.skipped ? h('span', { class: 'x-chip', text: 'skipped' }) : null
-      ];
-      const edit = r.kind === 'plan' ? () => monthDialog(r) : r.kind === 'entry' ? () => entryDialog(r) : r.kind === 'client' ? () => { location.hash = 'clients/c/' + r.clientId; } : () => mapDialog(r.name, r.client);
-      const ad = r.kind === 'entry' && (r.post || r.campaignFrom)
-        ? h('div', { class: 'x-ad', text: [r.post ? 'Post: ' + r.post : '', r.campaignFrom ? 'Ran ' + dayName(r.campaignFrom) + (r.campaignTo ? ' to ' + dayName(r.campaignTo) : '') : ''].filter(Boolean).join(' · ') }) : null;
-      const tr = h('tr', { class: r.skipped ? 'is-off' : '' },
-        h('td', { class: 'x-date', text: dayName(r.date).replace(/ \d{4}$/, '') }),
-        h('td', null, h('b', { text: r.name }), r.vendor && r.vendor !== r.name ? h('small', { class: 'muted', text: ' · ' + r.vendor }) : null, ad, h('div', { class: 'x-chips' }, chips)),
-        h('td', { text: r.client || (r.kind === 'render' ? 'Unassigned' : '') }),
-        h('td', { text: r.category }),
-        h('td', { class: 'num', text: fmt(r.amount, r.currency) }),
-        h('td', { class: 'num', text: r.currency === 'EUR' ? '' : eur(r.eur) }),
-        h('td', { class: 'num' }, h('button', { type: 'button', class: 'link', text: r.kind === 'render' ? 'Client' : r.kind === 'client' ? 'Open client' : 'Edit', onclick: edit })));
-      body.push(tr);
-      if (r.kind === 'render' && r.lines.length) {
-        body.push(h('tr', { class: 'x-sub' }, h('td'), h('td', { colspan: '6', class: 'muted', text: r.lines.map((l) => l.charge + ' ' + fmt(l.cost, 'USD')).join(' · ') })));
+    for (const [g, title] of GROUPS) {
+      const list = shown.filter((r) => groupOf(r) === g);
+      if (!list.length) continue;
+      body.push(h('tr', { class: 'x-group' }, h('td', { colspan: '4' }, h('b', { text: title })), h('td', { class: 'num' }, h('b', { text: eur(sumEur(list)) })), h('td')));
+      for (const r of list) {
+        const edit = r.kind === 'plan' ? () => monthDialog(r) : r.kind === 'entry' ? () => entryDialog(r) : r.kind === 'client' ? () => { location.hash = 'clients/c/' + r.clientId; } : () => mapDialog(r.name, r.client);
+        const sub = r.kind === 'entry' && r.post ? 'Post: ' + r.post + (r.campaignFrom ? ' · ' + dayName(r.campaignFrom).replace(/ \d{4}$/, '') + (r.campaignTo ? ' to ' + dayName(r.campaignTo).replace(/ \d{4}$/, '') : '') : '')
+          : r.skipped ? 'skipped this month' : r.changed ? 'different amount this month' : r.vendor && r.vendor !== r.name && r.kind !== 'render' ? r.vendor : '';
+        body.push(h('tr', { class: r.skipped ? 'is-off' : '' },
+          h('td', { class: 'x-date', text: dayName(r.date).replace(/ \d{4}$/, '') }),
+          h('td', null, r.name, sub ? h('div', { class: 'x-ad', text: sub }) : null),
+          h('td', { class: 'muted', text: r.client || (r.kind === 'render' ? 'no client' : '') }),
+          h('td', { class: 'num', text: r.currency === 'EUR' ? '' : fmt(r.amount, r.currency) }),
+          h('td', { class: 'num' }, eur(r.eur), r.estimate || r.upcoming ? h('small', { class: 'x-est', text: r.estimate ? ' est.' : ' due' }) : null),
+          h('td', { class: 'num' }, h('button', { type: 'button', class: 'link', text: r.kind === 'render' ? 'Client' : r.kind === 'client' ? 'Client' : 'Edit', onclick: edit }))));
       }
     }
-    return h('section', { class: 'card x-card' },
-      h('h3', { text: d.label }),
-      h('div', { class: 'x-table-wrap' }, h('table', { class: 'x-table' },
-        h('thead', null, h('tr', null, h('th', { text: 'Date' }), h('th', { text: 'What' }), h('th', { text: 'Client' }), h('th', { text: 'Category' }), h('th', { class: 'num', text: 'Amount' }), h('th', { class: 'num', text: 'In EUR' }), h('th'))),
-        h('tbody', null, body,
-          free.length ? h('tr', { class: 'x-sub' }, h('td'), h('td', { colspan: '6', class: 'muted', text: 'Free on Render this month: ' + free.map((r) => r.name).join(', ') })) : null),
-        h('tfoot', null, h('tr', null, h('td'), h('td', null, h('b', { text: 'Total' })), h('td'), h('td'), h('td'), h('td', { class: 'num' }, h('b', { text: eur(d.totals.eur) })), h('td'))))));
-  }
-
-  function bars(items, max) {
-    return h('ul', { class: 'x-bars' }, items.map(([label, value, note]) => h('li', null,
-      h('span', { class: 'x-bar-label', text: label }),
-      h('span', { class: 'x-bar' }, h('i', { style: 'width:' + (max ? Math.max(2, (value / max) * 100) : 0) + '%' })),
-      h('b', { text: eur(value) + (note || '') }))));
-  }
-  function byClient(d) {
-    const items = Object.entries(d.totals.byClient).sort((a, b) => b[1] - a[1]);
-    const max = Math.max(0, ...items.map((x) => x[1]));
-    return h('section', { class: 'card x-card' }, h('h3', { text: 'Per client, ' + monthName(d.month, true) }),
-      items.length ? bars(items, max) : h('p', { class: 'muted', text: 'Nothing yet.' }),
-      h('p', { class: 'muted x-note', text: 'Costs without a client count as Unassigned. Give each Render service a client below.' }));
-  }
-  function history(d) {
-    const first = d.history.findIndex((x) => x.eur > 0);
-    const months = first < 0 ? d.history.slice(-1) : d.history.slice(first);     // skip the empty months before the first cost
-    const max = Math.max(0, ...months.map((x) => x.eur));
-    return h('section', { class: 'card x-card' }, h('h3', { text: months.length < 12 ? 'Month by month' : 'Last 12 months' }),
-      bars(months.map((x) => [monthName(x.month, true) + ' ' + x.month.slice(2, 4), x.eur, x.estimate ? ' *' : '']), max),
-      h('p', { class: 'muted x-note', text: '* includes estimates or charges still to come.' }));
+    if (!body.length) body.push(h('tr', null, h('td', { colspan: '6', class: 'muted', text: 'Nothing matches.' })));
+    tbody.replaceChildren(...body);
+    tfoot.replaceChildren(h('tr', null, h('td'), h('td', null, h('b', { text: (filtered ? 'Shown, ' : 'Total ') + d.label })), h('td'), h('td'),
+      h('td', { class: 'num' }, h('b', { text: eur(filtered ? sumEur(shown) : d.totals.eur) })), h('td')));
+    }
   }
 
   /* ---------------- recurring ---------------- */
   function recurring(d) {
     return h('section', { class: 'card x-card' },
       h('div', { class: 'x-card-head' }, h('h3', { text: 'Recurring costs' }), h('button', { type: 'button', class: 'btn btn-light', text: '+ Recurring', onclick: () => planDialog() })),
+      h('p', { class: 'muted x-note', text: 'Subscriptions and renewals that repeat. Edit one to change its price from a month on, set a reminder, stop it or delete it. To change only one month, open that month and press Edit on the line.' }),
       d.plans.length ? h('div', { class: 'x-table-wrap' }, h('table', { class: 'x-table' },
-        h('thead', null, h('tr', null, h('th', { text: 'Name' }), h('th', { text: 'Repeats' }), h('th', { class: 'num', text: 'Price now' }), h('th', { text: 'Next charge' }), h('th', { text: 'Reminder' }), h('th'))),
+        h('thead', null, h('tr', null, h('th', { text: 'Name' }), h('th', { text: 'Repeats' }), h('th', { class: 'num', text: 'Price' }), h('th', { text: 'Next charge' }), h('th', { text: 'Reminder' }), h('th'))),
         h('tbody', null, d.plans.map((p) => h('tr', { class: p.stop && p.stop <= thisMonth() ? 'is-off' : '' },
-          h('td', null, h('b', { text: p.name }), p.vendor ? h('small', { class: 'muted', text: ' · ' + p.vendor }) : null,
-            p.stop ? h('div', { class: 'x-chips' }, h('span', { class: 'x-chip', text: 'stopped from ' + monthName(p.stop) })) : null),
+          h('td', null, h('b', { text: p.name }), p.stop ? h('div', { class: 'x-ad', text: 'stopped from ' + monthName(p.stop) }) : p.vendor ? h('div', { class: 'x-ad', text: p.vendor + (p.client ? ' · for ' + p.client : '') }) : null),
           h('td', { text: EVERY[p.every] }),
           h('td', { class: 'num', text: fmt(p.currentPrice, p.currency) }),
           h('td', { text: p.next ? dayName(p.next) : '—' }),
@@ -191,7 +176,9 @@
   }
 
   /* ---------------- Render ---------------- */
-  function renderCard(d) {
+  function hosting(d) {
+    const file = h('input', { type: 'file', accept: '.csv,text/csv', multiple: true, hidden: true });
+    file.addEventListener('change', () => importRender(Array.from(file.files)).finally(() => { file.value = ''; }));
     const months = Object.entries(d.render).sort((a, b) => b[0].localeCompare(a[0]));
     const inputs = {};
     const mapRows = d.services.map((s) => {
@@ -199,24 +186,27 @@
       inputs[s] = inp;
       return h('label', null, s, inp);
     });
-    const save = h('button', { type: 'button', class: 'btn btn-dark', text: 'Save clients', onclick: async () => {
+    const save = h('button', { type: 'button', class: 'btn btn-dark', text: 'Save', onclick: async () => {
       const map = {};
       for (const [s, inp] of Object.entries(inputs)) map[s] = inp.value;
-      try { await api('/expenses/render-map', { method: 'PUT', body: { map } }); toast('Clients saved'); reload(); } catch (e) { toast(e.message); }
+      try { await api('/expenses/render-map', { method: 'PUT', body: { map } }); toast('Saved'); reload(); } catch (e) { toast(e.message); }
     } });
-    return h('section', { class: 'card x-card' },
-      h('h3', { text: 'Render hosting' }),
-      h('p', { class: 'muted x-note', text: 'In Render: Billing › download the usage CSV for each month. The current month’s “unbilled charges” file is an estimate: import it again whenever you like, and import the final file once the month is billed. A new file for a month replaces the old one.' }),
-      months.length ? h('ul', { class: 'x-list' }, months.map(([m, r]) => h('li', null,
-        h('span', { class: 'x-grow' }, h('b', { text: monthName(m) }), h('small', { class: 'muted', text: ' · ' + (r.file || 'imported') })),
-        h('span', { class: 'x-chip' + (r.final ? '' : ' is-warn'), text: r.final ? 'final' : 'estimate' }),
-        h('button', { type: 'button', class: 'link', text: 'Remove', onclick: async () => {
-          if (!confirm('Remove the Render file for ' + monthName(m) + '?')) return;
-          try { await api('/expenses/render/' + m, { method: 'DELETE' }); toast('Removed'); reload(); } catch (e) { toast(e.message); }
-        } })))) : h('p', { class: 'muted', text: 'No Render files yet.' }),
-      d.services.length ? [h('h4', { text: 'Which client is each service?' }),
-        h('div', { class: 'x-mapgrid' }, mapRows), h('div', null, save)] : null,
-      h('datalist', { id: 'xClients' }, d.clients.map((c) => h('option', { value: c }))));
+    return [
+      h('section', { class: 'card x-card' },
+        h('div', { class: 'x-card-head' }, h('h3', { text: 'Render files' }), h('button', { type: 'button', class: 'btn btn-dark', text: 'Import CSV', onclick: () => file.click() }), file),
+        h('p', { class: 'muted x-note', text: 'In Render: Billing, then download the usage CSV for each month. The current month’s “unbilled charges” file is an estimate: import it again whenever you like, and import the final file when the month is billed. A new file for a month replaces the old one.' }),
+        months.length ? h('ul', { class: 'x-list' }, months.map(([m, r]) => h('li', null,
+          h('span', { class: 'x-grow' }, h('b', { text: monthName(m) }), h('small', { class: 'muted', text: ' · ' + (r.file || 'imported') })),
+          h('span', { class: 'x-chip' + (r.final ? '' : ' is-warn'), text: r.final ? 'final' : 'estimate' }),
+          h('button', { type: 'button', class: 'link', text: 'Remove', onclick: async () => {
+            if (!confirm('Remove the Render file for ' + monthName(m) + '?')) return;
+            try { await api('/expenses/render/' + m, { method: 'DELETE' }); toast('Removed'); reload(); } catch (e) { toast(e.message); }
+          } })))) : h('p', { class: 'muted', text: 'No Render files yet.' })),
+      d.services.length ? h('section', { class: 'card x-card' }, h('h3', { text: 'Which client is each service?' }),
+        h('p', { class: 'muted x-note', text: 'So hosting costs show under the right client in Reports. Leave empty for ErgonSite’s own.' }),
+        h('div', { class: 'x-mapgrid' }, mapRows), h('div', null, save),
+        h('datalist', { id: 'xClients' }, d.clients.map((c) => h('option', { value: c })))) : null
+    ];
   }
 
   /* ---------------- settings ---------------- */
@@ -227,6 +217,9 @@
     const extraCur = h('input', { placeholder: 'e.g. CHF', maxlength: '3', 'aria-label': 'Another currency' });
     const extraRate = h('input', { type: 'number', step: '0.0001', min: '0', placeholder: 'rate', 'aria-label': 'Its rate' });
     const email = h('input', { type: 'email', value: d.settings.remindEmail || '', placeholder: d.settings.defaultEmail });
+    const restore = h('input', { type: 'file', accept: '.json,application/json', hidden: true });
+    restore.addEventListener('change', () => importBackup(restore.files[0]).finally(() => { restore.value = ''; }));
+    const year = S.month.slice(0, 4);
     const saveRates = async () => {
       const rates = {};
       for (const [c, inp] of rateInputs) rates[c] = inp.value;
@@ -236,18 +229,29 @@
     auto.addEventListener('change', async () => {
       try { await api('/expenses/settings', { method: 'PUT', body: { autoRates: auto.checked } }); toast(auto.checked ? 'Rates will follow the European Central Bank' : 'Automatic rates off'); reload(); } catch (e) { toast(e.message); }
     });
-    return h('section', { class: 'card x-card' },
-      h('h3', { text: 'Settings' }),
-      h('h4', { text: 'Exchange rates (1 EUR = …)' }),
-      h('label', { class: 'x-check' }, auto, 'Update every day from the European Central Bank'),
-      h('div', { class: 'x-rates' }, rateInputs.map(([c, inp]) => h('label', null, c, inp)), h('label', null, 'Add currency', extraCur), h('label', null, 'Rate', extraRate)),
-      h('p', { class: 'muted x-note', text: 'Each month keeps the rate it was converted with, so past months do not change when the dollar moves. Typing a rate here turns the daily update off for now.' }),
-      h('div', null, h('button', { type: 'button', class: 'btn btn-light', text: 'Save rates', onclick: saveRates })),
-      h('h4', { text: 'Renewal reminder emails' }),
-      h('label', null, 'Send reminders to', email),
-      h('div', null, h('button', { type: 'button', class: 'btn btn-light', text: 'Save', onclick: async () => {
-        try { await api('/expenses/settings', { method: 'PUT', body: { remindEmail: email.value } }); toast('Saved'); } catch (e) { toast(e.message); }
-      } })));
+    return [
+      h('section', { class: 'card x-card' },
+        h('h3', { text: 'Exchange rates (1 EUR = …)' }),
+        h('label', { class: 'x-check' }, auto, 'Update every day from the European Central Bank'),
+        h('div', { class: 'x-rates' }, rateInputs.map(([c, inp]) => h('label', null, c, inp)), h('label', null, 'Add currency', extraCur), h('label', null, 'Rate', extraRate)),
+        h('p', { class: 'muted x-note', text: 'Each month keeps the rate it was converted with, so past months do not change when the dollar moves. Typing a rate turns the daily update off.' }),
+        h('div', null, h('button', { type: 'button', class: 'btn btn-light', text: 'Save rates', onclick: saveRates }))),
+      h('section', { class: 'card x-card' },
+        h('h3', { text: 'Renewal reminder emails' }),
+        h('p', { class: 'muted x-note', text: 'A recurring cost with a reminder emails this address once before it renews.' }),
+        h('label', null, 'Send to', email),
+        h('div', null, h('button', { type: 'button', class: 'btn btn-light', text: 'Save', onclick: async () => {
+          try { await api('/expenses/settings', { method: 'PUT', body: { remindEmail: email.value } }); toast('Saved'); } catch (e) { toast(e.message); }
+        } }))),
+      h('section', { class: 'card x-card' },
+        h('h3', { text: 'Downloads and backup' }),
+        h('div', { class: 'x-client-row' },
+          h('a', { class: 'btn btn-light', href: '/admin/api/expenses/export.csv?from=' + S.month + '&to=' + S.month, text: monthName(S.month) + ' (CSV)' }),
+          h('a', { class: 'btn btn-light', href: '/admin/api/expenses/export.csv?from=' + year + '-01&to=' + year + '-12', text: 'All of ' + year + ' (CSV)' }),
+          h('a', { class: 'btn btn-light', href: '/admin/api/expenses/backup', text: 'Backup (JSON)' }),
+          h('button', { type: 'button', class: 'btn btn-light', text: 'Restore a backup…', onclick: () => restore.click() }), restore),
+        h('p', { class: 'muted x-note', text: 'For any period, client or category, use Download CSV in Reports.' }))
+    ];
   }
 
   /* ---------------- dialogs ---------------- */

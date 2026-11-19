@@ -28,6 +28,21 @@ const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 const CUR_RE = /^[A-Z]{3}$/;
 const DEFAULT_RATES = { USD: 1.16, GBP: 0.88 };          // 1 EUR = x; replaced by the ECB rates on the first fetch
 const ECB_URL = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml';
+const ECB_90D = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist-90d.xml';
+const ECB_ALL = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.xml';
+
+/* ECB history: the rates of the last working day of each month */
+export function monthEndRates(xml) {
+  const out = {};
+  for (const m of String(xml).matchAll(/<Cube\s+time=['"](\d{4}-\d{2}-\d{2})['"]\s*>([\s\S]*?)<\/Cube>/g)) {
+    const month = m[1].slice(0, 7);
+    if (out[month] && out[month].date >= m[1]) continue;
+    const rates = {};
+    for (const r of m[2].matchAll(/currency=['"]([A-Z]{3})['"]\s+rate=['"]([0-9.]+)['"]/g)) rates[r[1]] = Number(r[2]);
+    if (rates.USD) out[month] = { date: m[1], rates };
+  }
+  return out;
+}
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const r2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
@@ -152,7 +167,11 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
   function snapshot() {
     // the current month converts at the latest rates; earlier months keep theirs
     const x = ensure();
-    x.fx.history[monthOf(todayStr())] = { ...x.fx.rates };
+    const month = monthOf(todayStr());
+    x.fx.history[month] = { ...x.fx.rates };
+    // the month before is now over: its last rate is final
+    const prev = addMonths(month, -1);
+    if (x.fx.history[prev] && !x.fx.history[prev].lockedAt) x.fx.history[prev].lockedAt = x.fx.date || todayStr();
   }
 
   async function fetchEcb() {
@@ -176,6 +195,53 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
       store.save();
     } catch (err) {
       console.warn('Exchange rates not updated:', err.message);
+    }
+  }
+
+  /* Months that ended before the console kept a rate for them (or while it
+     could not reach the ECB) get the ECB rate of their last working day,
+     and are locked from then on like every other past month. */
+  function monthsMissingRates() {
+    const x = ensure();
+    const current = monthOf(todayStr());
+    const dates = [
+      ...x.plans.map((p) => monthOf(p.start)), ...x.entries.map((q) => monthOf(q.date)), ...Object.keys(x.render),
+      ...(((db.clients && db.clients.charges) || []).filter((c) => c.type === 'domain' && c.start).map((c) => monthOf(c.start)))
+    ].filter((m) => MONTH_RE.test(m));
+    if (!dates.length) return [];
+    const first = dates.sort()[0];
+    const out = [];
+    for (let i = monthIndex(first); i < monthIndex(current); i++) {
+      const m = monthFromIndex(i);
+      if (!x.fx.history[m] || !x.fx.history[m].lockedAt) out.push(m);
+    }
+    return out;
+  }
+  async function getText(url) {
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 30_000);
+    try {
+      const res = await fetch(url, { signal: ctl.signal });
+      if (!res.ok) throw new Error('ECB ' + res.status);
+      return await res.text();
+    } finally { clearTimeout(t); }
+  }
+  async function lockPastMonths() {
+    const x = ensure();
+    const missing = monthsMissingRates();
+    if (!missing.length) return;
+    try {
+      let found = monthEndRates(await getText(ECB_90D));
+      if (missing.some((m) => !found[m])) found = { ...monthEndRates(await getText(ECB_ALL)), ...found };
+      let n = 0;
+      for (const m of missing) {
+        if (!found[m]) continue;
+        x.fx.history[m] = { ...found[m].rates, lockedAt: found[m].date };
+        n++;
+      }
+      if (n) { store.save(); console.log('Exchange rates locked for', n, 'past month(s)'); }
+    } catch (err) {
+      console.warn('Past exchange rates not locked yet:', err.message);
     }
   }
 
@@ -422,7 +488,7 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
       plans: x.plans.map(planOut).sort((a, b) => a.name.localeCompare(b.name)),
       render: Object.fromEntries(Object.entries(x.render).map(([m, r]) => [m, { final: r.final, importedAt: r.importedAt, file: r.file }])),
       renderMap: x.renderMap, services: [...services].sort((a, b) => a.localeCompare(b)),
-      fx: { rates: x.fx.rates, date: x.fx.date || '', source: x.fx.source, monthRates: ratesFor(month) },
+      fx: { rates: x.fx.rates, date: x.fx.date || '', source: x.fx.source, monthRates: ratesFor(month), lockedAt: (x.fx.history[month] || {}).lockedAt || '' },
       settings: { ...x.settings, defaultEmail: notifyEmail },
       clients: [...clients].sort((a, b) => a.localeCompare(b)), categories: [...categories].sort((a, b) => a.localeCompare(b))
     };
@@ -628,8 +694,8 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
   }
 
   /* ---------- background: rates twice a day, reminders every hour ---------- */
-  setTimeout(() => { fetchEcb(); sendReminders(); }, 5_000);
-  setInterval(fetchEcb, 12 * 3600_000).unref();
+  setTimeout(async () => { await fetchEcb(); await lockPastMonths(); sendReminders(); }, 5_000);
+  setInterval(async () => { await fetchEcb(); await lockPastMonths(); }, 12 * 3600_000).unref();
   setInterval(sendReminders, 3600_000).unref();
 
   // costs per client over a period, in euro (for the Clients report); keys are lower-case names

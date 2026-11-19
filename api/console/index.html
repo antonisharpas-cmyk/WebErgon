@@ -75,6 +75,7 @@
             <button type="button" data-chatfilter="all">All</button>
           </div>
         </header>
+        <input type="search" class="list-search" id="chatSearch" placeholder="Search chats…" aria-label="Search chats" />
         <ul class="list" id="chatList"></ul>
         <p class="empty" id="chatEmpty" hidden>No chats here yet.</p>
       </div>
@@ -94,6 +95,7 @@
             <button type="button" data-inqfilter="all">All</button>
           </div>
         </header>
+        <input type="search" class="list-search" id="inqSearch" placeholder="Search enquiries…" aria-label="Search enquiries" />
         <ul class="list" id="inqList"></ul>
         <p class="empty" id="inqEmpty" hidden>No enquiries here yet.</p>
       </div>
@@ -154,6 +156,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="console.js"></script>
+  <script src="widgets.js"></script>
   <script src="expenses.js"></script>
   <script src="clients.js"></script>
   <script src="dashboard.js"></script>
