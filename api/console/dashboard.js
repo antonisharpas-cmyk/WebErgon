@@ -19,11 +19,23 @@
   const pill = (key, label) => h('span', { class: 'x-chip st-' + key, text: label });
   const mailBtn = (m) => (m && m.to && C.mailto ? h('a', { class: 'btn btn-light x-mini', href: C.mailto(m), text: 'Write email' }) : null);
 
+  // the period of the money cards: its own, remembered while the browser tab is open
+  const P = { preset: 'month' };
+  try { Object.assign(P, JSON.parse(sessionStorage.getItem('es-dash') || '{}')); } catch (e) { /* no storage */ }
+  const mName = (m) => new Date(m + '-01T00:00:00').toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+  const span = (a, b) => (a === b ? mName(a) : mName(a) + ' to ' + mName(b));
+  const change = (now, before) => {
+    if (!before) return '';
+    const pct = Math.round(((now - before) / Math.abs(before)) * 100);
+    if (!pct) return 'same as before';
+    return (pct > 0 ? '+' : '') + pct + '% vs before';
+  };
+
   async function open() {
+    if (P.preset !== 'custom' && C.PERIODS[P.preset]) [P.from, P.to] = C.PERIODS[P.preset].range();
     let d;
-    try { d = await api('/dashboard'); } catch (e) { toast(e.message); return; }
+    try { d = await api('/dashboard' + (P.from ? '?from=' + P.from + '&to=' + P.to : '')); } catch (e) { toast(e.message); return; }
     const s = d.stats;
-    const monthName = new Date(d.month + '-01T00:00:00').toLocaleDateString('en-GB', { month: 'long' });
 
     const unpaid = d.unpaid.map((c) => h('li', { class: c.late ? 'is-late' : '' },
       h('span', { class: 'x-when' }, h('b', { text: c.start ? day(c.start) : 'no due date' }), h('small', { text: c.start ? (c.late ? 'due ' + rel(c.days) : 'due ' + rel(c.days)) : 'set one on the client' })),
@@ -57,7 +69,7 @@
       o.due ? pill('soon', 'renew soon') : null));
 
     const checks = d.checks.map((c) => h('li', null,
-      h('span', { class: 'x-grow' }, h('a', { href: '#clients/c/' + c.clientId, text: c.client }), h('small', { class: 'muted', text: ' · ' + c.text }))));
+      h('span', { class: 'x-grow' }, h('a', { href: c.href || '#clients/c/' + c.clientId, text: c.client }), h('small', { class: 'muted', text: ' · ' + c.text }))));
 
     const card = (title, items, empty, extra) => h('section', { class: 'card x-card' },
       h('div', { class: 'x-card-head' }, h('h3', { text: title }), extra || null),
@@ -70,12 +82,21 @@
     $('#dashboardRoot').replaceChildren(...[
       h('header', { class: 'x-head' }, h('div', null, h('h2', { text: 'Dashboard' }), h('p', { class: 'muted', text: 'What needs doing, and how the money looks.' })),
         inbox.length ? h('div', { class: 'x-client-row' }, inbox) : null),
-      h('section', { class: 'x-stats x-stats-5' },
-        stat('To collect', fmt(s.toCollect), s.overdue ? fmt(s.overdue) + ' of it is late' : 'nothing late', true),
-        stat('In, ' + monthName, fmt(s.inMonth), 'payments received'),
-        stat('Costs, ' + monthName, fmt(s.costsMonth), s.costsMonthEstimate ? 'includes estimates' : 'all charged'),
-        stat('In, ' + d.year, fmt(s.inYear), 'costs ' + fmt(s.costsYear)),
-        stat('Profit, ' + d.year, fmt(s.profitYear), 'money in minus costs', false, s.profitYear < 0)),
+      h('section', { class: 'card x-card x-money' },
+        h('div', { class: 'x-period-bar' },
+          h('div', null, h('h3', { text: 'Money' }), h('small', { class: 'muted', text: span(d.from, d.to) + ' · compared with ' + span(s.prev.from, s.prev.to) })),
+          C.periodPicker({ from: d.from, to: d.to, preset: P.preset, label: 'Period of the money cards', onChange: (p) => {
+            Object.assign(P, p);
+            try { sessionStorage.setItem('es-dash', JSON.stringify(P)); } catch (e) { /* no storage */ }
+            open();
+          } })),
+        h('div', { class: 'x-stats x-stats-5' },
+          stat('Billed', fmt(s.billed), change(s.billed, s.prev.billed) || 'what we charged'),
+          stat('Money in', fmt(s.received), change(s.received, s.prev.received) || 'payments received'),
+          stat('Costs', fmt(s.costs), (s.estimate ? 'includes estimates · ' : '') + (change(s.costs, s.prev.costs) || 'from Expenses')),
+          stat('Profit', fmt(s.profit), s.received ? Math.round((s.profit / s.received) * 100) + '% of money in' : 'money in minus costs', false, s.profit < 0),
+          stat('To collect, now', fmt(s.toCollect), s.overdue ? fmt(s.overdue) + ' of it is late' : 'nothing late')),
+        h('p', { class: 'muted x-note' }, 'The period changes these cards only. The lists below are always about today. For clients and categories, open ', h('a', { href: '#reports', text: 'Reports' }), '.')),
       card('Unpaid', unpaid, 'Every client is paid up.'),
       card('Domains expiring', domains, 'No domain expires in the next ' + Math.max(60, d.remindDays) + ' days.',
         h('small', { class: 'muted', text: 'highlighted ' + d.remindDays + ' days before' })),

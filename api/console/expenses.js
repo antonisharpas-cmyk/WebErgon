@@ -15,7 +15,8 @@
   const { $, h, api, toast } = C;
 
   const EVERY = { 1: 'Every month', 3: 'Every 3 months', 6: 'Every 6 months', 12: 'Every year', 24: 'Every 2 years' };
-  const S = { month: null, data: null, tab: 'month' };
+  // from/to: the period of "By period", its own; S.month (= to) is the default month for new costs
+  const S = { from: null, to: null, month: null, data: null, tab: 'month' };
 
   const fmt = (n, cur) => {
     try { return new Intl.NumberFormat('en-IE', { style: 'currency', currency: cur || 'EUR' }).format(n); }
@@ -31,17 +32,21 @@
 
   /* ---------------- load ----------------
      #expenses            this month          #expenses/2026-10   another month
+     #expenses/2026-01..2026-11                                   a period of months
      #expenses/recurring  subscriptions       #expenses/hosting   Render files and clients
      #expenses/settings   rates, reminders, downloads */
   const TABS = ['recurring', 'hosting', 'settings'];
   async function open(arg) {
     S.tab = TABS.includes(arg) ? arg : 'month';
-    if (/^\d{4}-\d{2}$/.test(arg || '')) S.month = arg;
-    S.month ||= thisMonth();
-    try { S.data = await api('/expenses?month=' + S.month); } catch (e) { toast(e.message); return; }
+    const m = /^(\d{4}-\d{2})(?:\.\.(\d{4}-\d{2}))?$/.exec(arg || '');
+    if (m) { S.from = m[1]; S.to = m[2] || m[1]; if (S.from > S.to) [S.from, S.to] = [S.to, S.from]; }
+    S.from ||= thisMonth(); S.to ||= S.from;
+    S.month = S.to;
+    try { S.data = await api('/expenses?month=' + S.from + '&to=' + S.to); } catch (e) { toast(e.message); return; }
     render();
   }
-  const reload = () => open(S.tab === 'month' ? S.month : S.tab);
+  const periodKey = (a, b) => (a === b ? a : a + '..' + b);
+  const reload = () => open(S.tab === 'month' ? periodKey(S.from, S.to) : S.tab);
 
   /* ---------------- page ---------------- */
   function render() {
@@ -63,7 +68,7 @@
         h('div', null, h('h2', { text: 'Expenses' }), h('p', { class: 'muted', text: 'What ErgonSite pays for. Totals in euro.' })),
         h('div', { class: 'x-actions' }, add)),
       h('nav', { class: 'x-tabs' },
-        t('month', 'By month', 'expenses/' + S.month), t('recurring', 'Recurring', 'expenses/recurring'),
+        t('month', 'By period', 'expenses/' + periodKey(S.from, S.to)), t('recurring', 'Recurring', 'expenses/recurring'),
         t('hosting', 'Render hosting', 'expenses/hosting'), t('settings', 'Settings', 'expenses/settings')));
   }
 
@@ -77,17 +82,26 @@
   function stats(d) {
     const rows = d.rows.filter((r) => !(r.kind === 'render' && !r.amount));
     const by = (g) => rows.filter((r) => groupOf(r) === g);
-    const hostEst = d.render[d.month] && !d.render[d.month].final;
+    // the months of the period that have a Render file
+    const len = (Number(d.to.slice(0, 4)) * 12 + Number(d.to.slice(5))) - (Number(d.month.slice(0, 4)) * 12 + Number(d.month.slice(5))) + 1;
+    const files = Array.from({ length: len }, (_, i) => d.render[shift(d.month, i)]).filter(Boolean);
+    const hostNote = !files.length ? 'no Render file yet' : len === 1 ? (files[0].final ? 'final bill' : 'estimate')
+      : files.length + ' of ' + len + ' months imported' + (files.some((f) => !f.final) ? ', some estimates' : '');
+    const go = (a, b) => { location.hash = 'expenses/' + periodKey(a, b); };
+    // arrows move the whole period: a month by a month, a year by a year, any other period by its length
+    const wholeYear = len > 1 && d.month.slice(5) === '01' && d.month.slice(0, 4) === d.to.slice(0, 4);
+    const step = (n) => (wholeYear ? go((Number(d.month.slice(0, 4)) + n) + '-01', (Number(d.month.slice(0, 4)) + n) + '-12') : go(shift(d.month, n * len), shift(d.to, n * len)));
+    const picker = C.periodPicker({ from: d.month, to: d.to, label: 'Period', onChange: (p) => go(p.from, p.to) });
     return h('div', { class: 'x-month-head' },
-      h('div', { class: 'x-month' },
-        h('button', { type: 'button', class: 'x-arrow', 'aria-label': 'Previous month', onclick: () => { location.hash = 'expenses/' + shift(d.month, -1); } }, '‹'),
+      h('div', { class: 'x-period-bar' }, h('div', { class: 'x-month' },
+        h('button', { type: 'button', class: 'x-arrow', 'aria-label': 'Previous period', onclick: () => step(-1) }, '‹'),
         h('b', { text: d.label }),
-        h('button', { type: 'button', class: 'x-arrow', 'aria-label': 'Next month', onclick: () => { location.hash = 'expenses/' + shift(d.month, 1); } }, '›'),
-        d.month !== thisMonth() ? h('button', { type: 'button', class: 'link', text: 'This month', onclick: () => { location.hash = 'expenses/' + thisMonth(); } }) : null),
+        h('button', { type: 'button', class: 'x-arrow', 'aria-label': 'Next period', onclick: () => step(1) }, '›')),
+        picker),
       h('section', { class: 'x-stats' },
         stat('Total', eur(d.totals.eur), d.totals.estimate ? 'includes estimates' : 'all charged', true),
-        stat('Subscriptions', eur(sumEur(by('plan'))), by('plan').length + ' this month'),
-        stat('Hosting', eur(sumEur(by('render'))), d.render[d.month] ? (hostEst ? 'estimate' : 'final bill') : 'no Render file yet'),
+        stat('Subscriptions', eur(sumEur(by('plan'))), by('plan').length + (len === 1 ? ' this month' : ' charges')),
+        stat('Hosting', eur(sumEur(by('render'))), hostNote),
         stat('Ads & other', eur(sumEur(by('ads')) + sumEur(by('entry')) + sumEur(by('client'))), by('ads').length + ' ad' + (by('ads').length === 1 ? '' : 's'))));
   }
   function stat(label, value, note, big) {
@@ -98,14 +112,17 @@
     const rows = d.rows.filter((r) => !(r.kind === 'render' && !r.amount));
     const usd = d.fx.monthRates.USD;
     const note = h('p', { class: 'muted x-note' },
-      usd ? 'Dollars converted at 1 EUR = ' + usd + ' USD' + (d.fx.lockedAt ? ', the month-end rate (' + dayName(d.fx.lockedAt) + '), locked' : d.month === thisMonth() ? (d.fx.source === 'ECB' ? ', today\u2019s European Central Bank rate: it follows the daily rate until the month ends, then it is locked' : d.fx.source === 'manual' ? ' (set by hand)' : ' (default rate, set it in Settings)') : '') + '. ' : '',
+      d.range ? 'Each month is converted at its own rate: the month-end rate once the month is over, today\u2019s rate for the current month. '
+      : usd ? 'Dollars converted at 1 EUR = ' + usd + ' USD' + (d.fx.lockedAt ? ', the month-end rate (' + dayName(d.fx.lockedAt) + '), locked' : d.month === thisMonth() ? (d.fx.source === 'ECB' ? ', today\u2019s European Central Bank rate: it follows the daily rate until the month ends, then it is locked' : d.fx.source === 'manual' ? ' (set by hand)' : ' (default rate, set it in Settings)') : '') + '. ' : '',
       'Totals per client and month by month are in ', h('a', { href: '#reports', text: 'Reports' }), '.',
       d.totals.missingRate ? h('b', { class: 'x-warn', text: ' Some costs have no exchange rate: add it in Settings.' }) : null);
     if (!rows.length) {
       return h('section', { class: 'card x-card' }, h('p', { class: 'muted', text: 'Nothing for ' + d.label + ' yet. Use + Add, or import Render’s file under Render hosting.' }), note);
     }
-    // search and filters: kept while you move between months
-    const search = h('input', { type: 'search', class: 'x-search', placeholder: 'Search this month…', 'aria-label': 'Search', value: S.q || '' });
+    // search and filters: kept while you move between periods
+    const crossYear = d.month.slice(0, 4) !== d.to.slice(0, 4);
+    const when = (r) => (crossYear ? dayName(r.date) : dayName(r.date).replace(/ \d{4}$/, ''));
+    const search = h('input', { type: 'search', class: 'x-search', placeholder: d.range ? 'Search this period…' : 'Search this month…', 'aria-label': 'Search', value: S.q || '' });
     const kinds = C.multiSelect({
       items: GROUPS.filter(([g]) => rows.some((r) => groupOf(r) === g)).map(([g, t]) => ({ value: g, label: t })),
       selected: S.kinds || [], allLabel: 'All types', noun: 'types', label: 'Types',
@@ -141,9 +158,9 @@
       for (const r of list) {
         const edit = r.kind === 'plan' ? () => monthDialog(r) : r.kind === 'entry' ? () => entryDialog(r) : r.kind === 'client' ? () => { location.hash = 'clients/c/' + r.clientId; } : () => mapDialog(r.name, r.client);
         const sub = r.kind === 'entry' && r.post ? 'Post: ' + r.post + (r.campaignFrom ? ' · ' + dayName(r.campaignFrom).replace(/ \d{4}$/, '') + (r.campaignTo ? ' to ' + dayName(r.campaignTo).replace(/ \d{4}$/, '') : '') : '')
-          : r.skipped ? 'skipped this month' : r.changed ? 'different amount this month' : r.vendor && r.vendor !== r.name && r.kind !== 'render' ? r.vendor : '';
+          : r.skipped ? 'skipped in ' + monthName(r.month, true) : r.changed ? 'different amount in ' + monthName(r.month, true) : r.vendor && r.vendor !== r.name && r.kind !== 'render' ? r.vendor : '';
         body.push(h('tr', { class: r.skipped ? 'is-off' : '' },
-          h('td', { class: 'x-date', text: dayName(r.date).replace(/ \d{4}$/, '') }),
+          h('td', { class: 'x-date', text: when(r) }),
           h('td', null, r.name, sub ? h('div', { class: 'x-ad', text: sub }) : null),
           h('td', { class: 'muted', text: r.client || (r.kind === 'render' ? 'no client' : '') }),
           h('td', { class: 'num', text: r.currency === 'EUR' ? '' : fmt(r.amount, r.currency) }),
@@ -184,7 +201,8 @@
     const mapRows = d.services.map((s) => {
       const inp = h('input', { value: d.renderMap[s.toLowerCase()] || '', list: 'xClients', placeholder: 'Which client?', 'aria-label': 'Client for ' + s });
       inputs[s] = inp;
-      return h('label', null, s, inp);
+      const pending = d.renderPending && d.renderPending[s.toLowerCase()];
+      return h('label', { class: pending ? 'is-new' : null }, h('span', null, s, pending ? h('span', { class: 'x-chip is-warn', text: inp.value ? 'guessed: check and save' : 'new' }) : null), inp);
     });
     const save = h('button', { type: 'button', class: 'btn btn-dark', text: 'Save', onclick: async () => {
       const map = {};
@@ -203,7 +221,7 @@
             try { await api('/expenses/render/' + m, { method: 'DELETE' }); toast('Removed'); reload(); } catch (e) { toast(e.message); }
           } })))) : h('p', { class: 'muted', text: 'No Render files yet.' })),
       d.services.length ? h('section', { class: 'card x-card' }, h('h3', { text: 'Which client is each service?' }),
-        h('p', { class: 'muted x-note', text: 'So hosting costs show under the right client in Reports. Leave empty for ErgonSite’s own.' }),
+        h('p', { class: 'muted x-note', text: 'So hosting costs show under the right client in Reports. Leave empty for ErgonSite’s own. A service that appears for the first time in an imported file is marked here (with a guess when its name looks like a client) and stays on the dashboard until you press Save.' }),
         h('div', { class: 'x-mapgrid' }, mapRows), h('div', null, save),
         h('datalist', { id: 'xClients' }, d.clients.map((c) => h('option', { value: c })))) : null
     ];
@@ -219,7 +237,19 @@
     const email = h('input', { type: 'email', value: d.settings.remindEmail || '', placeholder: d.settings.defaultEmail });
     const restore = h('input', { type: 'file', accept: '.json,application/json', hidden: true });
     restore.addEventListener('change', () => importBackup(restore.files[0]).finally(() => { restore.value = ''; }));
-    const year = S.month.slice(0, 4);
+    // downloads have their own period, separate from the month open in "By month"
+    const tm = thisMonth();
+    const dlFrom = h('input', { type: 'month', value: tm.slice(0, 4) + '-01', 'aria-label': 'From' });
+    const dlTo = h('input', { type: 'month', value: tm, 'aria-label': 'To' });
+    const dlLink = h('a', { class: 'btn btn-dark', text: 'Download CSV' });
+    const dlSet = () => {
+      const a = dlFrom.value || tm, b = dlTo.value || tm;
+      const [f, t] = a <= b ? [a, b] : [b, a];
+      dlLink.href = '/admin/api/expenses/export.csv?from=' + f + '&to=' + t;
+    };
+    dlFrom.addEventListener('change', dlSet);
+    dlTo.addEventListener('change', dlSet);
+    dlSet();
     const saveRates = async () => {
       const rates = {};
       for (const [c, inp] of rateInputs) rates[c] = inp.value;
@@ -244,13 +274,15 @@
           try { await api('/expenses/settings', { method: 'PUT', body: { remindEmail: email.value } }); toast('Saved'); } catch (e) { toast(e.message); }
         } }))),
       h('section', { class: 'card x-card' },
-        h('h3', { text: 'Downloads and backup' }),
+        h('h3', { text: 'Download expenses' }),
+        h('div', { class: 'x-inline x-dl' }, h('label', null, 'From', dlFrom), h('label', null, 'To', dlTo), dlLink),
+        h('p', { class: 'muted x-note', text: 'Every cost in the period as a spreadsheet (CSV). To pick clients or categories too, use Download CSV in Reports.' })),
+      h('section', { class: 'card x-card' },
+        h('h3', { text: 'Backup' }),
+        h('p', { class: 'muted x-note', text: 'A copy of everything in Expenses, to keep safe or to restore.' }),
         h('div', { class: 'x-client-row' },
-          h('a', { class: 'btn btn-light', href: '/admin/api/expenses/export.csv?from=' + S.month + '&to=' + S.month, text: monthName(S.month) + ' (CSV)' }),
-          h('a', { class: 'btn btn-light', href: '/admin/api/expenses/export.csv?from=' + year + '-01&to=' + year + '-12', text: 'All of ' + year + ' (CSV)' }),
-          h('a', { class: 'btn btn-light', href: '/admin/api/expenses/backup', text: 'Backup (JSON)' }),
-          h('button', { type: 'button', class: 'btn btn-light', text: 'Restore a backup…', onclick: () => restore.click() }), restore),
-        h('p', { class: 'muted x-note', text: 'For any period, client or category, use Download CSV in Reports.' }))
+          h('a', { class: 'btn btn-light', href: '/admin/api/expenses/backup', text: 'Download backup' }),
+          h('button', { type: 'button', class: 'btn btn-light', text: 'Restore a backup…', onclick: () => restore.click() }), restore))
     ];
   }
 
@@ -283,7 +315,7 @@
   const AD = 'Instagram ads';
   function entryDialog(r, preset) {
     const today = new Date();
-    const defDate = S.month === thisMonth() ? today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate()) : S.month + '-01';
+    const defDate = S.from <= thisMonth() && thisMonth() <= S.to ? today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate()) : S.month + '-01';
     const f = {
       name: h('input', { required: true, maxlength: '80', value: r ? r.name : '' }),
       date: h('input', { type: 'date', required: true, value: r ? r.date : defDate }),
@@ -370,12 +402,12 @@
     const plan = S.data.plans.find((p) => p.id === r.id);
     const amount = h('input', { type: 'number', step: '0.01', min: '0', value: r.skipped ? '' : r.amount });
     const content = [
-      h('p', { class: 'muted', text: 'Only ' + S.data.label + ' changes. To change the price for every month from now on, use Edit plan.' }),
-      field('Amount for ' + S.data.label + ' (' + r.currency + ')', amount)];
-    const { dlg } = dialog(r.name + ', ' + S.data.label, content, (err) => [
-      h('button', { type: 'submit', class: 'btn btn-dark', text: 'Save', onclick: (e) => { e.preventDefault(); run(err, dlg, () => api('/expenses/plans/' + r.id + '/month', { method: 'POST', body: { month: S.month, amount: amount.value } }), 'Saved for ' + S.data.label); } }),
-      h('button', { type: 'button', class: 'btn btn-light', text: r.skipped ? 'Charge it this month' : 'Skip this month', onclick: () => run(err, dlg, () => api('/expenses/plans/' + r.id + '/month', { method: 'POST', body: r.skipped ? { month: S.month, reset: true } : { month: S.month, skip: true } }), r.skipped ? 'Back on' : 'Skipped') }),
-      r.changed ? h('button', { type: 'button', class: 'btn btn-light', text: 'Back to the plan price', onclick: () => run(err, dlg, () => api('/expenses/plans/' + r.id + '/month', { method: 'POST', body: { month: S.month, reset: true } }), 'Back to the plan price') }) : null,
+      h('p', { class: 'muted', text: 'Only ' + monthName(r.month) + ' changes. To change the price for every month from now on, use Edit plan.' }),
+      field('Amount for ' + monthName(r.month) + ' (' + r.currency + ')', amount)];
+    const { dlg } = dialog(r.name + ', ' + monthName(r.month), content, (err) => [
+      h('button', { type: 'submit', class: 'btn btn-dark', text: 'Save', onclick: (e) => { e.preventDefault(); run(err, dlg, () => api('/expenses/plans/' + r.id + '/month', { method: 'POST', body: { month: r.month, amount: amount.value } }), 'Saved for ' + monthName(r.month)); } }),
+      h('button', { type: 'button', class: 'btn btn-light', text: r.skipped ? 'Charge it this month' : 'Skip this month', onclick: () => run(err, dlg, () => api('/expenses/plans/' + r.id + '/month', { method: 'POST', body: r.skipped ? { month: r.month, reset: true } : { month: r.month, skip: true } }), r.skipped ? 'Back on' : 'Skipped') }),
+      r.changed ? h('button', { type: 'button', class: 'btn btn-light', text: 'Back to the plan price', onclick: () => run(err, dlg, () => api('/expenses/plans/' + r.id + '/month', { method: 'POST', body: { month: r.month, reset: true } }), 'Back to the plan price') }) : null,
       plan ? h('button', { type: 'button', class: 'btn btn-light', text: 'Edit plan', onclick: () => { dlg.close(); planDialog(plan); } }) : null]);
   }
 

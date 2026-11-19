@@ -390,3 +390,26 @@ a.btn { text-decoration: none; display: inline-block; }
 .x-field { display: grid; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ink-2); min-width: 0; }
 .x-filter-pick { flex: 0 1 200px; min-width: 150px; }
 .x-filter-pick .w-ms { min-height: 40px; padding: 8px 12px; border-radius: 999px; font-size: 14px; }
+
+/* service map: new services from an import */
+.x-mapgrid label > span { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.x-mapgrid label.is-new input { border-color: #e8a33d; }
+.x-dl { align-items: flex-end; }
+.x-dl .btn { white-space: nowrap; }
+
+/* period picker (widgets.js) */
+.w-period { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; min-width: 0; }
+.w-period-custom { display: flex; gap: 10px; flex-wrap: wrap; }
+.w-period-custom[hidden] { display: none; }
+.w-period-custom label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); min-width: 140px; }
+.x-period-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.x-period-bar h3 { margin: 0; }
+.x-money { gap: 14px; }
+.x-money .x-stats { margin: 0; }
+.x-money .x-stat { box-shadow: none; background: var(--soft); }
+.x-money .x-stats-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 900px) { .x-money .x-stats-5 { grid-template-columns: 1fr 1fr; } }
+.x-month-head .seg { background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); }
+.x-month-head .seg button.is-on { background: var(--ink); color: #fff; }
+.x-month-head .w-period { justify-content: flex-end; }
+@media (max-width: 900px) { .x-money .x-stats-5 > :last-child { grid-column: 1 / -1; } }

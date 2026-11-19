@@ -210,4 +210,45 @@
     });
     return btn;
   };
+
+  /* ---------------- period picker ----------------
+     Quick choices (this month, last month, …) and Custom, which shows a
+     From and a To month. onChange({ preset, from, to }) on every change.
+     Each section keeps its own period. */
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const nowMonth = () => { const d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1); };
+  const mShift = (m, n) => { const i = Number(m.slice(0, 4)) * 12 + Number(m.slice(5)) - 1 + n; return Math.floor(i / 12) + '-' + pad2(i % 12 + 1); };
+  C.PERIODS = {
+    month: { label: 'This month', range: () => [nowMonth(), nowMonth()] },
+    last: { label: 'Last month', range: () => [mShift(nowMonth(), -1), mShift(nowMonth(), -1)] },
+    q: { label: 'Last 3 months', range: () => [mShift(nowMonth(), -2), nowMonth()] },
+    year: { label: 'This year', range: () => [nowMonth().slice(0, 4) + '-01', nowMonth()] },
+    prev: { label: 'Last year', range: () => { const y = Number(nowMonth().slice(0, 4)) - 1; return [y + '-01', y + '-12']; } },
+    custom: { label: 'Custom', range: null }
+  };
+  C.periodPreset = (from, to, keys) => (keys || Object.keys(C.PERIODS)).find((k) => C.PERIODS[k].range && C.PERIODS[k].range().join() === from + ',' + to) || 'custom';
+  C.monthShift = mShift;
+  C.periodPicker = function ({ from, to, preset, presets, onChange, label }) {
+    const keys = presets || Object.keys(C.PERIODS);
+    let cur = preset || C.periodPreset(from, to, keys);
+    const fromIn = h('input', { type: 'month', value: from, 'aria-label': 'From' });
+    const toIn = h('input', { type: 'month', value: to, 'aria-label': 'To' });
+    const custom = h('div', { class: 'w-period-custom', hidden: cur === 'custom' ? null : true },
+      h('label', null, 'From', fromIn), h('label', null, 'To', toIn));
+    const emit = (p, a, b) => { if (a > b) [a, b] = [b, a]; cur = p; if (onChange) onChange({ preset: p, from: a, to: b }); };
+    const onRange = () => { if (fromIn.value && toIn.value) emit('custom', fromIn.value, toIn.value); };
+    fromIn.addEventListener('change', onRange);
+    toIn.addEventListener('change', onRange);
+    const seg = h('div', { class: 'seg x-presets', role: 'group', 'aria-label': label || 'Period' }, keys.map((k) => h('button', {
+      type: 'button', class: cur === k ? 'is-on' : null, text: C.PERIODS[k].label, 'aria-pressed': cur === k ? 'true' : 'false',
+      onclick: (e) => {
+        seg.querySelectorAll('button').forEach((b) => { b.classList.toggle('is-on', b === e.currentTarget); b.setAttribute('aria-pressed', b === e.currentTarget ? 'true' : 'false'); });
+        if (k === 'custom') { custom.hidden = false; cur = 'custom'; return; }
+        custom.hidden = true;
+        const [a, b] = C.PERIODS[k].range();
+        emit(k, a, b);
+      }
+    })));
+    return h('div', { class: 'w-period' }, seg, custom);
+  };
 })();

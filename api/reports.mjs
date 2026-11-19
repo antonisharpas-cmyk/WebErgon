@@ -115,20 +115,34 @@ export function setupReports({ send, expenses, clients, inbox }) {
   }
 
   /* the dashboard: what needs doing, and how the month and the year look */
-  function dashboard() {
+  // the money cards follow the period picked on the dashboard (this month by default);
+  // the lists below them are always about now
+  function dashboard(url) {
     const d = new Date();
     const month = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
-    const m = build({ from: month, to: month, clients: [], categories: [] });
-    const y = build({ from: `${d.getFullYear()}-01`, to: month, clients: [], categories: [] });
+    const f = url.searchParams.get('from') ? filters(url) : { from: month, to: month };
+    const len = monthIndex(f.to) - monthIndex(f.from) + 1;
+    const cur = build({ from: f.from, to: f.to, clients: [], categories: [] });
+    // compared with: the same months a year before for a year or year-to-date, otherwise the period just before
+    const yearly = len > 1 && f.from.endsWith('-01') && f.from.slice(0, 4) === f.to.slice(0, 4);
+    const back = yearly ? 12 : len;
+    const prevFrom = monthFromIndex(monthIndex(f.from) - back), prevTo = monthFromIndex(monthIndex(f.to) - back);
+    const prev = build({ from: prevFrom, to: prevTo, clients: [], categories: [] });
     const a = clients.attention();
+    const pick = (r) => ({ received: r.totals.received, billed: r.totals.billed, costs: r.totals.costs, profit: r.totals.profit });
     return {
-      month, year: d.getFullYear(),
+      month, year: d.getFullYear(), from: f.from, to: f.to,
       stats: {
         toCollect: a.toCollect, overdue: a.overdue,
-        inMonth: m.totals.received, costsMonth: m.totals.costs, costsMonthEstimate: m.months.some((x) => x.estimate),
-        inYear: y.totals.received, costsYear: y.totals.costs, profitYear: y.totals.profit
+        ...pick(cur), estimate: cur.months.some((x) => x.estimate),
+        prev: { from: prevFrom, to: prevTo, ...pick(prev) }
       },
-      unpaid: a.unpaid, renewals: a.renewals, checks: a.checks, remindDays: a.remindDays,
+      unpaid: a.unpaid, renewals: a.renewals, remindDays: a.remindDays,
+      checks: [
+        ...expenses.pendingServices().map((s) => ({ kind: 'render', href: '#expenses/hosting', client: 'Render: ' + s.service,
+          text: s.guess ? 'new hosting service, looks like ' + s.guess + ': confirm it' : 'new hosting service: which client is it?' })),
+        ...a.checks
+      ],
       ours: expenses.comingUp(),
       inbox: inbox ? inbox() : { chatsUnread: 0, inquiriesNew: 0 }
     };
@@ -137,7 +151,7 @@ export function setupReports({ send, expenses, clients, inbox }) {
   async function handle(req, res, p, user, url) {
     if (user.role !== 'owner') return send(res, 403, { message: 'Only owners can see this.' });
     if (req.method !== 'GET') return send(res, 405, { message: 'Not allowed' });
-    if (p === '/dashboard') return send(res, 200, dashboard());
+    if (p === '/dashboard') return send(res, 200, dashboard(url));
     const f = filters(url);
     if (p === '/reports') return send(res, 200, build(f));
     if (p === '/reports/export.csv') {

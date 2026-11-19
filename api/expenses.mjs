@@ -63,6 +63,9 @@ function dateInMonth(month, day) {
   return `${month}-${pad(Math.min(day, last))}`;
 }
 const monthLabel = (m) => `${MONTHS[Number(m.slice(5, 7)) - 1]} ${m.slice(0, 4)}`;
+const periodLabel = (a, b) => (a.slice(0, 4) === b.slice(0, 4)
+  ? (a.slice(5) === '01' && b.slice(5) === '12' ? `All of ${a.slice(0, 4)}` : `${MONTHS[Number(a.slice(5, 7)) - 1]} to ${monthLabel(b)}`)
+  : `${monthLabel(a)} to ${monthLabel(b)}`);
 
 /* ---------- CSV ---------- */
 function parseCsv(text) {
@@ -143,6 +146,7 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
     x.entries ||= [];
     x.render ||= {};
     x.renderMap ||= {};
+    x.renderPending ||= {};                  // services imported but not confirmed yet (shown on the dashboard)
     x.settings ||= {};
     if (x.settings.autoRates === undefined) x.settings.autoRates = true;
     x.settings.remindEmail ||= '';
@@ -273,6 +277,33 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
       if (o && !o.skipped && o.date >= from) return { ...o, month: m };
     }
     return null;
+  }
+
+  /* A new Render service: guess its client from the client names, websites
+     and domains in the Clients section (e.g. "haandreoulaw" and andreou.law,
+     "CRMONEELEVEN" and OneEleven). It is only a suggestion until saved. */
+  function guessClient(service) {
+    const norm = (v) => String(v || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\.[a-z]{2,}(\/.*)?$/, '').replace(/[^a-z0-9]/g, '');
+    const s = norm(service);
+    if (s.length < 4) return '';
+    // what each client is called: its name, website and domain, and the services already confirmed for it
+    const cands = [];
+    for (const cl of (db.clients && db.clients.list) || []) for (const v of [cl.name, cl.website, cl.domain]) cands.push([cl.name, norm(v)]);
+    const x = ensure();
+    for (const [k, c] of Object.entries(x.renderMap)) if (c && !x.renderPending[k]) cands.push([c, norm(k)]);
+    let best = '', score = 0;
+    for (const [name, cand] of cands) {
+      if (cand.length < 4) continue;
+      // the longest run of letters both share ("andreoumarmi" beats "andreou"); a full match wins
+      let sc = s === cand ? 1000 : 0;
+      if (!sc) {
+        for (let i = 0; i < s.length; i++) {
+          for (let j = s.length; j >= i + Math.max(5, sc + 1); j--) if (cand.includes(s.slice(i, j))) { sc = j - i; break; }
+        }
+      }
+      if (sc > score) { score = sc; best = name; }
+    }
+    return best;
   }
 
   /* ---------- a month, put together ---------- */
@@ -463,12 +494,20 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
     return e;
   }
 
-  function overview(month) {
+  // one month, or a period of months (to > month): every row carries its month
+  function overview(month, to) {
     const x = ensure();
-    const rows = monthRows(month);
+    if (!to || to < month) to = month;
+    if (monthIndex(to) - monthIndex(month) > 59) month = addMonths(to, -59);      // five years at most
+    const rows = [];
+    for (let i = monthIndex(month); i <= monthIndex(to); i++) {
+      const m = monthFromIndex(i);
+      for (const r of monthRows(m)) rows.push({ ...r, month: m });
+    }
+    const range = to !== month;
     const history = [];
     for (let i = 11; i >= 0; i--) {
-      const m = addMonths(month, -i);
+      const m = addMonths(to, -i);
       const t = totals(monthRows(m));
       history.push({ month: m, eur: t.eur, estimate: t.estimate });
     }
@@ -483,11 +522,11 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
     const services = new Set();
     for (const r of Object.values(x.render)) for (const l of r.lines) services.add(l.service);
     return {
-      month, label: monthLabel(month), today: todayStr(),
+      month, to, range, label: range ? periodLabel(month, to) : monthLabel(month), today: todayStr(),
       rows, totals: totals(rows), history, comingUp: comingUp(),
       plans: x.plans.map(planOut).sort((a, b) => a.name.localeCompare(b.name)),
       render: Object.fromEntries(Object.entries(x.render).map(([m, r]) => [m, { final: r.final, importedAt: r.importedAt, file: r.file }])),
-      renderMap: x.renderMap, services: [...services].sort((a, b) => a.localeCompare(b)),
+      renderMap: x.renderMap, renderPending: x.renderPending, services: [...services].sort((a, b) => a.localeCompare(b)),
       fx: { rates: x.fx.rates, date: x.fx.date || '', source: x.fx.source, monthRates: ratesFor(month), lockedAt: (x.fx.history[month] || {}).lockedAt || '' },
       settings: { ...x.settings, defaultEmail: notifyEmail },
       clients: [...clients].sort((a, b) => a.localeCompare(b)), categories: [...categories].sort((a, b) => a.localeCompare(b))
@@ -551,8 +590,9 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
     const body = () => readJson(req, 512 * 1024);
 
     if (p === '/expenses' && req.method === 'GET') {
-      const m = url.searchParams.get('month');
-      return send(res, 200, overview(MONTH_RE.test(m || '') ? m : monthOf(todayStr())));
+      const m = url.searchParams.get('month'), t = url.searchParams.get('to');
+      const from = MONTH_RE.test(m || '') ? m : monthOf(todayStr());
+      return send(res, 200, overview(from, MONTH_RE.test(t || '') ? t : from));
     }
 
     if (p === '/expenses/export.csv' && req.method === 'GET') {
@@ -649,7 +689,7 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
       x.render[month] = { final, importedAt: now(), file, lines };
       for (const l of lines) {
         const k = l.service.toLowerCase();
-        if (!(k in x.renderMap)) x.renderMap[k] = '';
+        if (!(k in x.renderMap)) { x.renderMap[k] = guessClient(l.service); x.renderPending[k] = true; }
       }
       store.save();
       return send(res, 200, { month, label: monthLabel(month), final, replaced, total: r2(lines.reduce((n, l) => n + l.cost, 0)) });
@@ -661,7 +701,11 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
     }
     if (p === '/expenses/render-map' && req.method === 'PUT') {
       const b = await body();
-      for (const [k, v] of Object.entries(b.map || {})) x.renderMap[String(k).toLowerCase().slice(0, 80)] = clean(v, 60);
+      for (const [k, v] of Object.entries(b.map || {})) {
+        const key = String(k).toLowerCase().slice(0, 80);
+        x.renderMap[key] = clean(v, 60);
+        delete x.renderPending[key];         // saved: confirmed
+      }
       store.save();
       return send(res, 200, { ok: true });
     }
@@ -727,6 +771,14 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
     return out;
   }
 
-  return { handle, dueCount, costsByClient, rowsBetween, comingUp: () => comingUp(), monthTotal: (m) => totals(monthRows(m)),
+  // Render services imported but not confirmed in "Which client is each service?"
+  const pendingServices = () => {
+    const x = ensure();
+    const names = new Map();
+    for (const r of Object.values(x.render)) for (const l of r.lines) names.set(l.service.toLowerCase(), l.service);
+    return Object.keys(x.renderPending).map((k) => ({ service: names.get(k) || k, guess: x.renderMap[k] || '' }));
+  };
+
+  return { handle, dueCount, costsByClient, rowsBetween, pendingServices, comingUp: () => comingUp(), monthTotal: (m) => totals(monthRows(m)),
     setExtraCosts: (fn) => { extraCosts = fn; } };
 }
