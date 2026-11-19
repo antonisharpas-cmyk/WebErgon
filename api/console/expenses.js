@@ -75,6 +75,7 @@
         d.month !== thisMonth() ? h('button', { type: 'button', class: 'link', text: 'This month', onclick: () => { location.hash = 'expenses/' + thisMonth(); } }) : null),
       h('div', { class: 'x-actions' },
         h('button', { type: 'button', class: 'btn btn-dark', text: '+ Expense', onclick: () => entryDialog() }),
+        h('button', { type: 'button', class: 'btn btn-light', text: '+ Instagram ad', onclick: () => entryDialog(null, AD) }),
         h('button', { type: 'button', class: 'btn btn-light', text: '+ Recurring', onclick: () => planDialog() }),
         h('button', { type: 'button', class: 'btn btn-light', text: 'Import Render CSV', onclick: () => file.click() }),
         more, file, restore));
@@ -119,20 +120,23 @@
       if (r.kind === 'render' && !r.amount) continue;          // free services: listed under Render below
       const chips = [
         r.kind === 'render' ? h('span', { class: 'x-chip', text: 'Render usage' }) : null,
+        r.kind === 'client' ? h('span', { class: 'x-chip', text: 'domain we pay for a client' }) : null,
         r.estimate ? h('span', { class: 'x-chip is-warn', text: 'estimate' }) : null,
         r.upcoming && !r.skipped ? h('span', { class: 'x-chip', text: 'upcoming' }) : null,
         r.changed ? h('span', { class: 'x-chip', text: 'changed this month' }) : null,
         r.skipped ? h('span', { class: 'x-chip', text: 'skipped' }) : null
       ];
-      const edit = r.kind === 'plan' ? () => monthDialog(r) : r.kind === 'entry' ? () => entryDialog(r) : () => mapDialog(r.name, r.client);
+      const edit = r.kind === 'plan' ? () => monthDialog(r) : r.kind === 'entry' ? () => entryDialog(r) : r.kind === 'client' ? () => { location.hash = 'clients/c/' + r.clientId; } : () => mapDialog(r.name, r.client);
+      const ad = r.kind === 'entry' && (r.post || r.campaignFrom)
+        ? h('div', { class: 'x-ad', text: [r.post ? 'Post: ' + r.post : '', r.campaignFrom ? 'Ran ' + dayName(r.campaignFrom) + (r.campaignTo ? ' to ' + dayName(r.campaignTo) : '') : ''].filter(Boolean).join(' · ') }) : null;
       const tr = h('tr', { class: r.skipped ? 'is-off' : '' },
         h('td', { class: 'x-date', text: dayName(r.date).replace(/ \d{4}$/, '') }),
-        h('td', null, h('b', { text: r.name }), r.vendor && r.vendor !== r.name ? h('small', { class: 'muted', text: ' · ' + r.vendor }) : null, h('div', { class: 'x-chips' }, chips)),
+        h('td', null, h('b', { text: r.name }), r.vendor && r.vendor !== r.name ? h('small', { class: 'muted', text: ' · ' + r.vendor }) : null, ad, h('div', { class: 'x-chips' }, chips)),
         h('td', { text: r.client || (r.kind === 'render' ? 'Unassigned' : '') }),
         h('td', { text: r.category }),
         h('td', { class: 'num', text: fmt(r.amount, r.currency) }),
         h('td', { class: 'num', text: r.currency === 'EUR' ? '' : eur(r.eur) }),
-        h('td', { class: 'num' }, h('button', { type: 'button', class: 'link', text: r.kind === 'render' ? 'Client' : 'Edit', onclick: edit })));
+        h('td', { class: 'num' }, h('button', { type: 'button', class: 'link', text: r.kind === 'render' ? 'Client' : r.kind === 'client' ? 'Open client' : 'Edit', onclick: edit })));
       body.push(tr);
       if (r.kind === 'render' && r.lines.length) {
         body.push(h('tr', { class: 'x-sub' }, h('td'), h('td', { colspan: '6', class: 'muted', text: r.lines.map((l) => l.charge + ' ' + fmt(l.cost, 'USD')).join(' · ') })));
@@ -271,7 +275,9 @@
     try { await fn(); dlg.close(); toast(done); reload(); } catch (e) { err.textContent = e.message; }
   }
 
-  function entryDialog(r) {
+  // an Instagram ad is a one-off expense with the post it promoted and when it ran
+  const AD = 'Instagram ads';
+  function entryDialog(r, preset) {
     const today = new Date();
     const defDate = S.month === thisMonth() ? today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate()) : S.month + '-01';
     const f = {
@@ -280,15 +286,23 @@
       amount: h('input', { type: 'number', step: '0.01', min: '0', required: true, value: r ? r.amount : '' }),
       currency: currencySelect(r && r.currency),
       vendor: h('input', { maxlength: '60', value: r ? r.vendor : '', placeholder: 'Who you paid' }),
-      category: h('input', { maxlength: '40', list: 'xCats', value: r ? r.category : '' }),
+      category: h('input', { maxlength: '40', list: 'xCats', value: r ? r.category : preset || '' }),
       client: h('input', { maxlength: '60', list: 'xClients2', value: r ? r.client : '', placeholder: 'Optional' }),
+      post: h('input', { maxlength: '300', value: r ? r.post || '' : '', placeholder: 'Which post: its caption or link' }),
+      campaignFrom: h('input', { type: 'date', value: r ? r.campaignFrom || '' : '' }),
+      campaignTo: h('input', { type: 'date', value: r ? r.campaignTo || '' : '' }),
       notes: h('textarea', { rows: '2', maxlength: '400' })
     };
     if (r && r.notes) f.notes.value = r.notes;
-    const content = h('div', { class: 'grid2' }, field('What', f.name), field('Date paid', f.date), field('Amount', f.amount), field('Currency', f.currency),
-      field('Paid to', f.vendor), field('Category', f.category), field('For a client?', f.client), field('Notes', f.notes), lists());
+    if (!r && preset === AD) { f.name.value = 'Instagram ad'; f.vendor.value = 'Meta'; }
+    const adParts = [field('Which post', f.post), field('Campaign started', f.campaignFrom), field('Campaign ended', f.campaignTo)];
+    const content = h('div', { class: 'grid2' }, field('What', f.name), field(preset === AD || (r && r.category === AD) ? 'Cost of the campaign' : 'Amount', f.amount), field('Currency', f.currency), field('Date paid', f.date),
+      adParts, field('Paid to', f.vendor), field('Category', f.category), field('For a client?', f.client), field('Notes', f.notes), lists());
+    const syncAd = () => { const on = f.category.value.trim().toLowerCase() === AD.toLowerCase(); adParts.forEach((p) => { p.hidden = !on; }); };
+    f.category.addEventListener('input', syncAd);
+    syncAd();
     const val = () => Object.fromEntries(Object.entries(f).map(([k, el]) => [k, el.value]));
-    const { dlg } = dialog(r ? 'Edit expense' : 'New one-off expense', content, (err) => [
+    const { dlg } = dialog(r ? 'Edit expense' : preset === AD ? 'New Instagram ad' : 'New one-off expense', content, (err) => [
       h('button', { type: 'submit', class: 'btn btn-dark', text: 'Save', onclick: (e) => { e.preventDefault(); run(err, dlg, () => api('/expenses/entries' + (r ? '/' + r.id : ''), { method: r ? 'PUT' : 'POST', body: val() }), 'Saved'); } }),
       r ? h('button', { type: 'button', class: 'btn btn-light x-danger', text: 'Delete', onclick: () => {
         if (confirm('Delete this expense?')) run(err, dlg, () => api('/expenses/entries/' + r.id, { method: 'DELETE' }), 'Deleted');

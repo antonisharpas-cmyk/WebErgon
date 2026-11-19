@@ -52,21 +52,24 @@ The console's **Expenses** section keeps what ErgonSite pays for, month by month
 
 - **Recurring costs** (Google Workspace, the domain, ...): set the price, how often it repeats and the first charge date. A new price applies from a chosen month on; earlier months keep the old one. One month can be changed or skipped on its own. **Stop** ends it from a month on and keeps the history; **Delete completely** removes it.
 - **Reminders**: "Remind me N days before" shows the renewal under *Coming up*, puts an orange count on the Expenses menu item and emails the team once, N days before each renewal (to the address under Settings, or `NOTIFY_EMAIL`).
-- **One-off expenses**: anything paid once.
+- **One-off expenses**: anything paid once. **+ Instagram ad** adds an ad campaign with the post it promoted, when it ran and what it cost; edit it any time the cost changes.
 - **Render hosting**: in Render, *Billing*, download the usage CSV for each month and use *Import Render CSV*. The current month's "unbilled charges" file is an estimate: import it again to update it, and import the final file once the month is billed. Each Render service is linked to a client, so hosting cost per client shows up.
 - **Currencies**: amounts stay in their own currency (EUR, USD, ...). Rates come from the European Central Bank every day, or can be typed in by hand under Settings. Each month keeps the rates it was converted with.
 - **More**: download a month or a year as CSV (for the accountant), download a backup, or restore one.
 
 The data lives in the same data file as the chats (`expenses` key), on the Render disk.
 
+## Dashboard (owners only)
+
+The first screen for owners. It lists what is **unpaid** (late ones highlighted), **client renewals** coming up (maintenance years and domains, highlighted 30 days before), **our own renewals** from Expenses, and **things to check** (a domain with no expiry date, a client with no email, a charge with no due date), with the month's and the year's money at the top. The orange number on the menu counts late payments and renewals due soon. Next to each item, **Write email** opens your own mail program with a suggested text to change and send yourself: the console never emails a client.
+
 ## Clients (owners only)
 
-The console's **Clients** section keeps every client's contact details, charges and payments, their domain's expiry, and the logins to their admin page.
+Every client as a card, with a search box. A client's page has the contact details, charges, payments and logins.
 
-- **Charges**: Website, CRM or Other (one-off, can be paid in parts), **Maintenance** (a yearly fee with start and end) and **Domain** (the client's own domain in their own registrar account; they pay the registrar, we only remind them). Record payments as they come in; the status (Pending, Partly paid, Paid, Unpaid after the due date) follows.
-- **Emails to approve**: every day the console prepares renewal notices (30 days before a maintenance year or a domain ends) and payment reminders (on the due date, then every 14 days while unpaid). Nothing is sent to a client until an owner presses **Send**; the team gets one email when new drafts are waiting. Sending a maintenance renewal also opens next year's charge.
-- **Profit & costs**: per client and per year, money received against the costs tagged with that client in Expenses (Render hosting and so on), and ErgonSite's own costs.
-- **Logins**: link, username and password for each client's admin page. Passwords are encrypted with `VAULT_KEY` (set it once in Render's Environment as a long random text and never change it). Only owners can show or copy them; the console notes who opened one last.
+- **Charges**: Website, CRM or Other (one-off, can be paid in parts), **Maintenance** (a yearly fee with start and end; **Renew** opens the next year) and **Domain** (expiry date; **Mark renewed** sets the next one). A domain is either paid by the client from their own registrar account, or **paid by ErgonSite for them**: then what we pay shows in Expenses and Reports under that client, and anything we charge the client back is tracked like other charges.
+- **Settings**: how many days before a renewal the dashboard highlights it, and the wording used in the suggested emails.
+- **Logins**: link, username and password for each client's admin page. Passwords are encrypted with `VAULT_KEY` (set once in Render's Environment as a long random text; never change it). Only owners can show or copy them; the console notes who opened one last.
 
 ## Reports (owners only)
 

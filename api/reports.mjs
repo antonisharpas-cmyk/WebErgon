@@ -6,6 +6,8 @@
    was billed). Costs come from the Expenses section (recurring, one-off
    and Render hosting, converted to euro). Clients are matched by name.
 
+   GET /admin/api/dashboard  what needs doing (unpaid, renewals, our own
+       renewals, things to check) and the month and the year in money
    GET /admin/api/reports?from=YYYY-MM&to=YYYY-MM&client=&category=
    GET /admin/api/reports/export.csv  (same filters) one line per payment
        and per cost, for the accountant
@@ -23,7 +25,7 @@ const csvCell = (v) => {
   return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 };
 
-export function setupReports({ send, expenses, clients }) {
+export function setupReports({ send, expenses, clients, inbox }) {
   function filters(url) {
     const now = new Date();
     const thisMonth = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
@@ -112,9 +114,30 @@ export function setupReports({ send, expenses, clients }) {
     return out.join('\r\n') + '\r\n';
   }
 
+  /* the dashboard: what needs doing, and how the month and the year look */
+  function dashboard() {
+    const d = new Date();
+    const month = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+    const m = build({ from: month, to: month, client: '', category: '' });
+    const y = build({ from: `${d.getFullYear()}-01`, to: month, client: '', category: '' });
+    const a = clients.attention();
+    return {
+      month, year: d.getFullYear(),
+      stats: {
+        toCollect: a.toCollect, overdue: a.overdue,
+        inMonth: m.totals.received, costsMonth: m.totals.costs, costsMonthEstimate: m.months.some((x) => x.estimate),
+        inYear: y.totals.received, costsYear: y.totals.costs, profitYear: y.totals.profit
+      },
+      unpaid: a.unpaid, renewals: a.renewals, checks: a.checks, remindDays: a.remindDays,
+      ours: expenses.comingUp(),
+      inbox: inbox ? inbox() : { chatsUnread: 0, inquiriesNew: 0 }
+    };
+  }
+
   async function handle(req, res, p, user, url) {
-    if (user.role !== 'owner') return send(res, 403, { message: 'Only owners can see reports.' });
+    if (user.role !== 'owner') return send(res, 403, { message: 'Only owners can see this.' });
     if (req.method !== 'GET') return send(res, 405, { message: 'Not allowed' });
+    if (p === '/dashboard') return send(res, 200, dashboard());
     const f = filters(url);
     if (p === '/reports') return send(res, 200, build(f));
     if (p === '/reports/export.csv') {

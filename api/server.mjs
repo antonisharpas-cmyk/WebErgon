@@ -71,9 +71,13 @@ const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]+\.[A-Za-z]{2,}$/;
 /* company expenses (console, owners only): see expenses.mjs */
 const expenses = setupExpenses({ db, store, send, readJson, clean, id, now, mailer, layout, esc, notifyEmail: NOTIFY_EMAIL, publicUrl: PUBLIC_URL });
 /* clients, billing, renewal emails and client logins (owners only): see clients.mjs */
-const clients = setupClients({ db, store, send, readJson, clean, id, now, mailer, layout, esc, notifyEmail: NOTIFY_EMAIL, publicUrl: PUBLIC_URL, vaultSecret: env.VAULT_KEY, expenses });
-/* money in against costs, any period, by client and category (owners only): see reports.mjs */
-const reports = setupReports({ send, expenses, clients });
+const clients = setupClients({ db, store, send, readJson, clean, id, now, vaultSecret: env.VAULT_KEY });
+expenses.setExtraCosts((month) => clients.ourDomainCosts(month));      // domains we pay for clients are costs too
+/* the dashboard, and money in against costs for any period (owners only): see reports.mjs */
+const reports = setupReports({ send, expenses, clients, inbox: () => ({
+  chatsUnread: db.conversations.filter((c) => c.messages.some((m) => m.from === 'visitor' && m.at > (c.staffReadAt || 0))).length,
+  inquiriesNew: db.inquiries.filter((q) => q.status === 'new').length
+}) });
 
 function hashPassword(pw) {
   const salt = crypto.randomBytes(16);
@@ -559,14 +563,14 @@ async function consoleApi(req, res, url) {
         chatsUnread: convs.reduce((n, c) => n + (c.unread ? 1 : 0), 0),
         inquiriesNew: inqs.filter((q) => q.status === 'new').length,
         renewalsDue: user.role === 'owner' ? expenses.dueCount() : 0,
-        clientDrafts: user.role === 'owner' ? clients.draftCount() : 0
+        attention: user.role === 'owner' ? clients.attentionCount() + expenses.dueCount() : 0
       }
     });
   }
 
   if (p === '/expenses' || p.startsWith('/expenses/')) return await expenses.handle(req, res, p, user, url);
   if (p === '/clients' || p.startsWith('/clients/')) return await clients.handle(req, res, p, user, url);
-  if (p === '/reports' || p.startsWith('/reports/')) return await reports.handle(req, res, p, user, url);
+  if (p === '/reports' || p.startsWith('/reports/') || p === '/dashboard') return await reports.handle(req, res, p, user, url);
 
   /* --- chats --- */
   let m = p.match(/^\/conversations\/([A-Za-z0-9_-]+)(\/reply|\/status)?$/);

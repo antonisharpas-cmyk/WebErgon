@@ -121,6 +121,7 @@ function httpError(status, message) {
 
 /* ===================================================================== */
 export function setupExpenses({ db, store, send, readJson, clean, id, now, mailer, layout, esc, notifyEmail, publicUrl }) {
+  let extraCosts = () => [];                 // set by the Clients section (domains we pay for clients)
   const ensure = () => {
     const x = db.expenses || (db.expenses = {});
     x.plans ||= [];
@@ -228,8 +229,11 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
     for (const e of x.entries) {
       if (monthOf(e.date) !== month) continue;
       rows.push({ kind: 'entry', id: e.id, name: e.name, vendor: e.vendor, category: e.category, client: e.client,
-        currency: e.currency, amount: e.amount, date: e.date, notes: e.notes, upcoming: e.date > today });
+        currency: e.currency, amount: e.amount, date: e.date, notes: e.notes, upcoming: e.date > today,
+        post: e.post || '', campaignFrom: e.campaignFrom || '', campaignTo: e.campaignTo || '' });
     }
+    // domains ErgonSite pays for clients (kept in the Clients section)
+    for (const d of extraCosts(month)) rows.push({ kind: 'client', ...d, upcoming: d.date > today });
     const r = x.render[month];
     if (r) {
       const by = new Map();
@@ -376,7 +380,15 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
       if (!CUR_RE.test(c)) throw httpError(400, 'Currency should be a 3-letter code like EUR or USD.');
       e.currency = c;
     }
-    for (const [k, n] of [['vendor', 60], ['category', 40], ['client', 60], ['notes', 400]]) if (b[k] !== undefined) e[k] = clean(b[k], n);
+    for (const [k, n] of [['vendor', 60], ['category', 40], ['client', 60], ['notes', 400], ['post', 300]]) if (b[k] !== undefined) e[k] = clean(b[k], n);
+    // an ad campaign can say when it ran
+    for (const k of ['campaignFrom', 'campaignTo']) {
+      if (b[k] === undefined) continue;
+      if (b[k] === '' || b[k] === null) e[k] = '';
+      else if (!DATE_RE.test(b[k])) throw httpError(400, 'A campaign date is not valid.');
+      else e[k] = b[k];
+    }
+    if (e.campaignFrom && e.campaignTo && e.campaignTo < e.campaignFrom) throw httpError(400, 'The campaign ends before it starts.');
     e.currency ||= 'EUR';
     e.category ||= 'Other';
     e.vendor ||= '';
@@ -399,7 +411,7 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
     for (const e of x.entries) if (e.client) clients.add(e.client);
     for (const c of Object.values(x.renderMap)) if (c) clients.add(c);
     for (const c of (db.clients && db.clients.list) || []) clients.add(c.name);      // the Clients section
-    const categories = new Set(['Hosting', 'Email & software', 'Domains', 'Marketing', 'Equipment', 'Other']);
+    const categories = new Set(['Hosting', 'Email & software', 'Domains', 'Instagram ads', 'Marketing', 'Equipment', 'Other']);
     for (const p of x.plans) categories.add(p.category);
     for (const e of x.entries) categories.add(e.category);
     const services = new Set();
@@ -423,7 +435,7 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
       for (const r of monthRows(m)) {
         if (r.skipped || (r.kind === 'render' && !r.amount)) continue;
         const status = r.estimate ? 'estimate' : r.upcoming ? 'upcoming' : 'charged';
-        out.push([r.date, m, r.kind === 'render' ? 'hosting usage' : r.kind === 'plan' ? 'recurring' : 'one-off', r.name, r.vendor, r.category,
+        out.push([r.date, m, r.kind === 'render' ? 'hosting usage' : r.kind === 'plan' ? 'recurring' : r.kind === 'client' ? 'client domain' : 'one-off', r.name + (r.post ? ' (' + r.post + ')' : ''), r.vendor, r.category,
           r.client, r.currency, r.amount.toFixed(2), r.eur === null ? '' : r.eur.toFixed(2), status].map(csvCell).join(','));
       }
     }
@@ -642,12 +654,13 @@ export function setupExpenses({ db, store, send, readJson, clean, id, now, maile
       const m = monthFromIndex(i);
       for (const r of monthRows(m)) {
         if (r.skipped || (r.kind === 'render' && !r.amount)) continue;
-        out.push({ month: m, date: r.date, kind: r.kind, name: r.name, vendor: r.vendor, category: r.category || 'Other', client: r.client || '',
+        out.push({ month: m, date: r.date, kind: r.kind, name: r.name + (r.post ? ' · ' + r.post : ''), vendor: r.vendor, category: r.category || 'Other', client: r.client || '',
           currency: r.currency, amount: r.amount, eur: r.eur, estimate: !!r.estimate, upcoming: !!r.upcoming });
       }
     }
     return out;
   }
 
-  return { handle, dueCount, costsByClient, rowsBetween };
+  return { handle, dueCount, costsByClient, rowsBetween, comingUp: () => comingUp(), monthTotal: (m) => totals(monthRows(m)),
+    setExtraCosts: (fn) => { extraCosts = fn; } };
 }

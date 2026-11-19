@@ -2,25 +2,26 @@
    Clients and billing, for the console's Clients section (owners only).
 
    For every client: contact details, what they pay us (website or CRM
-   fees, yearly maintenance), their domain's expiry date, the payments
-   they made, and the logins to their admin page.
+   fees, yearly maintenance), their domain, the payments they made, and
+   the logins to their admin page.
 
    Charges
      website / crm / other   a one-off fee; it can be paid in parts.
      maintenance             a yearly fee with a start and an end date.
-     domain                  the client's own domain, in the client's own
-                             registrar account and paid by them to the
-                             registrar; we only remind them to renew it.
-   A charge's status comes from its payments: Pending, Partly paid, Paid.
+     domain                  the client's domain and when it expires.
+                             Usually the client pays the registrar from
+                             their own account and we only keep an eye on
+                             the date. When ErgonSite pays the registrar
+                             for them, what we pay is a cost (it shows in
+                             Expenses and Reports under that client), and
+                             whatever the client pays us back is tracked
+                             like any other charge.
+   A charge's status comes from its payments: Pending, Partly paid, Paid,
+   Unpaid once the due date has passed.
 
-   Emails to clients are never sent on their own. Each day the console
-   prepares drafts and waits for an owner to read, edit and send them:
-     - renewal notices, a set number of days (30) before a maintenance
-       year or a domain ends; sending a maintenance notice also opens
-       the next year's charge, so its payment can be tracked;
-     - payment reminders for anything unpaid, on the due date and then
-       every few weeks until it is paid.
-   When new drafts appear, the team gets one email saying so.
+   Nothing is ever emailed to a client from here. The dashboard lists
+   what is unpaid and what renews soon; next to each one, "Write email"
+   opens your own mail program with a suggested text you can change.
 
    Logins are encrypted with AES-256-GCM. The key comes from VAULT_KEY in
    Render's environment and never touches the data file, so the file on
@@ -30,6 +31,7 @@ import crypto from 'node:crypto';
 
 const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]+\.[A-Za-z]{2,}$/;
+const CUR_RE = /^[A-Z]{3}$/;
 const TYPES = ['website', 'crm', 'maintenance', 'domain', 'other'];
 const TYPE_LABEL = { website: 'Website', crm: 'CRM', maintenance: 'Maintenance & hosting', domain: 'Domain', other: 'Other' };
 const METHODS = ['Cash', 'Bank transfer', 'Card', 'Other'];
@@ -39,11 +41,6 @@ const pad = (n) => String(n).padStart(2, '0');
 const todayStr = () => {
   const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Nicosia' }));
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-};
-const addDays = (date, n) => {
-  const d = new Date(date + 'T00:00:00Z');
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
 };
 const addMonthsDate = (date, n) => {
   const y = Number(date.slice(0, 4)), m = Number(date.slice(5, 7)) - 1 + n, day = Number(date.slice(8, 10));
@@ -70,7 +67,7 @@ function seal(key, text) {
   const data = Buffer.concat([c.update(String(text), 'utf8'), c.final()]);
   return Buffer.concat([iv, c.getAuthTag(), data]).toString('base64');
 }
-function open(key, sealed) {
+function unseal(key, sealed) {
   const b = Buffer.from(sealed, 'base64');
   const d = crypto.createDecipheriv('aes-256-gcm', key, b.subarray(0, 12));
   d.setAuthTag(b.subarray(12, 28));
@@ -78,164 +75,164 @@ function open(key, sealed) {
 }
 
 /* ===================================================================== */
-export function setupClients({ db, store, send, readJson, clean, id, now, mailer, layout, esc, notifyEmail, publicUrl, vaultSecret, expenses }) {
+export function setupClients({ db, store, send, readJson, clean, id, now, vaultSecret }) {
   const KEY = vaultKey(vaultSecret);
   const ensure = () => {
     const x = db.clients || (db.clients = {});
     x.list ||= [];
     x.charges ||= [];
     x.logins ||= [];
-    x.outbox ||= [];
+    delete x.outbox;                         // the old "emails to approve" list is gone
     x.settings ||= {};
     const s = x.settings;
     s.remindDays ??= 30;
-    s.chaseDays ??= 14;
     s.paymentText ??= 'You can pay in cash when we next meet, or reply to this email and we will arrange it with you.';
     s.signature ??= 'ErgonSite Team';
-    s.digest ??= true;
+    delete s.chaseDays; delete s.digest;
     return x;
   };
   ensure();
 
   /* ---------- figures ---------- */
   const paidOf = (c) => r2((c.payments || []).reduce((n, p) => n + p.amount, 0));
-  function statusOf(c, today = todayStr()) {
-    if (c.type === 'domain') {
-      if (c.renewedTo) return { key: 'renewed', label: 'Renewed' };
-      if (!c.end) return { key: 'check', label: 'Expiry not known' };
-      const d = daysBetween(today, c.end);
-      if (d < 0) return { key: 'overdue', label: 'Expired' };
-      if (d <= (c.remindDays ?? ensure().settings.remindDays)) return { key: 'soon', label: 'Renew soon' };
-      return { key: 'ok', label: 'Active' };
-    }
+  const openOf = (c) => r2(Math.max(0, (c.amount || 0) - paidOf(c)));
+  const yearly = (c) => c.type === 'maintenance' || c.type === 'domain';
+  function payStatus(c, today = todayStr()) {
     const amount = c.amount || 0;
     const paid = paidOf(c);
     if (amount > 0 && paid >= amount) return { key: 'paid', label: 'Paid' };
+    if (!(amount > 0)) return null;
     const late = c.start && c.start < today;
     if (paid > 0) return { key: late ? 'overdue' : 'part', label: 'Partly paid, ' + euro(r2(amount - paid), c.currency) + ' to go' };
     return { key: late ? 'overdue' : 'pending', label: late ? 'Unpaid' : 'Pending' };
   }
+  function renewStatus(c, today = todayStr()) {
+    if (c.renewedTo) return { key: 'renewed', label: 'Renewed' };
+    if (!c.end) return { key: 'check', label: 'Expiry not known' };
+    const d = daysBetween(today, c.end);
+    if (d < 0) return { key: 'overdue', label: c.type === 'domain' ? 'Expired' : 'Ended' };
+    if (d <= (c.remindDays ?? ensure().settings.remindDays)) return { key: 'soon', label: 'Renews soon' };
+    return { key: 'ok', label: 'Active' };
+  }
   function chargeOut(c) {
-    const s = statusOf(c);
-    return { ...c, paid: paidOf(c), open: c.type === 'domain' ? 0 : r2(Math.max(0, (c.amount || 0) - paidOf(c))), status: s.key, statusLabel: s.label, typeLabel: TYPE_LABEL[c.type] };
+    // a domain shows its renewal state; money owed shows as a second line
+    const pay = payStatus(c);
+    const main = c.type === 'domain' ? renewStatus(c) : (pay || { key: 'paid', label: 'Paid' });
+    return { ...c, paid: paidOf(c), open: openOf(c), status: main.key, statusLabel: main.label,
+      payStatus: c.type === 'domain' && pay ? pay : null, typeLabel: TYPE_LABEL[c.type] };
   }
   function clientOut(cl) {
     const x = ensure();
     const charges = x.charges.filter((c) => c.clientId === cl.id).map(chargeOut);
     const today = todayStr();
-    const next = charges.filter((c) => (c.type === 'maintenance' || c.type === 'domain') && c.end && !c.renewedTo && c.end >= today)
-      .sort((a, b) => a.end.localeCompare(b.end))[0];
+    const next = charges.filter((c) => yearly(c) && c.end && !c.renewedTo && c.end >= today).sort((a, b) => a.end.localeCompare(b.end))[0];
     return {
       ...cl,
       open: r2(charges.reduce((n, c) => n + c.open, 0)),
-      paidTotal: r2(charges.reduce((n, c) => n + (c.type === 'domain' ? 0 : c.paid), 0)),
-      overdue: charges.some((c) => c.status === 'overdue'),
-      nextRenewal: next ? { date: next.end, type: next.typeLabel } : null,
-      drafts: x.outbox.filter((o) => o.clientId === cl.id && o.status === 'draft').length
+      paidTotal: r2(charges.reduce((n, c) => n + c.paid, 0)),
+      overdue: charges.some((c) => c.open > 0 && c.start && c.start < today),
+      nextRenewal: next ? { date: next.end, type: next.typeLabel } : null
     };
   }
+  const clientName = (cid) => (ensure().list.find((k) => k.id === cid) || {}).name || 'Unknown client';
 
-  /* ---------- the emails ---------- */
-  function draft(cl, c, kind) {
-    const x = ensure();
-    const s = x.settings;
+  /* ---------- a suggested email, opened in your own mail program ---------- */
+  function compose(cl, c, kind) {
+    const s = ensure().settings;
     const name = (cl.contact || '').split(/\s+/)[0] || cl.name;
     const sign = `\n\nKind regards,\n${s.signature}\ninfo@ergonsite.com · +357 96 400 240`;
-    let subject, text;
+    let subject, body;
     if (kind === 'renewal' && c.type === 'maintenance') {
-      const nextEnd = addMonthsDate(c.end, 12);
       subject = `Your ErgonSite maintenance renews on ${nice(c.end)}`;
-      text = `Dear ${name},\n\nA friendly note that the maintenance and hosting plan for ${cl.website || cl.name} ends on ${nice(c.end)}.\n\n`
-        + `To keep your website online, updated and supported for another year (${nice(c.end)} to ${nice(nextEnd)}), the renewal is ${euro(c.amount || 0, c.currency)}.\n\n`
+      body = `Dear ${name},\n\nA friendly note that the maintenance and hosting plan for ${cl.website || cl.name} ends on ${nice(c.end)}.\n\n`
+        + `To keep your website online, updated and supported for another year (${nice(c.end)} to ${nice(addMonthsDate(c.end, 12))}), the renewal is ${euro(c.amount || 0, c.currency)}.\n\n`
         + `${s.paymentText}\n\nIf you have any questions, just reply to this email.${sign}`;
     } else if (kind === 'renewal' && c.type === 'domain') {
       const dom = c.domainName || cl.domain || 'your domain';
       subject = `Your domain ${dom} expires on ${nice(c.end)}`;
-      text = `Dear ${name},\n\nA friendly reminder that your domain ${dom} expires on ${nice(c.end)}.\n\n`
-        + `The domain is registered in your own${c.registrar ? ' ' + c.registrar : ''} account, so the renewal is made there and paid directly to ${c.registrar || 'the registrar'}${c.domainCost ? ' (' + c.domainCost + ' a year)' : ''}. `
-        + `Please renew it before ${nice(c.end)}: if it expires, the website and any email addresses on it stop working.\n\n`
-        + `If you would like us to help with the renewal, reply to this email and we will arrange it.${sign}`;
+      body = c.payer === 'ergonsite'
+        ? `Dear ${name},\n\nA friendly note that your domain ${dom} expires on ${nice(c.end)}. We will renew it for you${c.amount ? ', and the renewal for the next year is ' + euro(c.amount, c.currency) : ''}.\n\n`
+          + `${c.amount ? s.paymentText + '\n\n' : ''}If you have any questions, just reply to this email.${sign}`
+        : `Dear ${name},\n\nA friendly reminder that your domain ${dom} expires on ${nice(c.end)}.\n\n`
+          + `The domain is registered in your own${c.registrar ? ' ' + c.registrar : ''} account, so the renewal is made there and paid directly to ${c.registrar || 'the registrar'}${c.domainCost ? ' (' + c.domainCost + ' a year)' : ''}. `
+          + `Please renew it before ${nice(c.end)}: if it expires, the website and any email addresses on it stop working.\n\n`
+          + `If you would like us to help with the renewal, reply to this email and we will arrange it.${sign}`;
     } else {
-      const open = r2((c.amount || 0) - paidOf(c));
       subject = `Payment reminder: ${c.description || TYPE_LABEL[c.type]}`;
-      text = `Dear ${name},\n\nA friendly reminder that ${euro(open, c.currency)} is still open for ${c.description || TYPE_LABEL[c.type]}${c.start ? ' (due ' + nice(c.start) + ')' : ''}.\n\n`
+      body = `Dear ${name},\n\nA friendly reminder that ${euro(openOf(c), c.currency)} is still open for ${c.description || TYPE_LABEL[c.type]}${c.start ? ' (due ' + nice(c.start) + ')' : ''}.\n\n`
         + `${s.paymentText}\n\nIf you have already paid, thank you, and please ignore this email.${sign}`;
     }
-    const d = { id: id(8), clientId: cl.id, chargeId: c.id, kind, to: cl.email || '', subject, text, createdAt: now(), status: 'draft' };
-    x.outbox.push(d);
-    return d;
+    return { to: cl.email || '', subject, body };
   }
 
-  // prepare whatever is due today; returns the new drafts
-  function prepare() {
+  /* ---------- what needs attention (for the dashboard) ---------- */
+  function attention() {
     const x = ensure();
-    const s = x.settings;
     const today = todayStr();
-    const made = [];
-    for (const c of x.charges) {
-      const cl = x.list.find((k) => k.id === c.clientId);
-      if (!cl || cl.paused || c.noReminders) continue;
-      const mine = x.outbox.filter((o) => o.chargeId === c.id);
-      // renewal notice
-      if ((c.type === 'maintenance' || c.type === 'domain') && c.end && !c.renewedTo) {
-        const days = daysBetween(today, c.end);
-        if (days <= (c.remindDays ?? s.remindDays) && days >= -30 && !mine.some((o) => o.kind === 'renewal')) made.push(draft(cl, c, 'renewal'));
-      }
-      // payment reminder
-      if (c.type !== 'domain' && (c.amount || 0) > paidOf(c) && c.start && c.start <= today) {
-        const last = mine.filter((o) => o.kind === 'payment').sort((a, b) => b.createdAt - a.createdAt)[0];
-        const waiting = last && last.status === 'draft';
-        const recent = last && daysBetween(new Date(last.sentAt || last.dismissedAt || last.createdAt).toISOString().slice(0, 10), today) < s.chaseDays;
-        if (!waiting && !recent) made.push(draft(cl, c, 'payment'));
-      }
-    }
-    if (made.length) store.save();
-    return made;
-  }
-  async function daily() {
-    const made = prepare();
-    const x = ensure();
-    if (!made.length || !x.settings.digest) return;
-    const lines = made.map((d) => {
-      const cl = x.list.find((k) => k.id === d.clientId);
-      return `- ${cl ? cl.name : 'Client'}: ${d.subject}`;
-    });
-    try {
-      await mailer.send({
-        to: notifyEmail,
-        subject: `${made.length} client email${made.length === 1 ? '' : 's'} waiting for your approval`,
-        text: `The console has prepared these emails to clients. Nothing is sent until you approve it.\n\n${lines.join('\n')}\n\nOpen them: ${publicUrl}/admin/#clients/outbox`,
-        html: layout('Client emails to approve', `<p>The console has prepared these emails to clients. Nothing is sent until you approve it.</p><ul>${lines.map((l) => '<li>' + esc(l.slice(2)) + '</li>').join('')}</ul>`
-          + `<p><a href="${esc(publicUrl)}/admin/#clients/outbox" style="color:#1b3a9e;font-weight:600">Open the emails to approve</a></p>`)
-      });
-    } catch (err) {
-      console.error('Draft digest not sent:', err.message);
-    }
+    const s = x.settings;
+    const withClient = (c, extra) => {
+      const cl = x.list.find((k) => k.id === c.clientId) || { name: 'Unknown client' };
+      return { ...chargeOut(c), client: cl.name, clientEmail: cl.email || '', ...extra };
+    };
+    const unpaid = x.charges.filter((c) => openOf(c) > 0)
+      .map((c) => {
+        const cl = x.list.find((k) => k.id === c.clientId) || { name: '' };
+        const late = !!(c.start && c.start < today);
+        return withClient(c, { late, days: c.start ? daysBetween(today, c.start) : null, mail: compose(cl, c, 'payment') });
+      })
+      .sort((a, b) => (a.start || '9999').localeCompare(b.start || '9999'));
+    const renewals = x.charges.filter((c) => yearly(c) && c.end && !c.renewedTo)
+      .map((c) => {
+        const cl = x.list.find((k) => k.id === c.clientId) || { name: '' };
+        return withClient(c, { days: daysBetween(today, c.end), mail: compose(cl, c, 'renewal') });
+      })
+      .filter((c) => c.days <= Math.max(60, s.remindDays))
+      .sort((a, b) => a.end.localeCompare(b.end));
+    const checks = [
+      ...x.charges.filter((c) => c.type === 'domain' && !c.end && !c.renewedTo).map((c) => ({ kind: 'domain', clientId: c.clientId, client: clientName(c.clientId), text: 'Domain expiry date not known' + (c.domainName ? ' (' + c.domainName + ')' : '') })),
+      ...x.list.filter((k) => !k.email).map((k) => ({ kind: 'email', clientId: k.id, client: k.name, text: 'No email address' })),
+      ...x.charges.filter((c) => openOf(c) > 0 && !c.start).map((c) => ({ kind: 'due', clientId: c.clientId, client: clientName(c.clientId), text: 'No due date for ' + (c.description || TYPE_LABEL[c.type]) }))
+    ];
+    return {
+      unpaid, renewals, checks, remindDays: s.remindDays,
+      toCollect: r2(unpaid.reduce((n, c) => n + c.open, 0)),
+      overdue: r2(unpaid.filter((c) => c.late).reduce((n, c) => n + c.open, 0)),
+      count: unpaid.filter((c) => c.late).length + renewals.filter((c) => c.days <= s.remindDays).length
+    };
   }
 
-  async function sendDraft(d, user) {
+  // domains ErgonSite pays for a client: a cost in the month it was bought or renewed
+  function ourDomainCosts(month) {
+    return ensure().charges
+      .filter((c) => c.type === 'domain' && c.payer === 'ergonsite' && c.ourCost > 0 && c.start && c.start.slice(0, 7) === month)
+      .map((c) => ({ id: c.id, clientId: c.clientId, date: c.start, name: 'Domain ' + (c.domainName || ''), vendor: c.registrar || '', category: 'Domains',
+        client: clientName(c.clientId), currency: c.ourCostCurrency || 'USD', amount: r2(c.ourCost) }));
+  }
+
+  // money in between two dates (for Reports): payments received, and charges billed
+  function ledger(from, to) {
     const x = ensure();
-    if (!EMAIL_RE.test(d.to || '')) throw httpError(400, 'This client has no valid email address. Add it on the client first.');
-    if (!mailer.enabled) throw httpError(400, 'Email is not set up on the server, so nothing can be sent yet.');
-    const html = layout(d.subject, esc(d.text).replace(/\n/g, '<br>'));
-    await mailer.send({ to: d.to, replyTo: 'info@ergonsite.com', subject: d.subject, text: d.text, html });
-    d.status = 'sent';
-    d.sentAt = now();
-    d.sentBy = user.name;
-    // sending a maintenance renewal opens next year's charge
-    const c = x.charges.find((q) => q.id === d.chargeId);
-    if (c && d.kind === 'renewal' && c.type === 'maintenance' && !c.renewedTo) renew(c, {});
-    store.save();
+    const payments = [], billed = [];
+    for (const c of x.charges) {
+      for (const p of c.payments || []) {
+        if (p.date >= from && p.date <= to) payments.push({ date: p.date, client: clientName(c.clientId), type: TYPE_LABEL[c.type], description: c.description, method: p.method, note: p.note || '', currency: c.currency || 'EUR', amount: p.amount });
+      }
+      if (c.amount > 0 && c.start && c.start >= from && c.start <= to) billed.push({ date: c.start, client: clientName(c.clientId), type: TYPE_LABEL[c.type], description: c.description, currency: c.currency || 'EUR', amount: c.amount, paid: paidOf(c) });
+    }
+    const open = x.charges.filter((c) => openOf(c) > 0).map((c) => ({ client: clientName(c.clientId), description: c.description, due: c.start || null, open: openOf(c) }));
+    return { payments, billed, open };
   }
 
   function renew(c, b) {
     const x = ensure();
     const start = c.end || todayStr();
     const end = b.end && DATE_RE.test(b.end) ? b.end : addMonthsDate(start, 12);
+    const amount = b.amount !== undefined && b.amount !== '' && b.amount !== null ? r2(b.amount) : (c.amount ?? null);
     const next = {
       id: id(8), clientId: c.clientId, type: c.type, description: c.description, currency: c.currency || 'EUR',
-      amount: c.type === 'domain' ? null : r2(b.amount !== undefined && b.amount !== '' ? b.amount : c.amount),
+      amount: c.type === 'domain' && c.payer !== 'ergonsite' ? null : amount,
       start, end, payments: [], registrar: c.registrar || '', domainName: c.domainName || '', domainCost: c.domainCost || '',
+      payer: c.payer || 'client', ourCost: b.ourCost !== undefined && b.ourCost !== '' ? r2(b.ourCost) : (c.ourCost || 0), ourCostCurrency: c.ourCostCurrency || 'USD',
       remindDays: c.remindDays, notes: '', createdAt: now()
     };
     x.charges.push(next);
@@ -249,11 +246,11 @@ export function setupClients({ db, store, send, readJson, clean, id, now, mailer
     for (const [k, n] of [['name', 80], ['contact', 80], ['phone', 40], ['website', 120], ['domain', 120], ['notes', 2000]]) if (b[k] !== undefined) c[k] = clean(b[k], n);
     if (b.email !== undefined) {
       const e = clean(b.email, 160);
-      if (e && !e.split(/[,;]\s*/).every((x) => EMAIL_RE.test(x))) throw httpError(400, 'That email address is not valid.');
+      if (e && !e.split(/[,;]\s*/).every((v) => EMAIL_RE.test(v))) throw httpError(400, 'That email address is not valid.');
       c.email = e;
     }
-    if (b.paused !== undefined) c.paused = !!b.paused;
     if (!c.name) throw httpError(400, 'The client needs a name.');
+    delete c.paused;
     if (!old) c.id = id(8);
     return c;
   }
@@ -272,69 +269,51 @@ export function setupClients({ db, store, send, readJson, clean, id, now, mailer
       else c[k] = b[k];
     }
     if (c.start && c.end && c.end < c.start) throw httpError(400, 'The end date is before the start date.');
+    if (b.payer !== undefined) c.payer = b.payer === 'ergonsite' ? 'ergonsite' : 'client';
+    if (b.ourCost !== undefined) c.ourCost = b.ourCost === '' || b.ourCost === null ? 0 : r2(b.ourCost);
+    if (b.ourCostCurrency !== undefined) {
+      const cur = String(b.ourCostCurrency).toUpperCase();
+      if (!CUR_RE.test(cur)) throw httpError(400, 'Currency should be a 3-letter code like USD.');
+      c.ourCostCurrency = cur;
+    }
     if (b.amount !== undefined) c.amount = b.amount === '' || b.amount === null ? null : r2(b.amount);
-    if (c.type !== 'domain' && !(c.amount >= 0)) throw httpError(400, 'Enter the amount.');
-    if (c.type === 'domain') c.amount = null;
+    if (c.type === 'domain') {
+      c.payer ||= 'client';
+      if (c.payer === 'client') { c.amount = null; c.ourCost = 0; }
+      c.ourCostCurrency ||= 'USD';
+    } else if (!(c.amount >= 0)) throw httpError(400, 'Enter the amount.');
     if (b.remindDays !== undefined) c.remindDays = b.remindDays === '' || b.remindDays === null ? undefined : Math.max(0, Math.min(180, Math.round(Number(b.remindDays))));
-    if (b.noReminders !== undefined) c.noReminders = !!b.noReminders;
+    delete c.noReminders;
     c.currency ||= 'EUR';
     c.description ||= TYPE_LABEL[c.type];
     if (!old) c.id = id(8);
     return c;
   }
 
-  /* ---------- reports: what came in against what it cost ---------- */
-  function report(year) {
-    const x = ensure();
-    const from = `${year}-01-01`, to = `${year}-12-31`;
-    const costs = expenses ? expenses.costsByClient(`${year}-01`, `${year}-12`) : { byClient: {}, total: 0 };
-    const key = (s) => String(s || '').trim().toLowerCase();
-    const rows = x.list.map((cl) => {
-      const charges = x.charges.filter((c) => c.clientId === cl.id && c.type !== 'domain');
-      const billed = r2(charges.filter((c) => c.start && c.start >= from && c.start <= to).reduce((n, c) => n + (c.amount || 0), 0));
-      const received = r2(charges.reduce((n, c) => n + (c.payments || []).filter((p) => p.date >= from && p.date <= to).reduce((m, p) => m + p.amount, 0), 0));
-      const open = r2(charges.reduce((n, c) => n + Math.max(0, (c.amount || 0) - paidOf(c)), 0));
-      const cost = r2(costs.byClient[key(cl.name)] || 0);
-      return { id: cl.id, name: cl.name, billed, received, open, costs: cost, profit: r2(received - cost) };
-    }).sort((a, b) => b.received - a.received || a.name.localeCompare(b.name));
-    const named = new Set(x.list.map((c) => key(c.name)));
-    const company = r2(Object.entries(costs.byClient).filter(([k]) => !named.has(k)).reduce((n, [, v]) => n + v, 0));
-    const t = rows.reduce((a, r) => ({ billed: a.billed + r.billed, received: a.received + r.received, open: a.open + r.open, costs: a.costs + r.costs }), { billed: 0, received: 0, open: 0, costs: 0 });
-    const allCosts = r2(t.costs + company);
-    return { year, rows, company, totals: { billed: r2(t.billed), received: r2(t.received), open: r2(t.open), clientCosts: r2(t.costs), costs: allCosts, profit: r2(t.received - allCosts) } };
-  }
-
   function overview() {
     const x = ensure();
-    prepare();
     return {
       today: todayStr(),
       clients: x.list.map(clientOut).sort((a, b) => a.name.localeCompare(b.name)),
-      drafts: x.outbox.filter((o) => o.status === 'draft').length,
-      upcoming: x.charges.filter((c) => (c.type === 'maintenance' || c.type === 'domain') && c.end && !c.renewedTo)
-        .map((c) => ({ ...chargeOut(c), client: (x.list.find((k) => k.id === c.clientId) || {}).name, days: daysBetween(todayStr(), c.end) }))
-        .filter((c) => c.days <= 120).sort((a, b) => a.end.localeCompare(b.end)),
-      unpaid: x.charges.filter((c) => c.type !== 'domain' && (c.amount || 0) > paidOf(c))
-        .map((c) => ({ ...chargeOut(c), client: (x.list.find((k) => k.id === c.clientId) || {}).name }))
-        .sort((a, b) => (a.start || '9999').localeCompare(b.start || '9999')),
-      vault: !!KEY, mail: mailer.enabled, settings: x.settings, methods: METHODS, types: TYPE_LABEL
+      vault: !!KEY, settings: x.settings, methods: METHODS, types: TYPE_LABEL
     };
   }
   function clientDetail(cl) {
     const x = ensure();
     return {
       client: clientOut(cl),
-      charges: x.charges.filter((c) => c.clientId === cl.id).map(chargeOut)
-        .sort((a, b) => (b.start || '').localeCompare(a.start || '') || a.type.localeCompare(b.type)),
-      logins: x.logins.filter((l) => l.clientId === cl.id).map(({ secret, ...l }) => ({ ...l, hasPassword: !!secret })),
-      emails: x.outbox.filter((o) => o.clientId === cl.id).sort((a, b) => b.createdAt - a.createdAt).slice(0, 30)
+      charges: x.charges.filter((c) => c.clientId === cl.id).map((c) => ({
+        ...chargeOut(c),
+        mail: openOf(c) > 0 ? compose(cl, c, 'payment') : yearly(c) && c.end && !c.renewedTo ? compose(cl, c, 'renewal') : null
+      })).sort((a, b) => (b.start || '').localeCompare(a.start || '') || a.type.localeCompare(b.type)),
+      logins: x.logins.filter((l) => l.clientId === cl.id).map(({ secret, ...l }) => ({ ...l, hasPassword: !!secret }))
     };
   }
 
   /* other parts of the console keep client names (expenses); keep them in step */
   function renameEverywhere(oldName, newName) {
     if (!oldName || oldName === newName || !db.expenses) return;
-    const same = (s) => String(s || '').trim().toLowerCase() === oldName.trim().toLowerCase();
+    const same = (v) => String(v || '').trim().toLowerCase() === oldName.trim().toLowerCase();
     for (const p of db.expenses.plans || []) if (same(p.client)) p.client = newName;
     for (const e of db.expenses.entries || []) if (same(e.client)) e.client = newName;
     for (const k of Object.keys(db.expenses.renderMap || {})) if (same(db.expenses.renderMap[k])) db.expenses.renderMap[k] = newName;
@@ -361,7 +340,7 @@ export function setupClients({ db, store, send, readJson, clean, id, now, mailer
   }
 
   /* ---------- routes: /admin/api/clients/... ---------- */
-  async function handle(req, res, p, user, url) {
+  async function handle(req, res, p, user) {
     if (user.role !== 'owner') return send(res, 403, { message: 'Only owners can see clients and billing.' });
     const x = ensure();
     const body = () => readJson(req, 256 * 1024);
@@ -374,10 +353,6 @@ export function setupClients({ db, store, send, readJson, clean, id, now, mailer
       x.list.push(cl); store.save();
       return send(res, 201, { client: clientOut(cl) });
     }
-    if (p === '/clients/report' && req.method === 'GET') {
-      const y = Number(url.searchParams.get('year')) || Number(todayStr().slice(0, 4));
-      return send(res, 200, report(y));
-    }
     if (p === '/clients/import' && req.method === 'POST') {
       const b = await body();
       return send(res, 200, { ok: true, added: importData(b.data) });
@@ -386,50 +361,10 @@ export function setupClients({ db, store, send, readJson, clean, id, now, mailer
       const b = await body();
       const s = x.settings;
       if (b.remindDays !== undefined) s.remindDays = Math.max(1, Math.min(180, Math.round(Number(b.remindDays) || 30)));
-      if (b.chaseDays !== undefined) s.chaseDays = Math.max(3, Math.min(90, Math.round(Number(b.chaseDays) || 14)));
       if (b.paymentText !== undefined) s.paymentText = clean(b.paymentText, 600);
       if (b.signature !== undefined) s.signature = clean(b.signature, 80) || 'ErgonSite Team';
-      if (b.digest !== undefined) s.digest = !!b.digest;
       store.save();
       return send(res, 200, { ok: true });
-    }
-
-    /* emails waiting for approval */
-    if (p === '/clients/outbox' && req.method === 'GET') {
-      prepare();
-      const list = x.outbox.filter((o) => o.status === 'draft').sort((a, b) => a.createdAt - b.createdAt)
-        .map((o) => ({ ...o, client: (x.list.find((k) => k.id === o.clientId) || {}).name }));
-      const sent = x.outbox.filter((o) => o.status !== 'draft').sort((a, b) => (b.sentAt || b.dismissedAt || 0) - (a.sentAt || a.dismissedAt || 0)).slice(0, 40)
-        .map((o) => ({ ...o, client: (x.list.find((k) => k.id === o.clientId) || {}).name }));
-      return send(res, 200, { drafts: list, history: sent, mail: mailer.enabled });
-    }
-    m = p.match(/^\/clients\/outbox\/([A-Za-z0-9_-]+)(\/send|\/dismiss)?$/);
-    if (m) {
-      const d = x.outbox.find((o) => o.id === m[1]);
-      if (!d) return send(res, 404, { message: 'Not found.' });
-      if (d.status !== 'draft') return send(res, 400, { message: 'This email was already handled.' });
-      if (!m[2] && req.method === 'PUT') {
-        const b = await body();
-        if (b.to !== undefined) d.to = clean(b.to, 300);
-        if (b.subject !== undefined) d.subject = clean(b.subject, 200);
-        if (b.text !== undefined) d.text = clean(b.text, 8000);
-        d.edited = true;
-        store.save();
-        return send(res, 200, { ok: true });
-      }
-      if (m[2] === '/send' && req.method === 'POST') {
-        const b = await body();
-        if (b.to !== undefined) d.to = clean(b.to, 300);
-        if (b.subject !== undefined) d.subject = clean(b.subject, 200);
-        if (b.text !== undefined) d.text = clean(b.text, 8000);
-        await sendDraft(d, user);
-        return send(res, 200, { ok: true });
-      }
-      if (m[2] === '/dismiss' && req.method === 'POST') {
-        d.status = 'dismissed'; d.dismissedAt = now(); d.dismissedBy = user.name;
-        store.save();
-        return send(res, 200, { ok: true });
-      }
     }
 
     /* one client */
@@ -444,8 +379,6 @@ export function setupClients({ db, store, send, readJson, clean, id, now, mailer
         if (x.list.some((k, j) => j !== i && k.name.toLowerCase() === next.name.toLowerCase())) return send(res, 400, { message: 'There is already a client with that name.' });
         x.list[i] = next;
         renameEverywhere(old, next.name);
-        // drafts not sent yet go to the new address
-        for (const o of x.outbox) if (o.clientId === next.id && o.status === 'draft') o.to = next.email || '';
         store.save();
         return send(res, 200, { client: clientOut(next) });
       }
@@ -454,7 +387,6 @@ export function setupClients({ db, store, send, readJson, clean, id, now, mailer
         x.list.splice(i, 1);
         x.charges = x.charges.filter((c) => c.clientId !== cid);
         x.logins = x.logins.filter((l) => l.clientId !== cid);
-        x.outbox = x.outbox.filter((o) => o.clientId !== cid);
         store.save();
         return send(res, 200, { ok: true });
       }
@@ -467,7 +399,7 @@ export function setupClients({ db, store, send, readJson, clean, id, now, mailer
       const b = await body();
       const c = chargeInput(b);
       c.clientId = m[1];
-      if (c.type !== 'domain' && Number(b.paidNow) > 0) {
+      if ((c.amount || 0) > 0 && Number(b.paidNow) > 0) {
         c.payments.push({ id: id(6), date: DATE_RE.test(b.paidOn || '') ? b.paidOn : todayStr(), amount: r2(b.paidNow), method: METHODS.includes(b.method) ? b.method : 'Cash', note: '' });
       }
       x.charges.push(c); store.save();
@@ -481,7 +413,6 @@ export function setupClients({ db, store, send, readJson, clean, id, now, mailer
       if (!m[2] && req.method === 'DELETE') {
         x.charges = x.charges.filter((q) => q.id !== c.id);
         for (const q of x.charges) if (q.renewedTo === c.id) q.renewedTo = null;
-        x.outbox = x.outbox.filter((o) => o.chargeId !== c.id || o.status !== 'draft');
         store.save();
         return send(res, 200, { ok: true });
       }
@@ -491,17 +422,6 @@ export function setupClients({ db, store, send, readJson, clean, id, now, mailer
         if (!(a > 0)) return send(res, 400, { message: 'Enter the amount received.' });
         if (!DATE_RE.test(b.date || '')) return send(res, 400, { message: 'Pick the date it was paid.' });
         c.payments.push({ id: id(6), date: b.date, amount: a, method: METHODS.includes(b.method) ? b.method : 'Other', note: clean(b.note, 200) });
-        // a waiting payment reminder: dropped when paid in full, otherwise rewritten
-        // with the new open amount (unless someone already edited it by hand)
-        for (const o of x.outbox) {
-          if (o.chargeId !== c.id || o.kind !== 'payment' || o.status !== 'draft') continue;
-          if (paidOf(c) >= (c.amount || 0)) { o.status = 'dismissed'; o.dismissedAt = now(); o.dismissedBy = 'paid'; continue; }
-          if (o.edited) continue;
-          const cl = x.list.find((k) => k.id === c.clientId);
-          const fresh = draft(cl, c, 'payment');
-          x.outbox = x.outbox.filter((q) => q !== fresh);
-          o.subject = fresh.subject; o.text = fresh.text;
-        }
         store.save();
         return send(res, 200, { charge: chargeOut(c) });
       }
@@ -513,9 +433,8 @@ export function setupClients({ db, store, send, readJson, clean, id, now, mailer
       }
       if (m[2] === '/renew' && req.method === 'POST') {
         if (c.renewedTo) return send(res, 400, { message: 'This one was already renewed.' });
-        if (c.type !== 'maintenance' && c.type !== 'domain') return send(res, 400, { message: 'Only maintenance and domains renew.' });
+        if (!yearly(c)) return send(res, 400, { message: 'Only maintenance and domains renew.' });
         const next = renew(c, await body());
-        for (const o of x.outbox) if (o.chargeId === c.id && o.kind === 'renewal' && o.status === 'draft') { o.status = 'dismissed'; o.dismissedAt = now(); o.dismissedBy = 'renewed'; }
         store.save();
         return send(res, 200, { charge: chargeOut(next) });
       }
@@ -542,7 +461,7 @@ export function setupClients({ db, store, send, readJson, clean, id, now, mailer
         if (!l.secret) return send(res, 400, { message: 'No password saved for this login.' });
         if (!KEY) return send(res, 400, { message: 'VAULT_KEY is not set on Render, so passwords cannot be opened.' });
         let pw;
-        try { pw = open(KEY, l.secret); } catch { return send(res, 400, { message: 'This password was saved with a different VAULT_KEY and cannot be opened.' }); }
+        try { pw = unseal(KEY, l.secret); } catch { return send(res, 400, { message: 'This password was saved with a different VAULT_KEY and cannot be opened.' }); }
         l.lastShownBy = user.name; l.lastShownAt = now(); store.save();
         return send(res, 200, { password: pw });
       }
@@ -568,30 +487,12 @@ export function setupClients({ db, store, send, readJson, clean, id, now, mailer
     return send(res, 404, { message: 'Not found' });
   }
 
-  setTimeout(daily, 8_000);
-  setInterval(daily, 6 * 3600_000).unref();
-
-  // money in between two dates (for Reports): payments received, and charges billed
-  function ledger(from, to) {
-    const x = ensure();
-    const name = (cid) => (x.list.find((k) => k.id === cid) || {}).name || 'Unknown client';
-    const payments = [], billed = [];
-    for (const c of x.charges) {
-      if (c.type === 'domain') continue;
-      for (const p of c.payments || []) {
-        if (p.date >= from && p.date <= to) payments.push({ date: p.date, client: name(c.clientId), type: TYPE_LABEL[c.type], description: c.description, method: p.method, note: p.note || '', currency: c.currency || 'EUR', amount: p.amount });
-      }
-      if (c.start && c.start >= from && c.start <= to) billed.push({ date: c.start, client: name(c.clientId), type: TYPE_LABEL[c.type], description: c.description, currency: c.currency || 'EUR', amount: c.amount || 0, paid: paidOf(c) });
-    }
-    const open = x.charges.filter((c) => c.type !== 'domain' && (c.amount || 0) > paidOf(c))
-      .map((c) => ({ client: name(c.clientId), description: c.description, due: c.start || null, open: r2((c.amount || 0) - paidOf(c)) }));
-    return { payments, billed, open };
-  }
-
   return {
     handle,
     ledger,
-    draftCount: () => ensure().outbox.filter((o) => o.status === 'draft').length,
+    attention,
+    ourDomainCosts,
+    attentionCount: () => attention().count,
     names: () => ensure().list.map((c) => c.name)
   };
 }

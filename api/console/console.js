@@ -110,6 +110,7 @@
     $('#navExpenses').hidden = data.user.role !== 'owner';
     $('#navClients').hidden = data.user.role !== 'owner';
     $('#navReports').hidden = data.user.role !== 'owner';
+    $('#navDashboard').hidden = data.user.role !== 'owner';
     route();
     await refresh();
     clearInterval(state.listTimer);
@@ -118,10 +119,10 @@
 
   /* ---------------- routing (#chats, #chat/ID, #inquiries, #inquiry/ID, #team, #expenses/YYYY-MM) ---------------- */
   function route() {
-    const hash = location.hash.replace(/^#/, '') || 'chats';
+    const hash = location.hash.replace(/^#/, '') || (state.me && state.me.role === 'owner' ? 'dashboard' : 'chats');
     const [name, id] = hash.split('/');
-    let view = name === 'chat' ? 'chats' : name === 'inquiry' ? 'inquiries' : (['chats', 'inquiries', 'team', 'expenses', 'clients', 'reports'].includes(name) ? name : 'chats');
-    if (['expenses', 'clients', 'reports'].includes(view) && (!state.me || state.me.role !== 'owner')) view = 'chats';
+    let view = name === 'chat' ? 'chats' : name === 'inquiry' ? 'inquiries' : (['chats', 'inquiries', 'team', 'expenses', 'clients', 'reports', 'dashboard'].includes(name) ? name : 'chats');
+    if (['expenses', 'clients', 'reports', 'dashboard'].includes(view) && (!state.me || state.me.role !== 'owner')) view = 'chats';
     state.view = view;
     $$('.view').forEach((v) => (v.hidden = v.id !== 'view-' + view));
     $$('.side-nav a').forEach((a) => a.classList.toggle('is-on', a.dataset.view === view));
@@ -133,6 +134,7 @@
     if (view === 'expenses' && window.ExpensesView) window.ExpensesView.open(id);
     if (view === 'clients' && window.ClientsView) window.ClientsView.open(hash.split('/').slice(1).join('/'));
     if (view === 'reports' && window.ReportsView) window.ReportsView.open();
+    if (view === 'dashboard' && window.DashboardView) window.DashboardView.open();
   }
   window.addEventListener('hashchange', route);
 
@@ -151,8 +153,7 @@
     const c = state.overview.counts;
     const bc = $('#badgeChats'); bc.hidden = !c.chatsUnread; bc.textContent = c.chatsUnread;
     const bi = $('#badgeInq'); bi.hidden = !c.inquiriesNew; bi.textContent = c.inquiriesNew;
-    const be = $('#badgeExp'); be.hidden = !c.renewalsDue; be.textContent = c.renewalsDue;
-    const bk = $('#badgeClients'); bk.hidden = !c.clientDrafts; bk.textContent = c.clientDrafts;
+    const bd = $('#badgeDash'); bd.hidden = !c.attention; bd.textContent = c.attention;
     const total = c.chatsUnread + c.inquiriesNew;
     document.title = (total ? '(' + total + ') ' : '') + 'ErgonSite console';
     renderLists();
